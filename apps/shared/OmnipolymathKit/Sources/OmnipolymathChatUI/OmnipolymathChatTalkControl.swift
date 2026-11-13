@@ -1,0 +1,72 @@
+public struct OmnipolymathChatAudioInputDevice: Equatable, Identifiable, Sendable {
+    public var id: String
+    public var name: String
+
+    public init(id: String, name: String) {
+        self.id = id
+        self.name = name
+    }
+}
+
+public enum OmnipolymathCameraFacingSelection: String, Equatable, Sendable {
+    case back
+    case front
+}
+
+public struct OmnipolymathChatTalkControl {
+    public var isEnabled: Bool
+    public var isListening: Bool
+    public var isSpeaking: Bool
+    public var isGatewayConnected: Bool
+    public var statusText: String
+    public var providerLabel: String
+    public var level: Double
+    public var isMicrophoneMuted: Bool
+    public var toggleMicrophone: (@MainActor () -> Void)?
+    public var partialTranscript: String
+    public var recentTranscript: [String]
+    public var inputDevices: [OmnipolymathChatAudioInputDevice]
+    public var selectedInputDeviceID: String?
+    public var selectInputDevice: (@MainActor (_ deviceID: String?) -> Void)?
+    public var cameraFacing: OmnipolymathCameraFacingSelection?
+    public var flipCamera: (@MainActor () -> Void)?
+    public var toggle: @MainActor (_ sessionKey: String) -> Void
+
+    public init(
+        isEnabled: Bool,
+        isListening: Bool,
+        isSpeaking: Bool,
+        isGatewayConnected: Bool,
+        statusText: String,
+        providerLabel: String,
+        level: Double = 0,
+        isMicrophoneMuted: Bool = false,
+        toggleMicrophone: (@MainActor () -> Void)? = nil,
+        partialTranscript: String = "",
+        recentTranscript: [String] = [],
+        inputDevices: [OmnipolymathChatAudioInputDevice] = [],
+        selectedInputDeviceID: String? = nil,
+        selectInputDevice: (@MainActor (_ deviceID: String?) -> Void)? = nil,
+        cameraFacing: OmnipolymathCameraFacingSelection? = nil,
+        flipCamera: (@MainActor () -> Void)? = nil,
+        toggle: @escaping @MainActor (_ sessionKey: String) -> Void)
+    {
+        self.isEnabled = isEnabled
+        self.isListening = isListening
+        self.isSpeaking = isSpeaking
+        self.isGatewayConnected = isGatewayConnected
+        self.statusText = statusText
+        self.providerLabel = providerLabel
+        self.level = level
+        self.isMicrophoneMuted = isMicrophoneMuted
+        self.toggleMicrophone = toggleMicrophone
+        self.partialTranscript = partialTranscript
+        self.recentTranscript = recentTranscript
+        self.inputDevices = inputDevices
+        self.selectedInputDeviceID = selectedInputDeviceID
+        self.selectInputDevice = selectInputDevice
+        self.cameraFacing = cameraFacing
+        self.flipCamera = flipCamera
+        self.toggle = toggle
+    }
+}

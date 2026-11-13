@@ -1,0 +1,4 @@
+module OmnipolymathWatchRTC {
+    header "OmnipolymathWatchRTC.h"
+    export *
+}

@@ -1,0 +1,187 @@
+import OmnipolymathKit
+import SwiftUI
+
+/// Per-gateway custom header editor for gateways behind authenticating reverse proxies
+/// (Cloudflare Access-style service tokens). Header values are credentials: they render
+/// masked, persist in the Keychain, and must never appear in logs or diagnostics.
+struct GatewayCustomHeadersSettingsView: View {
+    let gatewayStableID: String
+
+    @State private var entries: [HeaderEntry] = []
+    @State private var newName = ""
+    @State private var newValue = ""
+    @State private var loaded = false
+
+    private struct HeaderEntry: Identifiable, Equatable {
+        let id = UUID()
+        var name: String
+        var value: String
+    }
+
+    var body: some View {
+        Form {
+            if !self.entries.isEmpty {
+                Section {
+                    ForEach(self.$entries) { $entry in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(GatewayCustomHeaderNames.displayName(for: entry.name))
+                                .font(OmnipolymathType.subheadSemiBold)
+                            self.headerValueField("Value", text: $entry.value)
+                        }
+                    }
+                    .onDelete { self.entries.remove(atOffsets: $0) }
+                } header: {
+                    Text("Headers")
+                        .font(OmnipolymathType.captionSemiBold)
+                } footer: {
+                    // Keep the extraction key contiguous for the native localization inventory.
+                    // swiftlint:disable line_length
+                    Text(
+                        String(
+                            localized:
+                            "Sent over trusted TLS connections to this gateway, including Share extension delivery. Reconnect Omnipolymath after changes to update Share access."))
+                        .font(OmnipolymathType.caption)
+                    // swiftlint:enable line_length
+                }
+            }
+
+            Section {
+                TextField(
+                    text: self.$newName,
+                    prompt: Text("e.g. CF-Access-Client-Id").font(OmnipolymathType.subhead))
+                {
+                    Text("Header name")
+                        .font(OmnipolymathType.subhead)
+                }
+                .font(OmnipolymathType.subhead)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                self.headerValueField("Header value", text: self.$newValue)
+                Button {
+                    self.addEntry()
+                } label: {
+                    Label {
+                        Text("Add Header")
+                            .font(OmnipolymathType.subheadSemiBold)
+                    } icon: {
+                        Image(systemName: "plus")
+                    }
+                }
+                .disabled(!self.canAddEntry)
+            } header: {
+                Text("Add Header")
+                    .font(OmnipolymathType.captionSemiBold)
+            } footer: {
+                Text(self.addFooterText)
+                    .font(OmnipolymathType.caption)
+            }
+        }
+        .navigationTitle("Custom Headers")
+        .toolbar {
+            EditButton()
+                .font(OmnipolymathType.subheadSemiBold)
+        }
+        .onAppear(perform: self.loadOnce)
+        .onChange(of: self.entries) { _, _ in
+            guard self.loaded else { return }
+            self.persist()
+        }
+    }
+
+    private var trimmedNewName: String {
+        self.newName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var newNameIsReserved: Bool {
+        GatewayCustomHeaders.isReservedName(self.trimmedNewName)
+    }
+
+    private var newNameIsDuplicate: Bool {
+        let name = self.trimmedNewName
+        return self.entries.contains { $0.name.caseInsensitiveCompare(name) == .orderedSame }
+    }
+
+    private var newNameIsCredential: Bool {
+        GatewayCustomHeaderNames.credential(named: self.trimmedNewName) != nil
+    }
+
+    /// Storage drops a non-token name on save, which made the row look added until the next visit.
+    private var newNameIsInvalidToken: Bool {
+        let name = self.trimmedNewName
+        return !name.isEmpty && !GatewayCustomHeaders.isValidName(name)
+    }
+
+    private var canAddEntry: Bool {
+        !self.trimmedNewName.isEmpty
+            && !self.newNameIsReserved
+            && !self.newNameIsDuplicate
+            && !self.newNameIsCredential
+            && !self.newNameIsInvalidToken
+    }
+
+    private var addFooterText: String {
+        if self.newNameIsReserved {
+            return String(localized: "This header is managed by the connection and cannot be overridden.")
+        }
+        if self.newNameIsDuplicate {
+            return String(localized: "A header with this name already exists.")
+        }
+        // Keep the extraction key contiguous for the native localization inventory.
+        // swiftlint:disable line_length
+        if GatewayCustomHeaderNames.credential(named: self.trimmedNewName) == .clientId {
+            return String(
+                localized: "This looks like a Cloudflare Access Client ID. Put it in Header value and enter CF-Access-Client-Id as Header name.")
+        }
+        if GatewayCustomHeaderNames.credential(named: self.trimmedNewName) == .secret {
+            return String(localized: "This looks like a secret. Put it in Header value, not Header name.")
+        }
+        if self.newNameIsInvalidToken {
+            return "Header names cannot include spaces or other characters outside a single HTTP token."
+        }
+        return String(
+            localized: "Sent only over secure connections. For a Cloudflare Access service token, add two headers: Header name CF-Access-Client-Id with your Client ID as Header value, then Header name CF-Access-Client-Secret with your Client Secret as Header value.")
+        // swiftlint:enable line_length
+    }
+
+    private func headerValueField(_ placeholder: String, text: Binding<String>) -> some View {
+        ZStack(alignment: .leading) {
+            SecureField("", text: text)
+                .font(OmnipolymathType.subhead)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .accessibilityLabel(placeholder)
+            if text.wrappedValue.isEmpty {
+                Text(placeholder)
+                    .font(OmnipolymathType.subhead)
+                    .foregroundStyle(.tertiary)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+
+    private func loadOnce() {
+        guard !self.loaded else { return }
+        self.entries = GatewaySettingsStore.loadGatewayCustomHeaders(gatewayStableID: self.gatewayStableID)
+            .sorted { $0.key.localizedCaseInsensitiveCompare($1.key) == .orderedAscending }
+            .map { HeaderEntry(name: $0.key, value: $0.value) }
+        self.loaded = true
+    }
+
+    private func addEntry() {
+        guard self.canAddEntry else { return }
+        self.entries.append(HeaderEntry(name: self.trimmedNewName, value: self.newValue))
+        self.newName = ""
+        self.newValue = ""
+    }
+
+    private func persist() {
+        var headers: [String: String] = [:]
+        for entry in self.entries {
+            let name = entry.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { continue }
+            headers[name] = entry.value
+        }
+        GatewaySettingsStore.saveGatewayCustomHeaders(headers, gatewayStableID: self.gatewayStableID)
+    }
+}

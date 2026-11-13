@@ -1,0 +1,1347 @@
+import Foundation
+import OmnipolymathChatUI
+import OmnipolymathProtocol
+
+enum AppleReviewDemoMode {
+    static let setupCode = "APPLE-REVIEW-DEMO"
+    static let gatewayName = "Apple Review Demo Gateway"
+    static let gatewayAddress = "Local demo mode"
+    static let gatewayID = "apple-review-demo"
+
+    static func isSetupCode(_ value: String) -> Bool {
+        value.trimmingCharacters(in: .whitespacesAndNewlines)
+            .localizedCaseInsensitiveCompare(self.setupCode) == .orderedSame
+    }
+}
+
+enum ScreenshotFixtureMode {
+    static var progressBarEnabled: Bool {
+        ProcessInfo.processInfo.arguments.contains("--omnipolymath-progress-bar-fixture")
+    }
+
+    static var modelSignInScenario: String? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "--omnipolymath-model-sign-in-fixture"),
+              arguments.indices.contains(index + 1)
+        else { return nil }
+        return arguments[index + 1]
+    }
+
+    static let gatewayName = "Omnipolymath Gateway"
+    static let gatewayAddress = "Gateway on local network"
+    static let gatewayID = "screenshot-fixture-gateway"
+    static var reactionsEnabled: Bool {
+        !ProcessInfo.processInfo.arguments.contains("--omnipolymath-no-reactions-fixture")
+    }
+
+    static var progressCardEnabled: Bool {
+        ProcessInfo.processInfo.arguments.contains("--omnipolymath-progress-card-fixture")
+    }
+
+    /// Two long chats, so switching between them proves where the reader lands.
+    static var chatSwitchEnabled: Bool {
+        ProcessInfo.processInfo.arguments.contains("--omnipolymath-chat-switch-fixture")
+    }
+
+    /// Holds the model catalog, the last step of a chat's load, like a slow Gateway.
+    static var slowModelCatalogEnabled: Bool {
+        ProcessInfo.processInfo.arguments.contains("--omnipolymath-slow-model-catalog-fixture")
+    }
+
+    static let chatSwitchSecondSessionKey = "agent:main:launch-plan"
+}
+
+struct LocalChatFixture {
+    let sessionKey: String
+    let defaultAgentID: String
+    let sessionIDPrefix: String
+    let displayName: String
+    let subject: String
+    let modelProvider: String
+    let modelID: String
+    let modelName: String
+    let modelSelectionTarget: String
+    let additionalModels: [OmnipolymathChatModelChoice]
+    let responsePrefix: String
+    let seedMessages: [String]
+    let agents: [AgentSummary]
+
+    static let appleReviewDemo = LocalChatFixture(
+        sessionKey: "main",
+        defaultAgentID: "main",
+        sessionIDPrefix: "apple-review-demo",
+        displayName: "Apple Review Demo",
+        subject: "Gateway review flow",
+        modelProvider: "demo",
+        modelID: "local-demo",
+        modelName: "Apple Review Demo",
+        modelSelectionTarget: "session",
+        additionalModels: [],
+        responsePrefix: "Demo mode is active.",
+        seedMessages: [
+            """
+            Apple Review demo mode is active. This local chat transport lets reviewers inspect the iOS app \
+            without a private Gateway.
+            """,
+        ],
+        agents: [
+            AgentSummary(
+                id: "main",
+                name: "Main",
+                identity: ["emoji": AnyCodable("OC")],
+                workspace: "Apple Review Demo",
+                workspacegit: false,
+                model: ["provider": AnyCodable("demo"), "model": AnyCodable("local-demo")],
+                agentruntime: ["kind": AnyCodable("local")],
+                thinkinglevels: nil,
+                thinkingoptions: ["auto", "low", "medium"],
+                thinkingdefault: "auto"),
+        ])
+
+    static let appScreenshots = LocalChatFixture(
+        sessionKey: "main",
+        defaultAgentID: "main",
+        sessionIDPrefix: "screenshot-fixture",
+        displayName: "Molty",
+        subject: "Mobile command center",
+        modelProvider: "openai",
+        modelID: "gpt-5.6-sol",
+        modelName: "GPT-5.6",
+        modelSelectionTarget: "global",
+        additionalModels: [
+            OmnipolymathChatModelChoice(
+                modelID: "claude-opus-4-1",
+                name: "Claude Opus 4.1",
+                provider: "anthropic",
+                contextWindow: 200_000),
+        ],
+        responsePrefix: "Omnipolymath is connected to your gateway.",
+        seedMessages: ProcessInfo.processInfo.arguments.contains("--omnipolymath-empty-chat-fixture")
+            ? []
+            : [
+                "Ready when you are. I can check a project, coordinate an agent, or prepare the next step.",
+                """
+                A small release workflow:
+
+                ```mermaid
+                flowchart TD
+                  Draft --> Review
+                  Review --> Ship
+                ```
+                """,
+            ],
+        agents: [
+            AgentSummary(
+                id: "main",
+                name: "Molty",
+                identity: ["emoji": AnyCodable("M")],
+                workspace: "Omnipolymath",
+                workspacegit: false,
+                model: ["provider": AnyCodable("openai"), "model": AnyCodable("gpt-5.6-sol")],
+                agentruntime: ["kind": AnyCodable("gateway")],
+                thinkinglevels: nil,
+                thinkingoptions: ["auto", "low", "medium", "high"],
+                thinkingdefault: "auto"),
+            AgentSummary(
+                id: "research",
+                name: "Research",
+                identity: ["emoji": AnyCodable("RS")],
+                workspace: "Omnipolymath",
+                workspacegit: false,
+                model: ["provider": AnyCodable("openai"), "model": AnyCodable("gpt-5.6-sol")],
+                agentruntime: ["kind": AnyCodable("gateway")],
+                thinkinglevels: nil,
+                thinkingoptions: ["auto", "low", "medium", "high"],
+                thinkingdefault: "medium"),
+            AgentSummary(
+                id: "automation",
+                name: "Automation",
+                identity: ["emoji": AnyCodable("AU")],
+                workspace: "Omnipolymath",
+                workspacegit: false,
+                model: ["provider": AnyCodable("openai"), "model": AnyCodable("gpt-5.6-sol")],
+                agentruntime: ["kind": AnyCodable("gateway")],
+                thinkinglevels: nil,
+                thinkingoptions: ["auto", "low", "medium", "high"],
+                thinkingdefault: "auto"),
+        ])
+}
+
+struct LocalFixtureChatTransport: OmnipolymathChatTransport {
+    var supportsComposerCapabilities: Bool {
+        true
+    }
+
+    func loadComposerCapabilityCatalog(
+        sessionKey _: String,
+        agentID _: String?) async -> OmnipolymathChatComposerCapabilityCatalog
+    {
+        OmnipolymathChatComposerCapabilityCatalog(
+            sessionSettingsAvailable: true,
+            modelMutationAvailable: ScreenshotFixtureMode.modelSignInScenario != "read-only",
+            effortMutationAvailable: true,
+            verboseMutationAvailable: true,
+            webSearchBaseEnabled: true,
+            webSearchAvailable: true,
+            skills: [
+                OmnipolymathChatComposerSkill(
+                    key: "autoreview",
+                    name: "Auto Review",
+                    baseEnabled: true,
+                    missingDependencies: false,
+                    blocked: false),
+                OmnipolymathChatComposerSkill(
+                    key: "release",
+                    name: "Release Omnipolymath",
+                    baseEnabled: true,
+                    missingDependencies: false,
+                    blocked: false),
+                OmnipolymathChatComposerSkill(
+                    key: "disabled-fixture",
+                    name: "Disabled Skill",
+                    baseEnabled: false,
+                    missingDependencies: false,
+                    blocked: false),
+            ],
+            connectors: [
+                OmnipolymathChatComposerConnector(
+                    name: "GitHub",
+                    baseEnabled: true,
+                    tools: [
+                        OmnipolymathChatComposerTool(name: "search_code", label: "Search code"),
+                        OmnipolymathChatComposerTool(name: "create_issue", label: "Create issue"),
+                    ]),
+                OmnipolymathChatComposerConnector(
+                    name: "Linear",
+                    baseEnabled: true,
+                    tools: [
+                        OmnipolymathChatComposerTool(name: "search_issues", label: "Search issues"),
+                    ]),
+            ],
+            skillsAvailable: true,
+            connectorsAvailable: true,
+            toolAccessAvailable: true,
+            permissionMutationAvailable: true,
+            toolOverrideMutationAvailable: true,
+            canSelectFullPermission: true)
+    }
+
+    private let fixture: LocalChatFixture
+    private let store: LocalFixtureChatStore
+    private let reactionsRouteID = UUID()
+
+    init(fixture: LocalChatFixture) {
+        self.fixture = fixture
+        self.store = LocalFixtureChatStore(fixture: fixture)
+    }
+
+    func createSession(
+        key: String,
+        label _: String?,
+        parentSessionKey _: String?,
+        worktree _: Bool?) async throws -> OmnipolymathChatCreateSessionResponse
+    {
+        await self.store.createSession(key: key)
+    }
+
+    func createSession(
+        key: String,
+        label _: String?,
+        agentID: String?,
+        parentSessionKey _: String?,
+        worktree: Bool?,
+        worktreeBaseRef: String?) async throws -> OmnipolymathChatCreateSessionResponse
+    {
+        let normalizedAgentID = agentID?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        let requestedAgentID = normalizedAgentID?.isEmpty == false
+            ? normalizedAgentID
+            : self.fixture.defaultAgentID
+        guard self.fixture.agents.contains(where: { $0.id.lowercased() == requestedAgentID }) else {
+            throw Self.newSessionOptionsError("The selected fixture agent is unavailable.")
+        }
+        // Fixtures advertise no Git workspaces. Reject advanced inputs instead
+        // of reporting a session that ignored the selected worktree contract.
+        guard worktree != true, worktreeBaseRef == nil else {
+            throw Self.newSessionOptionsError("Worktree sessions are unavailable in local fixture mode.")
+        }
+        return await self.store.createSession(key: key)
+    }
+
+    func requestHistory(sessionKey: String) async throws -> OmnipolymathChatHistoryPayload {
+        try await self.store.history(sessionKey: sessionKey)
+    }
+
+    func gatewayAdvertisesMethod(_ method: String) async -> Bool? {
+        guard ScreenshotFixtureMode.progressCardEnabled,
+              ["progressCard.get", "progressCard.refresh"].contains(method)
+        else { return nil }
+        return true
+    }
+
+    func fetchProgressCard(sessionKey: String, agentID _: String?) async throws -> ProgressCard? {
+        guard ScreenshotFixtureMode.progressCardEnabled || ScreenshotFixtureMode.progressBarEnabled else { return nil }
+        return ProgressCard(
+            sessionkey: sessionKey,
+            revision: 1,
+            updatedat: 0,
+            markdown: ScreenshotFixtureMode.progressCardEnabled ? nil : """
+            <progress aria-label="Sample tasks · 3/5" value="3" max="5"></progress>
+
+            Now: reading the sample diff.
+            """,
+            steps: ScreenshotFixtureMode.progressCardEnabled ? [
+                ProgressCardStep(step: "Collect the sample data", status: .completed),
+                ProgressCardStep(step: "Draft the summary", status: .inProgress),
+                ProgressCardStep(step: "Share the result", status: .pending),
+            ] : [])
+    }
+
+    func acquireReactionsRouteLease() async -> OmnipolymathChatReactionsRouteLease? {
+        guard ScreenshotFixtureMode.reactionsEnabled else { return nil }
+        let store = self.store
+        return OmnipolymathChatReactionsRouteLease(
+            routeID: self.reactionsRouteID,
+            access: OmnipolymathChatReactionAccess(
+                role: "operator",
+                scopes: ["operator.admin"],
+                sessionCap: "write",
+                methods: ["session.reactions.list", "session.reactions.set"],
+                userID: "fixture-you"),
+            isCurrent: { true },
+            list: { sessionKey, _ in
+                await store.listReactions(sessionKey: sessionKey)
+            },
+            set: { sessionKey, agentID, messageID, emoji, remove in
+                try await store.setReaction(
+                    sessionKey: sessionKey,
+                    agentID: agentID,
+                    messageID: messageID,
+                    emoji: emoji,
+                    remove: remove)
+            })
+    }
+
+    func acquireModelSignInContext(agentID: String?) async -> OmnipolymathChatModelSignInContext? {
+        guard self.fixture.sessionIDPrefix == "screenshot-fixture",
+              ScreenshotFixtureMode.modelSignInScenario != nil
+        else { return nil }
+        return OmnipolymathChatModelSignInContext(
+            agentID: agentID ?? self.fixture.defaultAgentID,
+            request: { method, _ in
+                guard method == "models.authStatus" else { throw CancellationError() }
+                return Data(#"{"providers":[],"providerCapabilities":[]}"#.utf8)
+            },
+            isCurrent: { true })
+    }
+
+    func listModels(agentID _: String?) async throws -> [OmnipolymathChatModelChoice] {
+        if ScreenshotFixtureMode.modelSignInScenario == "empty" { return [] }
+        if ProcessInfo.processInfo.arguments.contains("--omnipolymath-unavailable-model-fixture") {
+            return try OmnipolymathChatGatewayPayloadCodec.decodeModelChoices(Data(#"""
+            {"models":[
+              {"id":"gpt-5.6-sol","name":"GPT-5.6","provider":"openai",
+               "available":true,"contextWindow":128000},
+              {"id":"claude-opus-4-1","name":"Claude Opus 4.1","provider":"anthropic",
+               "available":false,"unavailableReason":"missing-auth","contextWindow":200000}
+            ]}
+            """#.utf8))
+        }
+        if ProcessInfo.processInfo.arguments.contains("--omnipolymath-selected-model-auth-failure-fixture") {
+            return try OmnipolymathChatGatewayPayloadCodec.decodeModelChoices(Data(#"""
+            {"models":[
+              {"id":"gpt-5.6-sol","name":"GPT-5.6","provider":"openai",
+               "available":false,"unavailableReason":"auth-failed","contextWindow":128000},
+              {"id":"claude-opus-4-1","name":"Claude Opus 4.1","provider":"anthropic",
+               "available":true,"contextWindow":200000}
+            ]}
+            """#.utf8))
+        }
+        return [
+            OmnipolymathChatModelChoice(
+                modelID: self.fixture.modelID,
+                name: self.fixture.modelName,
+                provider: self.fixture.modelProvider,
+                contextWindow: 128_000,
+                supportsFastMode: true),
+        ] + self.fixture.additionalModels
+    }
+
+    func loadModelCatalog(
+        sessionKey _: String,
+        agentID: String?) async throws -> OmnipolymathChatModelCatalogSnapshot
+    {
+        if ScreenshotFixtureMode.slowModelCatalogEnabled {
+            try await Task.sleep(for: .seconds(6))
+        }
+        let choices = try await self.listModels(agentID: agentID)
+        return OmnipolymathChatModelCatalogSnapshot(
+            choices: choices,
+            availabilityIsSessionScoped: true)
+    }
+
+    func isSwarmEnabled(sessionKey _: String) async throws -> Bool {
+        ProcessInfo.processInfo.arguments.contains("--omnipolymath-swarm-chat-fixture")
+    }
+
+    func sendMessage(
+        sessionKey: String,
+        message: String,
+        thinking _: String,
+        idempotencyKey: String,
+        attachments _: [OmnipolymathChatAttachmentPayload]) async throws -> OmnipolymathChatSendResponse
+    {
+        await self.store.sendMessage(
+            sessionKey: sessionKey,
+            message: message,
+            runId: idempotencyKey)
+    }
+
+    func abortRun(sessionKey: String, runId: String) async throws {
+        await self.store.abortRun(sessionKey: sessionKey, runId: runId)
+    }
+
+    func listSessions(
+        limit _: Int?,
+        search: String?,
+        archived: Bool) async throws -> OmnipolymathChatSessionsListResponse
+    {
+        let response = try await store.sessions()
+        var sessions = response.sessions
+        if self.fixture.sessionIDPrefix == "screenshot-fixture",
+           ProcessInfo.processInfo.arguments.contains("--omnipolymath-subagent-wait-fixture")
+        {
+            sessions[0].hasActiveSubagentRun = true
+            sessions.append(OmnipolymathChatSessionEntry(
+                key: "agent:main:subagent:fixture-helper",
+                displayName: "Project helper",
+                parentSessionKey: self.fixture.sessionKey,
+                status: "running",
+                hasActiveRun: true))
+        }
+        if archived {
+            sessions = []
+        }
+        if let search {
+            sessions = OmnipolymathChatSessionListOrganizer.filter(sessions, search: search)
+        }
+        return OmnipolymathChatSessionsListResponse(
+            ts: response.ts,
+            path: response.path,
+            count: sessions.count,
+            defaults: response.defaults,
+            sessions: sessions)
+    }
+
+    func loadAgents(onUpdate: @escaping OmnipolymathChatAgentCatalogUpdate) async throws {
+        await onUpdate(OmnipolymathChatAgentsListResponse(
+            defaultId: self.fixture.defaultAgentID,
+            agents: self.fixture.agents.map {
+                OmnipolymathChatAgentChoice(
+                    id: $0.id,
+                    name: $0.name,
+                    workspaceGit: $0.workspacegit)
+            }))
+    }
+
+    func listChildSessions(parentKey: String) async throws -> OmnipolymathChatChildSessionsResult {
+        guard ProcessInfo.processInfo.arguments.contains("--omnipolymath-swarm-chat-fixture") else {
+            return OmnipolymathChatChildSessionsResult(rows: [], isComplete: true)
+        }
+        let groupID = "swarm:\(parentKey):research"
+        return OmnipolymathChatChildSessionsResult(rows: [
+            self.swarmChild("polling", "National polling", status: "done", groupID: groupID, parentKey: parentKey),
+            self.swarmChild("work", "Work and labor", status: "running", groupID: groupID, parentKey: parentKey),
+            self.swarmChild("health", "Health", status: "running", groupID: groupID, parentKey: parentKey),
+            self.swarmChild(
+                "trust",
+                "Governance and trust",
+                status: nil,
+                groupID: groupID,
+                parentKey: parentKey,
+                queued: true),
+            self.swarmChild("media", "Media signals", status: "failed", groupID: groupID, parentKey: parentKey),
+        ], isComplete: true)
+    }
+
+    private func swarmChild(
+        _ key: String,
+        _ label: String,
+        status: String?,
+        groupID: String,
+        parentKey: String,
+        queued: Bool = false) -> OmnipolymathChatSessionEntry
+    {
+        OmnipolymathChatSessionEntry(
+            key: "agent:main:subagent:\(key)",
+            kind: "direct",
+            displayName: label,
+            updatedAt: 1,
+            modelProvider: self.fixture.modelProvider,
+            model: self.fixture.modelID,
+            contextTokens: 128_000,
+            parentSessionKey: parentKey,
+            spawnedBy: parentKey,
+            status: status,
+            hasActiveRun: status == "running",
+            subagentRunState: queued ? "active" : nil,
+            swarmGroupId: groupID,
+            swarmPhase: "Research",
+            swarmPhaseRank: 0,
+            swarmLog: "Comparing labor, education, health, trust, and media signals.")
+    }
+
+    func setSessionModel(sessionKey: String, model: String?) async throws {
+        _ = try await self.store.patchSessionSettings(
+            sessionKey: sessionKey,
+            patch: OmnipolymathChatSessionSettingsPatch(model: .some(model)))
+    }
+
+    func setSessionThinking(sessionKey: String, thinkingLevel: String) async throws {
+        _ = try await self.store.patchSessionSettings(
+            sessionKey: sessionKey,
+            patch: OmnipolymathChatSessionSettingsPatch(thinkingLevel: .some(thinkingLevel)))
+    }
+
+    func patchSessionSettings(
+        sessionKey: String,
+        agentID _: String?,
+        patch: OmnipolymathChatSessionSettingsPatch) async throws -> OmnipolymathChatModelPatchResult?
+    {
+        try await self.store.patchSessionSettings(sessionKey: sessionKey, patch: patch)
+    }
+
+    func requestHealth(timeoutMs _: Int) async throws -> Bool {
+        true
+    }
+
+    /// The held screenshot run resolves only when the real composer aborts it.
+    func waitForRunCompletion(runId: String, timeoutMs _: Int) async -> OmnipolymathChatRunObservation {
+        await self.store.runObservation(runId: runId)
+    }
+
+    func events() -> AsyncStream<OmnipolymathChatTransportEvent> {
+        AsyncStream { continuation in
+            continuation.yield(.health(ok: true))
+            Task {
+                await self.store.setEventContinuation(continuation)
+            }
+        }
+    }
+
+    func resetSession(sessionKey _: String) async throws {
+        await self.store.reset()
+    }
+
+    func compactSession(sessionKey _: String) async throws {}
+
+    private static func newSessionOptionsError(_ description: String) -> NSError {
+        NSError(
+            domain: "LocalFixtureChatTransport",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: description])
+    }
+}
+
+private actor LocalFixtureChatStore {
+    private let fixture: LocalChatFixture
+    private var messages: [OmnipolymathChatMessage]
+    private var modelID: String
+    private var thinkingLevel: String?
+    private var fastMode: OmnipolymathChatFastMode?
+    private var verboseLevel: String?
+    private var permissionMode: OmnipolymathChatPermissionMode? = .guarded
+    private var toolOverrides: OmnipolymathChatSessionToolOverrides?
+    private var reactionOverrides: [String: [OmnipolymathChatReactionSummary]] = [:]
+
+    init(fixture: LocalChatFixture) {
+        self.fixture = fixture
+        self.messages = Self.seedMessages(fixture: fixture)
+        self.modelID = fixture.modelID
+    }
+
+    func createSession(key: String) -> OmnipolymathChatCreateSessionResponse {
+        OmnipolymathChatCreateSessionResponse(ok: true, key: key, sessionId: "\(self.fixture.sessionIDPrefix)-\(key)")
+    }
+
+    func history(sessionKey: String) throws -> OmnipolymathChatHistoryPayload {
+        let owner = ScreenshotFixtureMode.progressCardEnabled || ScreenshotFixtureMode.progressBarEnabled
+            ? self.fixture.defaultAgentID : nil
+        let normalizedSessionKey = Self.normalizedSessionKey(sessionKey, fallback: self.fixture.sessionKey)
+        var startupSnapshot: OmnipolymathChatInFlightRun?
+        if ProcessInfo.processInfo.arguments.contains("--omnipolymath-startup-status-fixture"),
+           let runID = self.activeRunID
+        {
+            let wire = try JSONSerialization.data(withJSONObject: [[
+                "runId": runID,
+                "seq": 1,
+                "stream": "run_status",
+                "data": ["phase": "starting_model"],
+            ]])
+            let events = try JSONDecoder().decode([OmnipolymathAgentEventPayload].self, from: wire)
+            startupSnapshot = OmnipolymathChatInFlightRun(runId: runID, text: "", events: events)
+        }
+        if ProcessInfo.processInfo.arguments.contains("--omnipolymath-external-run-fixture"),
+           let runID = self.activeRunID
+        {
+            startupSnapshot = OmnipolymathChatInFlightRun(runId: runID, text: "", events: self.externalRunEvents)
+        }
+        let historyMessages: [OmnipolymathChatMessage] = if self.fixture.sessionIDPrefix == "screenshot-fixture",
+                                                        ProcessInfo.processInfo.arguments
+                                                            .contains("--omnipolymath-subagent-wait-fixture"),
+                                                            normalizedSessionKey == "agent:main:subagent:fixture-helper"
+        {
+            [Self.message(
+                role: "assistant",
+                text: "OMNIPOLYMATH_HELPER_SESSION",
+                timestamp: 1,
+                transcriptMessageID: "fixture-helper-answer")]
+        } else if ScreenshotFixtureMode.chatSwitchEnabled {
+            Self.chatSwitchTranscript(
+                secondSession: normalizedSessionKey == ScreenshotFixtureMode.chatSwitchSecondSessionKey)
+        } else {
+            self.messages
+        }
+        return try OmnipolymathChatHistoryPayload(
+            sessionKey: normalizedSessionKey,
+            sessionId: "\(self.fixture.sessionIDPrefix)-\(normalizedSessionKey)",
+            messages: JSONDecoder().decode([AnyCodable].self, from: JSONEncoder().encode(historyMessages)),
+            thinkingLevel: self.thinkingLevel,
+            // The progress card is read only for a session whose owner the history names.
+            sessionInfo: OmnipolymathChatSessionInfo(
+                hasActiveRun: self.activeRunID != nil,
+                activeRunIds: self.activeRunID.map { [$0] },
+                key: owner.map { "agent:\($0):\(normalizedSessionKey)" },
+                agentId: owner),
+            inFlightRun: startupSnapshot ?? self.duplicateReplaySessionKey.flatMap { _ in
+                self.activeRunID.map { OmnipolymathChatInFlightRun(runId: $0, text: "") }
+            } ?? (ProcessInfo.processInfo.arguments.contains("--omnipolymath-streaming-layout-fixture")
+                ? self.activeRunID.map {
+                    OmnipolymathChatInFlightRun(
+                        runId: $0,
+                        text: String(repeating: "Streaming layout response. ", count: 12))
+                } : nil),
+            activity: ProcessInfo.processInfo.arguments.contains("--omnipolymath-step-labels-fixture")
+                ? JSONDecoder().decode([OmnipolymathChatHistoryActivity].self, from: Data("""
+                [{"messageId":"fixture-step-call","items":[
+                  {"itemId":"tool:fixture-exec","toolCallId":"fixture-exec","kind":"tool","phase":"end",
+                   "title":"Exec — outcome unknown","name":"exec"},
+                  {"itemId":"tool:fixture-no-result","toolCallId":"fixture-no-result","kind":"tool","phase":"end",
+                   "title":"Exec — outcome unknown","name":"exec"},
+                  {"itemId":"tool:fixture-success","toolCallId":"fixture-success","kind":"tool","phase":"end",
+                   "title":"Exec","name":"exec","status":"completed"}
+                ]}]
+                """.utf8)) : nil)
+    }
+
+    func sendMessage(
+        sessionKey: String,
+        message: String,
+        runId: String) -> OmnipolymathChatSendResponse
+    {
+        let now = Date().timeIntervalSince1970 * 1000
+        let userMessage = Self.message(
+            role: "user",
+            text: message,
+            timestamp: now,
+            transcriptMessageID: "\(runId):user",
+            idempotencyKey: "\(runId):user")
+        self.messages.append(userMessage)
+        self.publishReactions(for: userMessage, sessionKey: sessionKey)
+        if ProcessInfo.processInfo.arguments.contains("--omnipolymath-dup-filter-fixture"),
+           self.fixture.sessionIDPrefix == "screenshot-fixture"
+        {
+            self.activeRunID = runId
+            self.duplicateReplaySessionKey = sessionKey
+            self.duplicateReplayStarted = false
+            return OmnipolymathChatSendResponse(runId: runId, status: "pending")
+        }
+        let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        let subject = trimmed.isEmpty ? "that request" : "\"\(trimmed)\""
+        if ScreenshotFixtureMode.holdsInitialChatRun,
+           self.fixture.sessionIDPrefix == "screenshot-fixture",
+           !self.heldInitialRun
+        {
+            self.heldInitialRun = true
+            self.activeRunID = runId
+            if ProcessInfo.processInfo.arguments.contains("--omnipolymath-startup-status-fixture") {
+                let wire = try? JSONSerialization.data(withJSONObject: [
+                    "runId": runId,
+                    "sessionKey": sessionKey,
+                    "state": "status",
+                    "phase": "starting_model",
+                    "seq": 1,
+                ])
+                if let wire, let event = try? JSONDecoder().decode(OmnipolymathChatEventPayload.self, from: wire) {
+                    self.publish(.chat(event))
+                }
+            }
+            return OmnipolymathChatSendResponse(runId: runId, status: "started")
+        }
+        let assistantMessage = Self.message(
+            role: "assistant",
+            text: """
+            \(self.fixture.responsePrefix) I can help with \(subject), summarize current project context, \
+            prepare agent actions, and keep the mobile workflow connected to the gateway.
+            """,
+            timestamp: now + 1,
+            transcriptMessageID: "\(runId):assistant")
+        self.messages.append(assistantMessage)
+        self.publishReactions(for: assistantMessage, sessionKey: sessionKey)
+        return OmnipolymathChatSendResponse(runId: runId, status: "ok")
+    }
+
+    private var duplicateReplaySessionKey: String?
+    private var duplicateReplayStarted = false
+
+    /// Replay begins from the run owner, after the send acknowledgment/history refresh.
+    /// History carries no live text: only the assistant event can supply the second copy.
+    private func replayDuplicateReply(sessionKey: String, runId: String, timestamp: Double) {
+        let text = "The cobalt lighthouse is ready."
+        let saved = Self.message(
+            role: "assistant",
+            text: text,
+            timestamp: timestamp + 1,
+            transcriptMessageID: "\(runId):assistant")
+        self.messages.append(saved)
+        self.publish(.sessionMessage(OmnipolymathSessionMessageEventPayload(
+            sessionKey: sessionKey, message: saved, messageId: saved.transcriptMessageID, messageSeq: nil)))
+        self.emitDuplicateAgentEvent(
+            runId: runId,
+            seq: 1,
+            stream: "assistant",
+            timestamp: timestamp + 2,
+            data: ["text": text])
+        self.emitDuplicateAgentEvent(
+            runId: runId,
+            seq: 2,
+            stream: "tool",
+            timestamp: timestamp + 3,
+            data: [
+                "phase": "start", "name": "read", "toolCallId": "dup-filter-receipt",
+                "args": ["path": "dup-filter-inputs-received"],
+            ])
+        self.emitDuplicateAgentEvent(
+            runId: runId,
+            seq: 3,
+            stream: "usage",
+            timestamp: timestamp + 4,
+            data: ["outputTokens": 485])
+        self.emitDuplicateAgentEvent(
+            runId: runId,
+            seq: 4,
+            stream: "run_status",
+            timestamp: timestamp + 5,
+            data: ["phase": "retrying", "attempt": 2, "maxAttempts": 3])
+    }
+
+    private func emitDuplicateAgentEvent(
+        runId: String,
+        seq: Int,
+        stream: String,
+        timestamp: Double,
+        data: [String: Any])
+    {
+        let frame = EventFrame(
+            type: "event",
+            event: "agent",
+            payload: AnyCodable([
+                "runId": runId, "seq": seq, "stream": stream, "ts": Int(timestamp), "data": data,
+            ]))
+        guard let event = OmnipolymathChatGatewayPayloadCodec.event(from: frame) else {
+            preconditionFailure("Invalid duplicate reply fixture event")
+        }
+        self.publish(event)
+    }
+
+    private var heldInitialRun = false
+    private var activeRunID: String?
+    private var eventContinuations: [UUID: AsyncStream<OmnipolymathChatTransportEvent>.Continuation] = [:]
+
+    func setEventContinuation(_ continuation: AsyncStream<OmnipolymathChatTransportEvent>.Continuation) {
+        // Chat and its session sidebar independently subscribe to the fixture transport.
+        let id = UUID()
+        self.eventContinuations[id] = continuation
+        if self.fixture.sessionIDPrefix == "screenshot-fixture",
+           ProcessInfo.processInfo.arguments.contains("--omnipolymath-external-run-fixture"),
+           !self.externalRunStarted
+        {
+            self.externalRunStarted = true
+            Task {
+                try? await Task.sleep(for: .seconds(4))
+                self.publishExternalRunStatus()
+                try? await Task.sleep(for: .seconds(8))
+                self.publishExternalRunTool()
+            }
+        }
+        continuation.onTermination = { [weak self] _ in
+            Task { await self?.removeEventContinuation(id) }
+        }
+    }
+
+    private var externalRunStarted = false
+    private var externalRunEvents: [OmnipolymathAgentEventPayload] = []
+
+    private func publishExternalRunStatus() {
+        self.activeRunID = "fixture-external-run"
+        let wire = Data(#"""
+        {"runId":"fixture-external-run","sessionKey":"main","state":"status",
+         "phase":"starting_model","seq":1}
+        """#.utf8)
+        if let event = try? JSONDecoder().decode(OmnipolymathChatEventPayload.self, from: wire) {
+            let statusWire = Data(#"""
+            {"runId":"fixture-external-run","seq":1,"stream":"run_status","data":{"phase":"starting_model"}}
+            """#.utf8)
+            if let status = try? JSONDecoder().decode(OmnipolymathAgentEventPayload.self, from: statusWire) {
+                self.externalRunEvents.append(status)
+            }
+            self.publish(.chat(event))
+        }
+    }
+
+    private func publishExternalRunTool() {
+        let wire = Data(#"""
+        {"runId":"fixture-external-run","seq":2,"stream":"tool",
+         "data":{"phase":"start","name":"read","toolCallId":"external-read",
+                 "args":{"path":"external-fixture.txt"}}}
+        """#.utf8)
+        if let event = try? JSONDecoder().decode(OmnipolymathAgentEventPayload.self, from: wire) {
+            self.externalRunEvents.append(event)
+            self.publish(.agent(event))
+        }
+    }
+
+    private func removeEventContinuation(_ id: UUID) {
+        self.eventContinuations[id] = nil
+    }
+
+    private func publish(_ event: OmnipolymathChatTransportEvent) {
+        for continuation in self.eventContinuations.values {
+            continuation.yield(event)
+        }
+    }
+
+    func runObservation(runId: String) -> OmnipolymathChatRunObservation {
+        if self.activeRunID == runId,
+           let sessionKey = self.duplicateReplaySessionKey,
+           !self.duplicateReplayStarted,
+           !self.eventContinuations.isEmpty
+        {
+            self.duplicateReplayStarted = true
+            self.replayDuplicateReply(
+                sessionKey: sessionKey, runId: runId, timestamp: Date().timeIntervalSince1970 * 1000)
+        }
+        return self.activeRunID == runId ? .checkAgain : .terminal(.completed)
+    }
+
+    func abortRun(sessionKey: String, runId: String) {
+        guard self.activeRunID == runId else { return }
+        self.activeRunID = nil
+        self.duplicateReplaySessionKey = nil
+        self.duplicateReplayStarted = false
+        self.publish(.chat(OmnipolymathChatEventPayload(
+            runId: runId,
+            sessionKey: sessionKey,
+            state: "aborted",
+            message: nil,
+            errorMessage: nil)))
+    }
+
+    private var selectedModelProvider: String {
+        self.fixture.additionalModels.first {
+            $0.selectionID == self.modelID || $0.modelID == self.modelID
+        }?.provider ?? self.fixture.modelProvider
+    }
+
+    func sessions() throws -> OmnipolymathChatSessionsListResponse {
+        var entry = OmnipolymathChatSessionEntry(
+            key: fixture.sessionKey,
+            kind: "chat",
+            displayName: self.fixture.displayName,
+            surface: "ios",
+            subject: self.fixture.subject,
+            updatedAt: Date().timeIntervalSince1970 * 1000,
+            sessionId: "\(self.fixture.sessionIDPrefix)-\(self.fixture.sessionKey)",
+            systemSent: true,
+            abortedLastRun: false,
+            thinkingLevel: self.thinkingLevel,
+            verboseLevel: self.verboseLevel,
+            totalTokens: 24000,
+            totalTokensFresh: true,
+            modelProvider: self.selectedModelProvider,
+            model: self.modelID,
+            contextTokens: 128_000,
+            thinkingLevels: Self.thinkingLevels,
+            thinkingOptions: Self.thinkingOptions,
+            thinkingDefault: "auto",
+            fastMode: self.fastMode,
+            effectiveFastMode: self.fastMode,
+            permissionMode: self.permissionMode,
+            toolOverrides: self.toolOverrides)
+        entry.visibility = .shared
+        entry.sharingRole = .owner
+        var sessions = [entry]
+        if ScreenshotFixtureMode.chatSwitchEnabled {
+            sessions[0].displayName = "Release checklist"
+            sessions.append(OmnipolymathChatSessionEntry(
+                key: ScreenshotFixtureMode.chatSwitchSecondSessionKey,
+                kind: "chat",
+                displayName: "Launch plan",
+                surface: "ios",
+                updatedAt: Date().timeIntervalSince1970 * 1000 - 60000,
+                sessionId: "\(self.fixture.sessionIDPrefix)-launch-plan",
+                modelProvider: self.fixture.modelProvider,
+                model: self.modelID,
+                contextTokens: 128_000))
+        }
+        return OmnipolymathChatSessionsListResponse(
+            ts: Date().timeIntervalSince1970 * 1000,
+            path: nil,
+            count: sessions.count,
+            defaults: OmnipolymathChatSessionsDefaults(
+                modelProvider: self.fixture.modelProvider,
+                model: self.fixture.modelID,
+                contextTokens: 128_000,
+                thinkingLevels: Self.thinkingLevels,
+                thinkingOptions: Self.thinkingOptions,
+                thinkingDefault: "auto",
+                mainSessionKey: self.fixture.sessionKey,
+                modelSelectionTarget: self.fixtureModelSelectionTarget),
+            sessions: sessions)
+    }
+
+    private var fixtureModelSelectionTarget: String {
+        let arguments = ProcessInfo.processInfo.arguments
+        switch arguments.drop(while: { $0 != "--omnipolymath-model-selection-target" }).dropFirst().first {
+        case let value? where ["session", "agent", "global"].contains(value): return value
+        default: return self.fixture.modelSelectionTarget
+        }
+    }
+
+    func reset() {
+        self.duplicateReplaySessionKey = nil
+        self.duplicateReplayStarted = false
+        self.messages = Self.seedMessages(fixture: self.fixture)
+        self.reactionOverrides.removeAll()
+        self.modelID = self.fixture.modelID
+        self.thinkingLevel = nil
+        self.fastMode = nil
+        self.verboseLevel = nil
+        self.permissionMode = .guarded
+        self.toolOverrides = nil
+    }
+
+    func patchSessionSettings(
+        sessionKey: String,
+        patch: OmnipolymathChatSessionSettingsPatch) throws -> OmnipolymathChatModelPatchResult
+    {
+        let key = Self.normalizedSessionKey(sessionKey, fallback: self.fixture.sessionKey)
+        let sessionID = "\(self.fixture.sessionIDPrefix)-\(key)"
+        if let expectedSessionID = patch.expectedSessionID, expectedSessionID != sessionID {
+            throw NSError(
+                domain: "LocalFixtureChatTransport",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "The fixture session changed before the update."])
+        }
+        if let model = patch.model {
+            self.modelID = model ?? self.fixture.modelID
+        }
+        if let thinkingLevel = patch.thinkingLevel {
+            self.thinkingLevel = thinkingLevel
+        }
+        if let fastMode = patch.fastMode {
+            self.fastMode = fastMode
+        }
+        if let verboseLevel = patch.verboseLevel {
+            self.verboseLevel = verboseLevel
+        }
+        if let permissionMode = patch.permissionMode {
+            self.permissionMode = permissionMode
+        }
+        if let toolOverrides = patch.toolOverrides {
+            self.toolOverrides = toolOverrides
+        }
+        return OmnipolymathChatModelPatchResult(
+            key: key,
+            modelProvider: self.selectedModelProvider,
+            model: self.modelID,
+            thinkingLevel: self.thinkingLevel,
+            thinkingLevels: Self.thinkingLevels,
+            fastMode: self.fastMode,
+            effectiveFastMode: self.fastMode,
+            verboseLevel: self.verboseLevel,
+            permissionMode: self.permissionMode,
+            toolOverrides: self.toolOverrides)
+    }
+
+    func listReactions(sessionKey: String) -> OmnipolymathChatReactionsListResult {
+        let key = Self.normalizedSessionKey(sessionKey, fallback: self.fixture.sessionKey)
+        var reactions: [String: [OmnipolymathChatReactionSummary]] = [:]
+        for message in self.messages {
+            guard let messageID = message.transcriptMessageID else { continue }
+            reactions[messageID] = self.reactions(for: message)
+        }
+        return OmnipolymathChatReactionsListResult(
+            sessionID: "\(self.fixture.sessionIDPrefix)-\(key)",
+            reactions: reactions)
+    }
+
+    func setReaction(
+        sessionKey: String,
+        agentID: String?,
+        messageID: String,
+        emoji: String,
+        remove: Bool) throws -> OmnipolymathChatReactionsSetResult
+    {
+        guard let message = self.messages.first(where: { $0.transcriptMessageID == messageID }) else {
+            throw NSError(
+                domain: "LocalFixtureChatTransport",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: String(localized: "The saved fixture message is unavailable.")])
+        }
+        let viewer = OmnipolymathChatReactionIdentity(id: "fixture-you", label: "Alex")
+        var reactions = self.reactions(for: message)
+        let index = reactions.firstIndex(where: { $0.emoji == emoji })
+        var identities = index.map { reactions[$0].identities } ?? []
+        identities.removeAll { $0.id == viewer.id }
+        if !remove {
+            identities.append(viewer)
+        }
+        if let index {
+            reactions.remove(at: index)
+        }
+        if !identities.isEmpty {
+            reactions.insert(
+                OmnipolymathChatReactionSummary(emoji: emoji, count: identities.count, identities: identities),
+                at: index ?? reactions.count)
+        }
+        self.reactionOverrides[messageID] = reactions
+        self.publishReactions(for: message, sessionKey: sessionKey, agentID: agentID)
+        return OmnipolymathChatReactionsSetResult(messageID: messageID, reactions: reactions)
+    }
+
+    private func publishReactions(for message: OmnipolymathChatMessage, sessionKey: String, agentID: String? = nil) {
+        guard ScreenshotFixtureMode.reactionsEnabled, let messageID = message.transcriptMessageID else { return }
+        let key = Self.normalizedSessionKey(sessionKey, fallback: self.fixture.sessionKey)
+        self.publish(.sessionReaction(OmnipolymathChatReactionEvent(
+            sessionKey: key,
+            agentID: agentID ?? self.fixture.defaultAgentID,
+            sessionID: "\(self.fixture.sessionIDPrefix)-\(key)",
+            messageID: messageID,
+            reactions: self.reactions(for: message))))
+    }
+
+    private func reactions(for message: OmnipolymathChatMessage) -> [OmnipolymathChatReactionSummary] {
+        if let messageID = message.transcriptMessageID, let reactions = self.reactionOverrides[messageID] {
+            return reactions
+        }
+        let casey = OmnipolymathChatReactionIdentity(id: "fixture-casey", label: "Casey")
+        if message.role == "user" {
+            return [
+                OmnipolymathChatReactionSummary(emoji: "👍", count: 2, identities: [
+                    OmnipolymathChatReactionIdentity(id: "fixture-you", label: "Alex"), casey,
+                ]),
+                OmnipolymathChatReactionSummary(emoji: "🚀", count: 1, identities: [
+                    OmnipolymathChatReactionIdentity(id: "fixture-morgan", label: "Morgan"),
+                ]),
+            ]
+        }
+        return [OmnipolymathChatReactionSummary(emoji: "🎉", count: 1, identities: [casey])]
+    }
+
+    private static var thinkingOptions: [String] {
+        ["auto", "low", "medium", "high"]
+    }
+
+    private static var thinkingLevels: [OmnipolymathChatThinkingLevelOption] {
+        [
+            OmnipolymathChatThinkingLevelOption(id: "auto", label: "Auto"),
+            OmnipolymathChatThinkingLevelOption(id: "low", label: "Low"),
+            OmnipolymathChatThinkingLevelOption(id: "medium", label: "Medium"),
+            OmnipolymathChatThinkingLevelOption(id: "high", label: "High"),
+        ]
+    }
+
+    private static func seedMessages(fixture: LocalChatFixture) -> [OmnipolymathChatMessage] {
+        let now = Date().timeIntervalSince1970 * 1000
+        if ProcessInfo.processInfo.arguments.contains("--omnipolymath-external-run-fixture") {
+            return [Self.message(
+                role: "user",
+                text: "Read external-fixture.txt. Sent from another client.",
+                timestamp: now,
+                transcriptMessageID: "fixture-external-user")]
+        }
+        if ProcessInfo.processInfo.arguments.contains("--omnipolymath-system-notices-fixture") {
+            return [
+                OmnipolymathChatMessage(
+                    role: "user",
+                    content: [OmnipolymathChatMessageContent(type: "text", text: """
+                    CONTEXT_START: A synthetic continuation summary.
+                    The earlier question asked for a release checklist.
+                    The changelog is ready; screenshot review remains open.
+                    No private session or Gateway is used by this fixture.
+                    CONTEXT_END: Keep the full summary available on request.
+                    """)],
+                    timestamp: now,
+                    provenance: OmnipolymathChatInputProvenance(
+                        kind: "internal_system", sourceTool: "cli_harness_context")),
+                OmnipolymathChatMessage(
+                    role: "user",
+                    content: [OmnipolymathChatMessageContent(type: "text", text: """
+                    TASK_START: A synthetic background task finished.
+                    The screenshot checklist was checked without changing files.
+                    TASK_END: The complete task result remains available.
+                    """)],
+                    timestamp: now + 1,
+                    provenance: OmnipolymathChatInputProvenance(
+                        kind: "internal_system", sourceTool: "claude_cli_task_notification")),
+                self.message(
+                    role: "assistant",
+                    text: "Notice fixture ready.",
+                    timestamp: now + 2,
+                    transcriptMessageID: "fixture-notice-answer"),
+            ]
+        }
+        if ProcessInfo.processInfo.arguments.contains("--omnipolymath-voice-consult-rows-fixture") {
+            // Persisted realtime-voice renditions beside consult answers, in both arrival orders.
+            let voice = OmnipolymathChatInputProvenance(kind: "realtime_voice", sourceChannel: "talk")
+            func row(_ text: String, at offset: Double, spoken: Bool) -> OmnipolymathChatMessage {
+                OmnipolymathChatMessage(
+                    role: "assistant",
+                    content: [OmnipolymathChatMessageContent(type: "text", text: text)],
+                    timestamp: now + offset,
+                    model: spoken ? "realtime-voice" : "consult-model",
+                    stopReason: "stop",
+                    provenance: spoken ? voice : nil,
+                    phase: spoken ? nil : "final_answer")
+            }
+            return [
+                self.message(
+                    role: "user",
+                    text: "Which build is on my phone?",
+                    timestamp: now,
+                    transcriptMessageID: "fixture-voice-prompt-1"),
+                row("VOICE_SPOKEN_FIRST: The latest build is on your phone.", at: 1, spoken: true),
+                row("CONSULT_AFTER: The build went on at about 14:15.", at: 2, spoken: false),
+                self.message(
+                    role: "user",
+                    text: "And the one before?",
+                    timestamp: now + 3,
+                    transcriptMessageID: "fixture-voice-prompt-2"),
+                row("CONSULT_FIRST: The previous build went on yesterday.", at: 4, spoken: false),
+                row("VOICE_SPOKEN_AFTER: The one before went on yesterday.", at: 5, spoken: true),
+            ]
+        }
+        if ProcessInfo.processInfo.arguments.contains("--omnipolymath-anthropic-work-chunks-fixture") {
+            return self.anthropicWorkChunkMessages(now: now)
+        }
+        if ProcessInfo.processInfo.arguments.contains("--omnipolymath-step-labels-fixture") {
+            return self.stepLabelMessages(now: now)
+        }
+        if ProcessInfo.processInfo.arguments.contains("--omnipolymath-long-chat-fixture") {
+            return [
+                self.message(
+                    role: "user",
+                    text: "Prepare a detailed project review.",
+                    timestamp: now,
+                    transcriptMessageID: "fixture-long-prompt"),
+                OmnipolymathChatMessage(
+                    role: "assistant",
+                    content: [.init(
+                        type: "toolCall",
+                        id: "fixture-long-review",
+                        name: "read",
+                        arguments: AnyCodable(["path": "project-review.txt"]))],
+                    timestamp: now + 1,
+                    transcriptMessageID: "fixture-long-call",
+                    stopReason: "toolUse"),
+                OmnipolymathChatMessage(
+                    role: "toolResult",
+                    content: [.init(type: "text", text: String(repeating: "Earlier response context. ", count: 120))],
+                    timestamp: now + 2,
+                    transcriptMessageID: "fixture-long-result",
+                    toolCallId: "fixture-long-review",
+                    toolName: "read"),
+                self.message(
+                    role: "assistant",
+                    text: "OMNIPOLYMATH_LONG_CHAT_LATEST",
+                    timestamp: now + 3,
+                    transcriptMessageID: "fixture-long-latest"),
+            ]
+        }
+        return fixture.seedMessages.enumerated().map { index, text in
+            self.message(
+                role: "assistant",
+                text: text,
+                timestamp: now + Double(index),
+                transcriptMessageID: "\(fixture.sessionIDPrefix)-seed-\(index)")
+        }
+    }
+
+    private static func anthropicWorkChunkMessages(now: Double) -> [OmnipolymathChatMessage] {
+        // Synthetic Anthropic-style envelopes: narration and tool_use share each
+        // assistant message; tool results separate the two narration boundaries.
+        [
+            self.message(
+                role: "user",
+                text: "Check the sample project.",
+                timestamp: now,
+                transcriptMessageID: "work-chunks-user"),
+            OmnipolymathChatMessage(
+                role: "assistant",
+                content: [
+                    .init(type: "text", text: "I will read the sample file."),
+                    .init(
+                        type: "tool_use",
+                        id: "work-chunks-read",
+                        name: "read",
+                        arguments: AnyCodable(["path": "sample.txt"])),
+                ],
+                timestamp: now + 1,
+                transcriptMessageID: "work-chunks-first",
+                stopReason: "tool_use"),
+            OmnipolymathChatMessage(
+                role: "toolResult",
+                content: [.init(type: "text", text: "Sample configuration is valid.")],
+                timestamp: now + 2,
+                transcriptMessageID: "work-chunks-read-result",
+                toolCallId: "work-chunks-read",
+                toolName: "read"),
+            OmnipolymathChatMessage(
+                role: "assistant",
+                content: [
+                    .init(type: "text", text: "The file looks good. I will run the check."),
+                    .init(
+                        type: "tool_use",
+                        id: "work-chunks-exec",
+                        name: "exec",
+                        arguments: AnyCodable(["command": "printf checked"])),
+                ],
+                timestamp: now + 3,
+                transcriptMessageID: "work-chunks-second",
+                stopReason: "tool_use"),
+            OmnipolymathChatMessage(
+                role: "toolResult",
+                content: [.init(type: "text", text: "checked")],
+                timestamp: now + 4,
+                transcriptMessageID: "work-chunks-exec-result",
+                toolCallId: "work-chunks-exec",
+                toolName: "exec"),
+            self.message(
+                role: "assistant",
+                text: "All checks passed.",
+                timestamp: now + 5,
+                transcriptMessageID: "work-chunks-final"),
+        ]
+    }
+
+    private static func stepLabelMessages(now: Double) -> [OmnipolymathChatMessage] {
+        [
+            self.message(
+                role: "user",
+                text: "Check local readiness.",
+                timestamp: now,
+                transcriptMessageID: "fixture-step-prompt"),
+            OmnipolymathChatMessage(
+                role: "assistant",
+                content: [
+                    OmnipolymathChatMessageContent(
+                        type: "toolCall",
+                        id: "fixture-exec",
+                        name: "exec",
+                        arguments: AnyCodable(
+                            ProcessInfo.processInfo.arguments.contains("--omnipolymath-command-purpose-fixture")
+                                ? ["command": "printf ready", "title": "Check local readiness"]
+                                : ["command": "printf ready"])),
+                    OmnipolymathChatMessageContent(
+                        type: "tool_result",
+                        content: AnyCodable([["type": "text", "text": "ready"]]),
+                        id: "fixture-exec",
+                        name: "exec"),
+                    OmnipolymathChatMessageContent(
+                        type: "toolCall",
+                        id: "fixture-no-result",
+                        name: "exec",
+                        arguments: AnyCodable(["command": "printf missing"])),
+                    OmnipolymathChatMessageContent(
+                        type: "toolCall",
+                        id: "fixture-success",
+                        name: "exec",
+                        arguments: AnyCodable(["command": "printf complete"])),
+                ],
+                timestamp: now + 1,
+                transcriptMessageID: "fixture-step-call",
+                stopReason: "toolUse"),
+            OmnipolymathChatMessage(
+                role: "toolResult",
+                content: [OmnipolymathChatMessageContent(type: "text", text: "complete")],
+                timestamp: now + 3,
+                transcriptMessageID: "fixture-success-result",
+                toolCallId: "fixture-success",
+                toolName: "exec"),
+            self.message(
+                role: "assistant",
+                text: "Local readiness checked.",
+                timestamp: now + 4,
+                transcriptMessageID: "fixture-step-answer"),
+        ]
+    }
+
+    /// Each chat is several screens tall; its first and latest rows carry markers.
+    private static func chatSwitchTranscript(secondSession: Bool) -> [OmnipolymathChatMessage] {
+        let id = secondSession ? "B" : "A"
+        let topic = secondSession ? "launch plan" : "release checklist"
+        let paragraph = String(repeating: "Notes for the \(topic), kept here for later review. ", count: 14)
+        var messages: [OmnipolymathChatMessage] = []
+        for turn in 0..<8 {
+            messages.append(self.message(
+                role: "user",
+                text: turn == 0 ? "OMNIPOLYMATH_SWITCH_\(id)_FIRST" : "Next step \(turn) for the \(topic)?",
+                timestamp: Double(1_800_000_000_000 + turn * 2000),
+                transcriptMessageID: "fixture-switch-\(id)-user-\(turn)"))
+            messages.append(self.message(
+                role: "assistant",
+                text: paragraph,
+                timestamp: Double(1_800_000_001_000 + turn * 2000),
+                transcriptMessageID: "fixture-switch-\(id)-answer-\(turn)"))
+        }
+        messages.append(self.message(
+            role: "assistant",
+            text: "OMNIPOLYMATH_SWITCH_\(id)_LATEST",
+            timestamp: 1_800_000_100_000,
+            transcriptMessageID: "fixture-switch-\(id)-latest"))
+        return messages
+    }
+
+    private static func message(
+        role: String,
+        text: String,
+        timestamp: Double,
+        transcriptMessageID: String,
+        idempotencyKey: String? = nil) -> OmnipolymathChatMessage
+    {
+        OmnipolymathChatMessage(
+            role: role,
+            content: [
+                OmnipolymathChatMessageContent(
+                    type: "text",
+                    text: text),
+            ],
+            timestamp: timestamp,
+            transcriptMessageID: transcriptMessageID,
+            idempotencyKey: idempotencyKey,
+            stopReason: role == "assistant" ? "stop" : nil)
+    }
+
+    private static func normalizedSessionKey(_ value: String, fallback: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? fallback : trimmed
+    }
+}
+
+extension ScreenshotFixtureMode {
+    static var holdsInitialChatRun: Bool {
+        ProcessInfo.processInfo.arguments.contains("--omnipolymath-hold-initial-chat-run")
+    }
+}

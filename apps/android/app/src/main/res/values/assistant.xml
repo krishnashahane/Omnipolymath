@@ -1,0 +1,7 @@
+<resources>
+    <string-array name="ask_omnipolymath_query_patterns">
+        <item>ask Omnipolymath $prompt</item>
+        <item>tell Omnipolymath to $prompt</item>
+        <item>open Omnipolymath and ask $prompt</item>
+    </string-array>
+</resources>

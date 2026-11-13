@@ -1,0 +1,7 @@
+<resources>
+    <string-array name="ask_omnipolymath_query_patterns">
+        <item>"از Omnipolymath بپرس %1$s"</item>
+        <item>"به Omnipolymath بگویید %1$s"</item>
+        <item>"Omnipolymath را باز کن و بپرس %1$s"</item>
+    </string-array>
+</resources>

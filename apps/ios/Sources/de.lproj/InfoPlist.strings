@@ -1,0 +1,32 @@
+/* Omnipolymath source: "Omnipolymath uses Bluetooth to securely set up a nearby ESP device when you choose device setup." */
+"NSBluetoothAlwaysUsageDescription" = "Omnipolymath verwendet Bluetooth, um ein ESP-Gerät in der Nähe sicher einzurichten, wenn du die Geräteeinrichtung auswählst.";
+/* Omnipolymath source: "Omnipolymath uses your calendars to show events and scheduling context when you enable calendar access." */
+"NSCalendarsFullAccessUsageDescription" = "Omnipolymath verwendet deine Kalender, um Termine und Informationen zur Terminplanung anzuzeigen, wenn du den Kalenderzugriff aktivierst.";
+/* Omnipolymath source: "Omnipolymath uses your calendars to show events and scheduling context when you enable calendar access." */
+"NSCalendarsUsageDescription" = "Omnipolymath verwendet deine Kalender, um Termine und Informationen zur Terminplanung anzuzeigen, wenn du den Kalenderzugriff aktivierst.";
+/* Omnipolymath source: "Omnipolymath uses your calendars to add events when you enable calendar access." */
+"NSCalendarsWriteOnlyAccessUsageDescription" = "Omnipolymath verwendet deine Kalender, um Termine hinzuzufügen, wenn du den Kalenderzugriff aktivierst.";
+/* Omnipolymath source: "Omnipolymath uses the camera when you scan a Gateway or device setup QR code or ask your paired Gateway or assistant to capture a photo or short video from this iPhone, for example to connect to your Gateway or show your assistant a document, device screen, or workspace." */
+"NSCameraUsageDescription" = "Omnipolymath verwendet die Kamera, wenn du einen QR-Code zur Einrichtung eines Gateways oder Geräts scannst oder dein gekoppeltes Gateway oder deinen Assistenten bittest, mit diesem iPhone ein Foto oder ein kurzes Video aufzunehmen – zum Beispiel, um eine Verbindung zu deinem Gateway herzustellen oder deinem Assistenten ein Dokument, einen Gerätebildschirm oder einen Arbeitsbereich zu zeigen.";
+/* Omnipolymath source: "Omnipolymath uses your contacts so you can search and reference people while using the assistant." */
+"NSContactsUsageDescription" = "Omnipolymath verwendet deine Kontakte, damit du während der Nutzung des Assistenten nach Personen suchen und auf sie verweisen kannst.";
+/* Omnipolymath source: "Omnipolymath reads your steps, sleep, resting heart rate, and workouts from the Apple Health app to create summaries you request and send them through your Gateway to your configured AI provider." */
+"NSHealthShareUsageDescription" = "Omnipolymath liest deine Schritte, deinen Schlaf, deinen Ruhepuls und deine Trainings aus der Apple Health-App, um auf deine Anfrage Zusammenfassungen zu erstellen und sie über dein Gateway an deinen konfigurierten KI-Anbieter zu senden.";
+/* Omnipolymath source: "Omnipolymath does not write to the Apple Health app. It uses read-only data to create summaries you request and send them through your Gateway to your configured AI provider." */
+"NSHealthUpdateUsageDescription" = "Omnipolymath schreibt keine Daten in die Apple Health-App. Es verwendet Daten ausschließlich lesend, um die von Ihnen angeforderten Zusammenfassungen zu erstellen und sie über Ihr Gateway an Ihren konfigurierten KI-Anbieter zu senden.";
+/* Omnipolymath source: "Omnipolymath discovers and connects to your Omnipolymath gateway on the local network." */
+"NSLocalNetworkUsageDescription" = "Omnipolymath findet Ihr Omnipolymath-Gateway im lokalen Netzwerk und stellt eine Verbindung damit her.";
+/* Omnipolymath source: "Omnipolymath can share your location in the background when you enable Always." */
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Omnipolymath kann Ihren Standort im Hintergrund teilen, wenn Sie „Immer“ aktivieren.";
+/* Omnipolymath source: "Omnipolymath uses your location when you allow location sharing." */
+"NSLocationWhenInUseUsageDescription" = "Omnipolymath verwendet deinen Standort, wenn du die Standortfreigabe erlaubst.";
+/* Omnipolymath source: "Omnipolymath uses the microphone for realtime chat, voice wake, push-to-talk, and voice notes." */
+"NSMicrophoneUsageDescription" = "Omnipolymath verwendet das Mikrofon für Echtzeit-Chat, Sprachaktivierung, Push-to-Talk und Sprachnotizen.";
+/* Omnipolymath source: "Omnipolymath may use motion data to support device-aware interactions and automations." */
+"NSMotionUsageDescription" = "Omnipolymath kann Bewegungsdaten verwenden, um gerätebezogene Interaktionen und Automatisierungen zu unterstützen.";
+/* Omnipolymath source: "Omnipolymath lets your assistant read photos you allow and lets you choose photos to share." */
+"NSPhotoLibraryUsageDescription" = "Omnipolymath ermöglicht Ihrem Assistenten den Lesezugriff auf Fotos, die Sie freigeben, und lässt Sie Fotos zum Teilen auswählen.";
+/* Omnipolymath source: "Omnipolymath uses your reminders to list, add, and complete tasks when you enable reminders access." */
+"NSRemindersFullAccessUsageDescription" = "Omnipolymath verwendet deine Erinnerungen, um Aufgaben aufzulisten, hinzuzufügen und abzuschließen, wenn du den Zugriff auf Erinnerungen aktivierst.";
+/* Omnipolymath source: "Omnipolymath uses on-device speech recognition for talk mode and voice wake." */
+"NSSpeechRecognitionUsageDescription" = "Omnipolymath verwendet für den Gesprächsmodus und die Sprachaktivierung die Spracherkennung auf dem Gerät.";

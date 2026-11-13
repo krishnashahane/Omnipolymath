@@ -1,0 +1,441 @@
+import OmnipolymathKit
+import SwiftUI
+import Testing
+import UIKit
+@testable import Omnipolymath
+@testable import OmnipolymathChatUI
+
+struct SwiftUIRenderSmokeTests {
+    @MainActor private static func host(_ view: some View, size: CGSize? = nil) -> UIWindow {
+        let frame = CGRect(origin: .zero, size: size ?? UIScreen.main.bounds.size)
+        let window = UIWindow(frame: frame)
+        window.rootViewController = UIHostingController(rootView: view)
+        window.makeKeyAndVisible()
+        window.rootViewController?.view.setNeedsLayout()
+        window.rootViewController?.view.layoutIfNeeded()
+        return window
+    }
+
+    @Test @MainActor func `Talk microphone states render on compact screens with large text`() {
+        var windows: [UIWindow] = []
+        defer { windows.forEach { $0.isHidden = true } }
+        for muted in [false, true] {
+            for typeSize in [DynamicTypeSize.large, .accessibility2] {
+                let control = OmnipolymathChatTalkControl(
+                    isEnabled: true,
+                    isListening: false,
+                    isSpeaking: true,
+                    isGatewayConnected: true,
+                    statusText: "Speaking",
+                    providerLabel: "",
+                    isMicrophoneMuted: muted,
+                    toggleMicrophone: {},
+                    recentTranscript: ["A synthetic reply is still playing."],
+                    toggle: { _ in })
+                let root = ChatTalkActivityStrip(control: control)
+                    .environment(\.dynamicTypeSize, typeSize)
+                windows.append(Self.host(root, size: CGSize(width: 320, height: 240)))
+            }
+        }
+    }
+
+    @Test @MainActor func `settings hub fallback builds in light and dark mode`() {
+        var windows: [UIWindow] = []
+        defer { windows.forEach { $0.isHidden = true } }
+
+        for scheme in [ColorScheme.light, ColorScheme.dark] {
+            let appModel = NodeAppModel()
+            let gatewayController = GatewayConnectionController(appModel: appModel, startDiscovery: false)
+
+            let root = SettingsHubScreen(navigationPath: .constant([]))
+                .environment(AppAppearanceModel())
+                .environment(appModel)
+                .environment(appModel.voiceWake)
+                .environment(gatewayController)
+                .preferredColorScheme(scheme)
+
+            windows.append(Self.host(root))
+        }
+    }
+
+    @Test @MainActor func `local device settings build across device widths and text sizes`() {
+        var windows: [UIWindow] = []
+        defer { windows.forEach { $0.isHidden = true } }
+        for width in [320.0, 768.0] {
+            for typeSize in [DynamicTypeSize.large, .accessibility2] {
+                let appModel = NodeAppModel(audioAdmissionInitiallyAllowed: false)
+                let controller = GatewayConnectionController(appModel: appModel, startDiscovery: false)
+                let root = NavigationStack {
+                    SettingsProTab(directRoute: .deviceSettings)
+                }
+                .environment(AppAppearanceModel())
+                .environment(appModel)
+                .environment(controller)
+                .environment(\.dynamicTypeSize, typeSize)
+                windows.append(Self.host(root, size: CGSize(width: width, height: 1024)))
+            }
+        }
+    }
+
+    @Test @MainActor func `settings About destination builds in light and dark mode`() {
+        for scheme in [ColorScheme.light, ColorScheme.dark] {
+            for typeSize in [DynamicTypeSize.large, .accessibility2] {
+                let appModel = NodeAppModel()
+                let gatewayController = GatewayConnectionController(appModel: appModel, startDiscovery: false)
+
+                let root = NavigationStack {
+                    SettingsProTab(directRoute: .about)
+                }
+                .environment(AppAppearanceModel())
+                .environment(appModel)
+                .environment(appModel.voiceWake)
+                .environment(gatewayController)
+                .environment(\.dynamicTypeSize, typeSize)
+                .preferredColorScheme(scheme)
+
+                _ = Self.host(root, size: CGSize(width: 320, height: 852))
+            }
+        }
+    }
+
+    @Test @MainActor func `settings Licenses destination builds in light and dark mode`() {
+        var windows: [UIWindow] = []
+        defer { windows.forEach { $0.isHidden = true } }
+
+        for scheme in [ColorScheme.light, ColorScheme.dark] {
+            let appModel = NodeAppModel()
+            let gatewayController = GatewayConnectionController(appModel: appModel, startDiscovery: false)
+
+            let root = NavigationStack {
+                SettingsProTab(directRoute: .licenses)
+            }
+            .environment(AppAppearanceModel())
+            .environment(appModel)
+            .environment(appModel.voiceWake)
+            .environment(gatewayController)
+            .preferredColorScheme(scheme)
+
+            windows.append(Self.host(root, size: CGSize(width: 393, height: 852)))
+        }
+    }
+
+    @Test @MainActor func `display math builds valid and fallback view hierarchies`() {
+        for typeSize in [DynamicTypeSize.large, .accessibility2] {
+            let root = VStack {
+                ChatMarkdownRenderer(
+                    text: #"Inline math \(E = mc^2\) stays inside prose."#,
+                    context: .assistant,
+                    variant: .standard,
+                    textColor: OmnipolymathChatTheme.assistantText)
+                ChatMathBlockView(block: ChatMathBlock(
+                    latex: #"\frac{-b \pm \sqrt{b^2 - 4ac}}{2a}"#,
+                    isComplete: true), textColor: OmnipolymathChatTheme.assistantText)
+                ChatMathBlockView(block: ChatMathBlock(
+                    latex: #"\notARealCommand{"#,
+                    isComplete: true), textColor: OmnipolymathChatTheme.assistantText)
+                ChatMathBlockView(block: ChatMathBlock(
+                    latex: "α + β = γ",
+                    isComplete: true), textColor: OmnipolymathChatTheme.assistantText)
+                ChatMathBlockView(block: ChatMathBlock(
+                    latex: String(repeating: "{", count: 65) + "x",
+                    isComplete: true), textColor: OmnipolymathChatTheme.assistantText)
+                ChatMathBlockView(block: ChatMathBlock(
+                    latex: String(repeating: #"\bar"#, count: 129) + "x",
+                    isComplete: true), textColor: OmnipolymathChatTheme.assistantText)
+                ChatMathBlockView(block: ChatMathBlock(
+                    latex: #"x\textcolor{#fff}{}"#,
+                    isComplete: true), textColor: OmnipolymathChatTheme.assistantText)
+            }
+            .environment(\.dynamicTypeSize, typeSize)
+
+            _ = Self.host(root, size: CGSize(width: 393, height: 240))
+        }
+    }
+
+    @Test @MainActor func `long user prompt disclosure builds across dynamic type sizes`() {
+        let text = Array(repeating: "A long user-authored prompt line.", count: 13).joined(separator: "\n")
+        let message = OmnipolymathChatMessage(
+            role: "user",
+            content: [OmnipolymathChatMessageContent(
+                type: "text",
+                text: text,
+                mimeType: nil,
+                fileName: nil,
+                content: nil)],
+            timestamp: nil)
+
+        for typeSize in [DynamicTypeSize.large, .accessibility2] {
+            let root = ChatMessageBubble(
+                message: message,
+                style: .standard,
+                markdownVariant: .standard,
+                userAccent: nil,
+                displayOptions: [],
+                assistantName: "Omnipolymath",
+                assistantAvatarText: "OC",
+                assistantAvatarTint: nil,
+                showsAssistantAvatar: true,
+                isClean: false,
+                contextWindowTokens: nil,
+                userMessageExpanded: false,
+                onToggleUserMessageExpanded: {},
+                inlineWidgetResolverReady: true,
+                inlineWidgetResourceResolver: { _, _ in nil },
+                mediaArtifactResolverReady: false,
+                mediaPlaybackAllowed: { true },
+                loadMediaArtifact: { _, _, _ in nil })
+                .environment(\.dynamicTypeSize, typeSize)
+
+            _ = Self.host(root, size: CGSize(width: 320, height: 420))
+        }
+    }
+
+    @Test(.timeLimit(.minutes(1)), arguments: [
+        (OmnipolymathChatMediaKind.image, nil, nil),
+        (.audio, nil, .transcode),
+        (.video, nil, .transcode),
+        (.audio, .native, .native),
+        (.video, .native, .native),
+        (.audio, .transcode, .transcode),
+        (.video, .transcode, .transcode),
+    ] as [(OmnipolymathChatMediaKind, OmnipolymathChatPlaybackMode?, OmnipolymathChatPlaybackMode?)])
+    @MainActor func `managed assistant media starts its artifact load with the playback route`(
+        input: (OmnipolymathChatMediaKind, OmnipolymathChatPlaybackMode?, OmnipolymathChatPlaybackMode?)) async
+    {
+        let (kind, playback, expectedPlayback) = input
+        let prefix = kind == .image ? "artifact_managed_image_" : "artifact_managed_media_"
+        let artifactId = prefix + "11111111-1111-4111-8111-111111111111"
+        let mimeType = switch kind {
+        case .audio: "audio/x-ms-wma"
+        case .video: "video/x-matroska"
+        default: "image/png"
+        }
+        let message = OmnipolymathChatMessage(
+            role: "assistant",
+            content: [OmnipolymathChatMessageContent(
+                type: kind.rawValue,
+                text: nil,
+                mimeType: mimeType,
+                fileName: nil,
+                artifactId: artifactId,
+                url: "/api/chat/media/outgoing/main/11111111-1111-4111-8111-111111111111/full",
+                alt: "Managed preview",
+                playback: playback,
+                content: nil)],
+            timestamp: 1)
+        let requests = AsyncStream<OmnipolymathChatPlaybackMode?>.makeStream()
+        defer { requests.continuation.finish() }
+        let root = ChatMessageBubble(
+            message: message,
+            style: .standard,
+            markdownVariant: .standard,
+            userAccent: nil,
+            displayOptions: [],
+            assistantName: "Omnipolymath",
+            assistantAvatarText: "OC",
+            assistantAvatarTint: nil,
+            showsAssistantAvatar: true,
+            isClean: false,
+            contextWindowTokens: nil,
+            userMessageExpanded: false,
+            onToggleUserMessageExpanded: {},
+            inlineWidgetResolverReady: true,
+            inlineWidgetResourceResolver: { _, _ in nil },
+            mediaArtifactResolverReady: true,
+            mediaPlaybackAllowed: { true },
+            loadMediaArtifact: { requested, requestedKind, playback in
+                #expect(requested == artifactId)
+                #expect(requestedKind == kind)
+                requests.continuation.yield(playback)
+                guard kind == .image else { return nil }
+                return OmnipolymathChatLoadedMedia.data(OmnipolymathChatMediaData(
+                    data: Data(base64Encoded:
+                        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8A" +
+                            "AusB9Y9Zl1sAAAAASUVORK5CYII=")!,
+                    mimeType: "image/png"))
+            })
+        let window = Self.host(root, size: CGSize(width: 393, height: 420))
+        defer { window.isHidden = true }
+
+        var iterator = requests.stream.makeAsyncIterator()
+        let requestedPlayback = await iterator.next()
+        #expect(requestedPlayback == .some(expectedPlayback))
+    }
+
+    @Test @MainActor func `streaming assistant bubble builds mixed prose and code`() {
+        let text = """
+        Earlier prose stays visible.
+
+        ```swift
+        let answer = 42
+        ```
+
+        Trailing streamed words fade in.
+        """
+
+        let root = ChatStreamingAssistantBubble(
+            text: ChatStreamingAssistantText(sourceText: text, includesThinking: false),
+            markdownVariant: .standard,
+            assistantName: "Omnipolymath",
+            assistantAvatarText: "OC",
+            assistantAvatarTint: nil,
+            showsAssistantAvatar: true,
+            isClean: false)
+
+        _ = Self.host(root, size: CGSize(width: 393, height: 400))
+    }
+
+    @Test @MainActor func `assistant usage footer builds across dynamic type sizes`() throws {
+        let usage = try JSONDecoder().decode(
+            OmnipolymathChatUsage.self,
+            from: Data(#"{"input":12000,"output":300,"cacheRead":438400,"cacheWrite":307000,"cost":{"total":0.0123}}"#
+                .utf8))
+        let message = OmnipolymathChatMessage(
+            role: "assistant",
+            content: [OmnipolymathChatMessageContent(
+                type: "text",
+                text: "A completed assistant response with per-run usage.",
+                thinking: nil,
+                thinkingSignature: nil,
+                mimeType: nil,
+                fileName: nil,
+                content: nil,
+                id: nil,
+                name: nil,
+                arguments: nil)],
+            timestamp: nil,
+            usage: usage)
+
+        for typeSize in [DynamicTypeSize.large, .accessibility2] {
+            let root = ChatMessageBubble(
+                message: message,
+                style: .standard,
+                markdownVariant: .standard,
+                userAccent: nil,
+                displayOptions: [],
+                assistantName: "Omnipolymath",
+                assistantAvatarText: "OC",
+                assistantAvatarTint: nil,
+                showsAssistantAvatar: true,
+                isClean: false,
+                contextWindowTokens: 1_000_000,
+                userMessageExpanded: false,
+                onToggleUserMessageExpanded: {},
+                inlineWidgetResolverReady: true,
+                inlineWidgetResourceResolver: { _, _ in nil },
+                mediaArtifactResolverReady: false,
+                mediaPlaybackAllowed: { true },
+                loadMediaArtifact: { _, _, _ in nil })
+                .environment(\.dynamicTypeSize, typeSize)
+
+            _ = Self.host(root, size: CGSize(width: 320, height: 280))
+        }
+    }
+
+    @Test @MainActor func `gateway trust prompt alert presents when prompt appears after initial render`() async {
+        let appModel = NodeAppModel()
+        let gatewayController = Self.gatewayControllerWithCapturedTLSFingerprint(appModel: appModel)
+        let root = Color.clear
+            .gatewayTrustPromptAlert()
+            .environment(gatewayController)
+
+        let window = Self.host(root)
+        await Self.triggerGatewayTrustPrompt(controller: gatewayController)
+        await Self.waitForPresentedAlert(in: window)
+
+        #expect(window.rootViewController?.presentedViewController is UIAlertController)
+    }
+
+    @Test @MainActor func `exec approval dialog builds on compact screens with accessibility text`() throws {
+        var windows: [UIWindow] = []
+        defer { windows.forEach { $0.isHidden = true } }
+
+        let layouts: [(CGSize, DynamicTypeSize)] = [
+            (CGSize(width: 320, height: 568), .accessibility5),
+            (CGSize(width: 568, height: 320), .accessibility3),
+        ]
+        for (size, typeSize) in layouts {
+            let appModel = NodeAppModel()
+            let prompt = try #require(NodeAppModel._test_makeExecApprovalPrompt(
+                id: "approval-layout",
+                commandText: String(repeating: "/usr/bin/find /private/var/mobile/Documents ", count: 12),
+                warningText: String(
+                    repeating: "This command can modify files outside the current workspace. ",
+                    count: 12),
+                allowedDecisions: ["allow-once", "allow-always", "deny"],
+                host: "gateway.example.com",
+                nodeId: "node-mobile",
+                agentId: "main",
+                expiresAtMs: Int64.max))
+            appModel._test_presentExecApprovalPrompt(prompt)
+
+            let root = Color.clear
+                .execApprovalPromptDialog()
+                .environment(appModel)
+                .environment(\.dynamicTypeSize, typeSize)
+            windows.append(Self.host(root, size: size))
+        }
+    }
+
+    @Test @MainActor func `root prompt alert stack presents gateway trust prompt`() async {
+        let appModel = NodeAppModel()
+        let gatewayController = Self.gatewayControllerWithCapturedTLSFingerprint(appModel: appModel)
+        let root = Color.clear
+            .gatewayTrustPromptAlert()
+            .deepLinkAgentPromptAlert()
+            .environment(appModel)
+            .environment(gatewayController)
+
+        let window = Self.host(root)
+        await Self.triggerGatewayTrustPrompt(controller: gatewayController)
+        await Self.waitForPresentedAlert(in: window)
+
+        #expect(window.rootViewController?.presentedViewController is UIAlertController)
+    }
+
+    @Test @MainActor func `root prompt alert stack still presents deep link prompt`() async throws {
+        let appModel = NodeAppModel()
+        appModel.apply(.connected(GatewaySessionInfo()), to: .node, route: nil)
+        let gatewayController = Self.gatewayControllerWithCapturedTLSFingerprint(appModel: appModel)
+        let root = Color.clear
+            .gatewayTrustPromptAlert()
+            .deepLinkAgentPromptAlert()
+            .environment(appModel)
+            .environment(gatewayController)
+
+        let window = Self.host(root)
+        let url = try #require(URL(string: "omnipolymath://agent?message=hello%20from%20deep%20link"))
+        await appModel.handleDeepLink(url: url)
+        await Self.waitForPresentedAlert(in: window)
+
+        #expect(window.rootViewController?.presentedViewController is UIAlertController)
+    }
+
+    @MainActor private static func gatewayControllerWithCapturedTLSFingerprint(
+        appModel: NodeAppModel)
+        -> GatewayConnectionController
+    {
+        GatewayConnectionController(
+            appModel: appModel,
+            startDiscovery: false,
+            tcpReachabilityProbe: { _, _, _, _ in true },
+            tlsFingerprintProbe: { _ in .fingerprint("abc123") })
+    }
+
+    @MainActor private static func triggerGatewayTrustPrompt(controller: GatewayConnectionController) async {
+        let host = "gateway-\(UUID().uuidString).example.com"
+        let port = 18789
+        let stableID = "manual|\(host.lowercased())|\(port)"
+        defer { GatewayTLSStore.clearFingerprint(stableID: stableID) }
+        GatewayTLSStore.clearFingerprint(stableID: stableID)
+        await controller.connectManual(host: host, port: port, useTLS: true)
+    }
+
+    @MainActor private static func waitForPresentedAlert(in window: UIWindow) async {
+        for _ in 0..<10 {
+            if window.rootViewController?.presentedViewController != nil { return }
+            await Task.yield()
+            try? await Task.sleep(nanoseconds: 50_000_000)
+        }
+    }
+}

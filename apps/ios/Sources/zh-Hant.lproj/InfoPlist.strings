@@ -1,0 +1,32 @@
+/* Omnipolymath source: "Omnipolymath uses Bluetooth to securely set up a nearby ESP device when you choose device setup." */
+"NSBluetoothAlwaysUsageDescription" = "當你選擇設定裝置時，Omnipolymath 會使用藍牙來安全地設定附近的 ESP 裝置。";
+/* Omnipolymath source: "Omnipolymath uses your calendars to show events and scheduling context when you enable calendar access." */
+"NSCalendarsFullAccessUsageDescription" = "當您啟用行事曆存取權時，Omnipolymath 會使用您的行事曆顯示行程及排程內容。";
+/* Omnipolymath source: "Omnipolymath uses your calendars to show events and scheduling context when you enable calendar access." */
+"NSCalendarsUsageDescription" = "當您啟用行事曆存取權時，Omnipolymath 會使用您的行事曆顯示行程及排程內容。";
+/* Omnipolymath source: "Omnipolymath uses your calendars to add events when you enable calendar access." */
+"NSCalendarsWriteOnlyAccessUsageDescription" = "當您啟用行事曆存取權時，Omnipolymath 會使用您的行事曆新增行程。";
+/* Omnipolymath source: "Omnipolymath uses the camera when you scan a Gateway or device setup QR code or ask your paired Gateway or assistant to capture a photo or short video from this iPhone, for example to connect to your Gateway or show your assistant a document, device screen, or workspace." */
+"NSCameraUsageDescription" = "當你掃描 Gateway 或裝置設定 QR 碼，或要求已配對的 Gateway 或助理使用這部 iPhone 拍攝照片或短片時，Omnipolymath 會使用相機，例如用於連接你的 Gateway，或向助理展示文件、裝置螢幕或工作空間。";
+/* Omnipolymath source: "Omnipolymath uses your contacts so you can search and reference people while using the assistant." */
+"NSContactsUsageDescription" = "Omnipolymath 會使用您的聯絡人，讓您在使用助理時搜尋及提及聯絡人。";
+/* Omnipolymath source: "Omnipolymath reads your steps, sleep, resting heart rate, and workouts from the Apple Health app to create summaries you request and send them through your Gateway to your configured AI provider." */
+"NSHealthShareUsageDescription" = "Omnipolymath 會從 Apple Health App 讀取您的步數、睡眠、靜息心率和體能訓練資料，以建立您要求的摘要，並透過您的 Gateway 傳送給您設定的 AI 供應商。";
+/* Omnipolymath source: "Omnipolymath does not write to the Apple Health app. It uses read-only data to create summaries you request and send them through your Gateway to your configured AI provider." */
+"NSHealthUpdateUsageDescription" = "Omnipolymath 不會寫入「Apple 健康」App。它會使用唯讀資料建立您要求的摘要，並透過 Gateway 將摘要傳送至您設定的 AI 供應商。";
+/* Omnipolymath source: "Omnipolymath discovers and connects to your Omnipolymath gateway on the local network." */
+"NSLocalNetworkUsageDescription" = "Omnipolymath 會探索並連線至區域網路上的 Omnipolymath Gateway。";
+/* Omnipolymath source: "Omnipolymath can share your location in the background when you enable Always." */
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "當您啟用「永遠」時，Omnipolymath 可以在背景分享您的位置。";
+/* Omnipolymath source: "Omnipolymath uses your location when you allow location sharing." */
+"NSLocationWhenInUseUsageDescription" = "當您允許分享位置時，Omnipolymath 會使用您的位置。";
+/* Omnipolymath source: "Omnipolymath uses the microphone for realtime chat, voice wake, push-to-talk, and voice notes." */
+"NSMicrophoneUsageDescription" = "Omnipolymath 會使用麥克風進行即時聊天、語音喚醒、按住說話及語音留言。";
+/* Omnipolymath source: "Omnipolymath may use motion data to support device-aware interactions and automations." */
+"NSMotionUsageDescription" = "Omnipolymath 可能會使用動作資料，以支援可感知裝置狀態的互動與自動化。";
+/* Omnipolymath source: "Omnipolymath lets your assistant read photos you allow and lets you choose photos to share." */
+"NSPhotoLibraryUsageDescription" = "Omnipolymath 可讓您的助理讀取您允許的照片，並讓您選擇要分享的照片。";
+/* Omnipolymath source: "Omnipolymath uses your reminders to list, add, and complete tasks when you enable reminders access." */
+"NSRemindersFullAccessUsageDescription" = "當您啟用提醒事項存取權時，Omnipolymath 會使用您的提醒事項列出、新增及完成任務。";
+/* Omnipolymath source: "Omnipolymath uses on-device speech recognition for talk mode and voice wake." */
+"NSSpeechRecognitionUsageDescription" = "Omnipolymath 使用裝置端語音辨識來支援對話模式和語音喚醒。";

@@ -1,0 +1,7 @@
+<resources>
+    <string-array name="ask_omnipolymath_query_patterns">
+        <item>"hỏi Omnipolymath %1$s"</item>
+        <item>"yêu cầu Omnipolymath %1$s"</item>
+        <item>"mở Omnipolymath và hỏi %1$s"</item>
+    </string-array>
+</resources>
