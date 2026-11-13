@@ -1,0 +1,36 @@
+parent_config: ../../config/swiftlint.yml
+
+included:
+  - Sources
+  - ShareExtension
+  - ActivityWidget
+  - WatchApp
+  - ../shared/OmnipolymathKit/Sources/OmnipolymathChatUI
+  - ../shared/OmnipolymathKit/Sources/OmnipolymathKit
+  - ../shared/OmnipolymathKit/Sources/OmnipolymathNativeState
+  - ../shared/OmnipolymathKit/Sources/OmnipolymathProtocol
+  - ../swabble/Sources/SwabbleKit
+
+excluded:
+  - ../macos
+  - ../macos-mlx-tts
+  - ../shared/OmnipolymathKit/Sources/OmnipolymathProtocol/GatewayModels.swift
+
+type_body_length:
+  warning: 900
+  error: 1300
+
+custom_rules:
+  omnipolymath_design_colors:
+    name: "Omnipolymath design colors"
+    excluded:
+      - Sources/Design/OmnipolymathBrand.swift
+      - ../shared/OmnipolymathKit/Sources/OmnipolymathChatUI/ChatTheme.swift
+    regex: '(Color\.accentColor|(^|[^A-Za-z0-9_])\.accentColor\b|Color\.(red|green|orange|cyan|blue|yellow|purple|pink)\b|\.(foregroundStyle|tint|fill|stroke|strokeBorder|background)\(\s*\.(red|green|orange|cyan|blue|yellow|purple|pink)\b|Color\(red:\s*0\s*/\s*255\.0,\s*green:\s*122\s*/\s*255\.0,\s*blue:\s*255\s*/\s*255\.0\))'
+    message: "Use OmnipolymathBrand or OmnipolymathChatTheme design tokens instead of raw accent/status colors."
+    severity: error
+  omnipolymath_public_url_logging:
+    name: "Omnipolymath public URL logging"
+    regex: '\\\([^)\n]*(absoluteString|URL|Url|\burl)[^)\n]*privacy:\s*\.public'
+    message: "Do not log URLs with privacy: .public; deep links and gateway URLs can carry secrets."
+    severity: error

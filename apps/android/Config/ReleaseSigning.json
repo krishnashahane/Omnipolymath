@@ -1,0 +1,15 @@
+{
+  "signingRepo": "git@github.com:omnipolymath/apps-signing.git",
+  "signingBranch": "main",
+  "assetPath": "android/omnipolymath",
+  "uploadKeystoreEncryptedFile": "upload-keystore.jks.enc",
+  "gradlePropertiesEncryptedFile": "gradle.properties.enc",
+  "apkCertificateSha256": "80dbc62315ea216dd6e8a7060735a866ddc464a48ed50fef29ff0550468b9a63",
+  "materializedRoot": "apps/android/build/release-signing",
+  "gradlePropertyNames": [
+    "OMNIPOLYMATH_ANDROID_STORE_FILE",
+    "OMNIPOLYMATH_ANDROID_STORE_PASSWORD",
+    "OMNIPOLYMATH_ANDROID_KEY_ALIAS",
+    "OMNIPOLYMATH_ANDROID_KEY_PASSWORD"
+  ]
+}

@@ -1,0 +1,34 @@
+// Default signing values for shared/repo builds.
+// Auto-selected local team overrides live in .local-signing.xcconfig (git-ignored).
+// Manual local overrides can go in LocalSigning.xcconfig (git-ignored).
+
+#include "build/Version.xcconfig"
+
+OMNIPOLYMATH_CODE_SIGN_STYLE = Manual
+OMNIPOLYMATH_CODE_SIGN_IDENTITY = Apple Development
+OMNIPOLYMATH_CODE_SIGN_ENTITLEMENTS = Sources/Omnipolymath.entitlements
+OMNIPOLYMATH_DEVELOPMENT_TEAM = FWJYW4S8P8
+
+OMNIPOLYMATH_APP_BUNDLE_ID = ai.omnipolymathfoundation.app
+OMNIPOLYMATH_SHARE_BUNDLE_ID = ai.omnipolymathfoundation.app.share
+OMNIPOLYMATH_APP_GROUP_ID = group.ai.omnipolymathfoundation.app.shared
+OMNIPOLYMATH_WATCH_APP_BUNDLE_ID = ai.omnipolymathfoundation.app.watchkitapp
+OMNIPOLYMATH_ACTIVITY_WIDGET_BUNDLE_ID = ai.omnipolymathfoundation.app.activitywidget
+OMNIPOLYMATH_APNS_ENTITLEMENT_ENVIRONMENT = development
+
+OMNIPOLYMATH_APP_PROFILE = ai.omnipolymathfoundation.app Development
+OMNIPOLYMATH_SHARE_PROFILE = ai.omnipolymathfoundation.app.share Development
+OMNIPOLYMATH_ACTIVITY_WIDGET_PROFILE =
+OMNIPOLYMATH_WATCH_APP_PROFILE =
+
+// Keep local includes after defaults: xcconfig is evaluated top-to-bottom,
+// so later assignments in local files override the defaults above.
+#include? ".local-signing.xcconfig"
+#include? "LocalSigning.xcconfig"
+
+// Debug products install alongside release products and keep their app-group data separate.
+OMNIPOLYMATH_DEBUG_APP_BUNDLE_ID = $(OMNIPOLYMATH_APP_BUNDLE_ID).debug
+OMNIPOLYMATH_DEBUG_SHARE_BUNDLE_ID = $(OMNIPOLYMATH_DEBUG_APP_BUNDLE_ID).share
+OMNIPOLYMATH_DEBUG_ACTIVITY_WIDGET_BUNDLE_ID = $(OMNIPOLYMATH_DEBUG_APP_BUNDLE_ID).activitywidget
+OMNIPOLYMATH_DEBUG_WATCH_APP_BUNDLE_ID = $(OMNIPOLYMATH_DEBUG_APP_BUNDLE_ID).watchkitapp
+OMNIPOLYMATH_DEBUG_APP_GROUP_ID = $(OMNIPOLYMATH_APP_GROUP_ID).debug

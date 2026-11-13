@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "omnipolymath.desktop",
+  "name": "Omnipolymath",
+  "version": "1.0.0",
+  "author": "Omnipolymath",
+  "description": "Omnipolymath agents, sessions, activity, attention indicators, and quick prompts",
+  "kinds": [
+    "service",
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "service": "Service.qml",
+    "barWidget": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "Omnipolymath",
+    "category": "AI",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

@@ -1,0 +1,17 @@
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <capability
+        android:name="custom.actions.intent.ASK_OMNIPOLYMATH"
+        app:queryPatterns="@array/ask_omnipolymath_query_patterns">
+        <intent
+            android:action="ai.omnipolymath.app.action.ASK_OMNIPOLYMATH"
+            android:targetPackage="ai.omnipolymath.app.debug"
+            android:targetClass="ai.omnipolymath.app.MainActivity">
+            <parameter
+                android:name="prompt"
+                android:key="prompt"
+                android:mimeType="https://schema.org/Text"
+                android:required="true" />
+        </intent>
+    </capability>
+</shortcuts>

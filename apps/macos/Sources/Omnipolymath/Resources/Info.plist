@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleExecutable</key>
+    <string>Omnipolymath</string>
+    <key>CFBundleIdentifier</key>
+    <string>ai.omnipolymath.mac</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>Omnipolymath</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>2026.11.3</string>
+    <key>CFBundleVersion</key>
+    <string>2026110300</string>
+    <key>CFBundleIconFile</key>
+    <string>Omnipolymath</string>
+    <key>CFBundleIconName</key>
+    <string>Icon</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>ai.omnipolymath.mac.deeplink</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>omnipolymath</string>
+            </array>
+        </dict>
+    </array>
+    <key>LSMinimumSystemVersion</key>
+    <string>26.2</string>
+    <key>LSUIElement</key>
+    <true/>
+
+    <key>OmnipolymathBuildTimestamp</key>
+    <string></string>
+    <key>OmnipolymathGitCommit</key>
+    <string></string>
+    <key>PeekabooSourceCommit</key>
+    <string></string>
+    <key>OmnipolymathPortGuardianStorageVersion</key>
+    <integer>2</integer>
+
+    <key>NSUserNotificationUsageDescription</key>
+    <string>Omnipolymath needs notification permission to show alerts for agent actions.</string>
+    <key>NSScreenCaptureDescription</key>
+    <string>Omnipolymath captures the screen when the agent needs screenshots for context.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Omnipolymath can capture photos or short video clips when requested by the agent.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Omnipolymath can share your location when requested by the agent.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Omnipolymath can share your location when requested by the agent.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Omnipolymath can share your location when requested by the agent.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Omnipolymath uses the local network to connect to your remote Omnipolymath gateway over LAN, Tailnet, or SSH.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Omnipolymath uses the microphone for Voice Wake, push-to-talk, Talk Mode, Quick Chat dictation, and agent audio capture.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Omnipolymath uses Apple Speech for Voice Wake, push-to-talk, Talk Mode, and Quick Chat dictation. Voice Wake stays on-device.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Omnipolymath needs Automation permission when an agent action controls another app.</string>
+    <key>NSRemindersUsageDescription</key>
+    <string>Omnipolymath can access Reminders when requested by the agent for the apple-reminders skill.</string>
+
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoadsInWebContent</key>
+        <true/>
+        <key>NSExceptionDomains</key>
+        <dict>
+            <key>100.100.100.100</key>
+            <dict>
+                <key>NSExceptionAllowsInsecureHTTPLoads</key>
+                <true/>
+                <key>NSIncludesSubdomains</key>
+                <true/>
+            </dict>
+        </dict>
+    </dict>
+</dict>
+</plist>

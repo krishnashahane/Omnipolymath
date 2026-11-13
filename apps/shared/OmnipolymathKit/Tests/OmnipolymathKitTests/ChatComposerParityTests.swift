@@ -1,0 +1,393 @@
+import Foundation
+import Observation
+import Synchronization
+import Testing
+import UniformTypeIdentifiers
+@testable import OmnipolymathChatUI
+
+private final class ComposerParityTransport: @unchecked Sendable, OmnipolymathChatTransport {
+    private let lock = NSLock()
+    private var sentMessagesStorage: [String] = []
+
+    var sentMessages: [String] {
+        self.lock.withLock { self.sentMessagesStorage }
+    }
+
+    func requestHistory(sessionKey: String) async throws -> OmnipolymathChatHistoryPayload {
+        OmnipolymathChatHistoryPayload(
+            sessionKey: sessionKey,
+            sessionId: nil,
+            messages: [],
+            thinkingLevel: "off")
+    }
+
+    func sendMessage(
+        sessionKey _: String,
+        message: String,
+        thinking _: String,
+        idempotencyKey: String,
+        attachments _: [OmnipolymathChatAttachmentPayload]) async throws -> OmnipolymathChatSendResponse
+    {
+        self.lock.withLock { self.sentMessagesStorage.append(message) }
+        return OmnipolymathChatSendResponse(runId: idempotencyKey, status: "started")
+    }
+
+    func requestHealth(timeoutMs _: Int) async throws -> Bool {
+        true
+    }
+
+    func events() -> AsyncStream<OmnipolymathChatTransportEvent> {
+        AsyncStream { $0.finish() }
+    }
+}
+
+struct ChatReplyQuoteTests {
+    @Test func `single line quote matches web fixture and escapes attribution`() {
+        let target = OmnipolymathChatReplyTarget(
+            messageID: UUID(),
+            text: "quoted body",
+            senderLabel: "A *B* [C]")
+
+        #expect(ChatReplyQuote.prepend(message: "continue", replyTarget: target) ==
+            "> **A \\*B\\* \\[C\\]:** quoted body\n\ncontinue")
+    }
+
+    @Test func `multiline quote prefixes every line including blanks`() {
+        let target = OmnipolymathChatReplyTarget(
+            messageID: UUID(),
+            text: "first\n\nthird",
+            senderLabel: "Assistant")
+
+        #expect(ChatReplyQuote.prepend(message: "continue", replyTarget: target) ==
+            "> **Assistant:**\n> first\n> \n> third\n\ncontinue")
+    }
+
+    @Test func `reply capture and preview truncate without splitting surrogate pair`() {
+        #expect(ChatReplyQuote.targetText(String(repeating: "x", count: 499) + "🧠tail") ==
+            String(repeating: "x", count: 499))
+        let preview = ChatReplyQuote.previewText(String(repeating: "x", count: 119) + "🧠tail")
+        #expect(preview.text == String(repeating: "x", count: 119))
+        #expect(preview.isTruncated)
+    }
+
+    @Test func `attachment only reply matches web empty prompt suffix`() {
+        let target = OmnipolymathChatReplyTarget(
+            messageID: UUID(),
+            text: "quoted body",
+            senderLabel: "User")
+
+        #expect(ChatReplyQuote.prepend(message: "", replyTarget: target) ==
+            "> **User:** quoted body\n\n")
+    }
+}
+
+@MainActor
+struct ChatComposerStateTests {
+    enum ComposerRouteTransition: CaseIterable {
+        case contract
+        case canonicalContract
+        case pinnedContract
+        case refresh
+        case pinnedQuestionRetirement
+        case detached
+    }
+
+    @Test(arguments: [false, true])
+    func `closed model pickers defer catalog projection`(clean: Bool) {
+        let vm = OmnipolymathChatViewModel(sessionKey: "main", transport: ComposerParityTransport())
+        defer { vm.detachTransport() }
+        vm.modelChoices = (0..<2000).map { index in
+            OmnipolymathChatModelChoice(
+                modelID: "model-\(index)",
+                name: "Model \(index)",
+                provider: "provider-\(index % 20)",
+                contextWindow: 200_000)
+        }
+        vm.input = "A draft being typed"
+        let composer = OmnipolymathChatComposer(
+            viewModel: vm,
+            style: .standard,
+            showsSessionSwitcher: false,
+            userAccent: nil,
+            composerChrome: clean ? .clean : .full,
+            isComposerEnabled: true,
+            isAttachmentInputEnabled: true,
+            messagePlaceholder: nil,
+            talkControl: nil,
+            dictationControl: nil,
+            voiceNoteControl: nil)
+        let changes = Mutex(0)
+        // Exercise the production builders, including both ViewThatFits candidates.
+        // Favorites/recents are projection-only inputs, unlike catalog reads needed
+        // by the visible selected-model label and send availability.
+        let duration = ContinuousClock().measure {
+            withObservationTracking {
+                for _ in 0..<40 {
+                    if clean {
+                        withExtendedLifetime(composer.cleanTrailingControls) {}
+                    } else {
+                        withExtendedLifetime(composer.modelPicker) {}
+                    }
+                }
+            } onChange: {
+                changes.withLock { $0 += 1 }
+            }
+        }
+        print("composer-menu-construction chrome=\(clean ? "clean" : "full") rows=2000 builds=40 elapsed=\(duration)")
+
+        vm.modelPickerFavorites = ["provider-0/model-0"]
+        vm.modelPickerRecents = ["provider-1/model-1"]
+
+        #expect(
+            changes.withLock { $0 } == 0,
+            "Constructing the closed picker must not group or observe the full catalog")
+    }
+
+    @Test(arguments: ComposerRouteTransition.allCases)
+    func `captured composer input follows only its admitted route`(_ transition: ComposerRouteTransition) {
+        let vm = OmnipolymathChatViewModel(
+            sessionKey: transition == .canonicalContract ? "agent:main:thread" : "main",
+            transport: ComposerParityTransport(),
+            activeAgentId: "main",
+            sessionRoutingContract: "global|main|main")
+        defer { vm.detachTransport() }
+        vm.input = "existing draft"
+        let resolveInputModel = vm.composerModelResolver()
+
+        switch transition {
+        case .contract, .canonicalContract:
+            vm.syncSessionRoutingContract("per-sender|main|main")
+        case .pinnedContract:
+            vm.beginAttachmentStaging()
+            vm.syncSessionRoutingContract("per-sender|main|main")
+        case .refresh:
+            vm.refresh()
+        case .pinnedQuestionRetirement:
+            vm.beginAttachmentStaging()
+            vm.retireQuestionAuthority()
+        case .detached:
+            vm.detachTransport()
+        }
+
+        resolveInputModel()?.input = "typed after transition"
+        let rejectsInput = transition == .contract || transition == .detached
+        #expect(vm.input == (rejectsInput ? "existing draft" : "typed after transition"))
+
+        if transition == .pinnedContract {
+            vm.endAttachmentStaging()
+            resolveInputModel()?.input = "stale editor callback"
+            #expect(vm.input == "typed after transition")
+        }
+        if transition == .contract || transition == .pinnedContract {
+            let resolveNewInputModel = vm.composerModelResolver()
+            resolveNewInputModel()?.input = "new route draft"
+            #expect(vm.input == "new route draft")
+        }
+        if transition == .pinnedQuestionRetirement {
+            vm.endAttachmentStaging()
+        }
+    }
+
+    @Test func `model selection target describes only gateway owned values`() {
+        let viewModel = OmnipolymathChatViewModel(sessionKey: "main", transport: ComposerParityTransport())
+        let expectations: [(String?, String?)] = [
+            ("session", "Changes this session only"),
+            ("agent", "Changes this agent's default"),
+            ("global", "Changes the global default"),
+            ("future-target", nil),
+            (nil, nil),
+        ]
+
+        for (target, expected) in expectations {
+            viewModel.sessionDefaults = OmnipolymathChatSessionsDefaults(
+                model: nil,
+                contextTokens: nil,
+                modelSelectionTarget: target)
+            #expect(viewModel.modelSelectionTargetDescription == expected)
+        }
+    }
+
+    @Test func `model selection matches qualified choices after gateway readback`() {
+        let choices = [
+            OmnipolymathChatModelChoice(
+                modelID: "claude-opus-4-1",
+                name: "Claude Opus 4.1",
+                provider: "anthropic",
+                contextWindow: 200_000),
+        ]
+
+        #expect(OmnipolymathChatViewModel.modelSelectionMatches(
+            selectionID: "anthropic/claude-opus-4-1",
+            currentSelectionID: "claude-opus-4-1",
+            choices: choices))
+        #expect(!OmnipolymathChatViewModel.modelSelectionMatches(
+            selectionID: OmnipolymathChatViewModel.defaultModelSelectionID,
+            currentSelectionID: "claude-opus-4-1",
+            choices: choices))
+    }
+
+    @Test func `tagless movie metadata stages as video`() async throws {
+        let metadata = OmnipolymathChatPickerAttachmentMetadata.resolve(contentType: .movie)
+        #expect(metadata.fileExtension == "mov")
+        #expect(metadata.mimeType == "video/quicktime")
+
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("tagless-movie-\(UUID().uuidString)")
+            .appendingPathExtension(metadata.fileExtension)
+        try Data("tagless-movie".utf8).write(to: fileURL)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+        let vm = OmnipolymathChatViewModel(sessionKey: "main", transport: ComposerParityTransport())
+
+        await vm.addVideoAttachment(
+            url: fileURL,
+            fileName: "video.\(metadata.fileExtension)",
+            mimeType: metadata.mimeType)
+
+        let attachment = try #require(vm.attachments.first)
+        #expect(attachment.fileName.hasSuffix(".mov"))
+        #expect(attachment.mimeType.hasPrefix("video/"))
+    }
+
+    @Test func `late send does not consume newer reply selection for same message`() {
+        let vm = OmnipolymathChatViewModel(sessionKey: "main", transport: ComposerParityTransport())
+        let messageID = UUID()
+        vm.setReplyTarget(messageID: messageID, text: "first", senderLabel: "Assistant")
+        let firstSelection = vm.replyTarget
+        vm.setReplyTarget(messageID: messageID, text: "second", senderLabel: "Assistant")
+        let secondSelection = vm.replyTarget
+
+        vm.consumeReplyTarget(firstSelection)
+
+        #expect(vm.replyTarget == secondSelection)
+        #expect(firstSelection?.selectionID != secondSelection?.selectionID)
+    }
+
+    @Test func `session switch stashes and restores drafts`() {
+        let vm = OmnipolymathChatViewModel(sessionKey: "main", transport: ComposerParityTransport())
+        vm.input = "main draft"
+
+        vm.switchSession(to: "other")
+        #expect(vm.input.isEmpty)
+        vm.input = "other draft"
+
+        vm.switchSession(to: "main")
+        #expect(vm.input == "main draft")
+        vm.switchSession(to: "other")
+        #expect(vm.input == "other draft")
+    }
+
+    @Test func `session switch preserves draft beneath recall and resets recall mode`() {
+        let vm = OmnipolymathChatViewModel(sessionKey: "main", transport: ComposerParityTransport())
+        vm.recordSuccessfulInput("older input", sessionKey: "main")
+        vm.input = "working draft"
+        #expect(vm.recallPreviousInput(caretOnFirstLine: true))
+        #expect(vm.input == "older input")
+
+        vm.switchSession(to: "other")
+        vm.switchSession(to: "main")
+
+        #expect(vm.input == "working draft")
+        #expect(!vm.recallNextInput())
+    }
+
+    @Test func `active recall walks past multiline item regardless of caret line`() {
+        let vm = OmnipolymathChatViewModel(sessionKey: "main", transport: ComposerParityTransport())
+        vm.recordSuccessfulInput("older", sessionKey: "main")
+        vm.recordSuccessfulInput("newer\nmultiline", sessionKey: "main")
+
+        #expect(vm.recallPreviousInput(caretOnFirstLine: true))
+        #expect(vm.input == "newer\nmultiline")
+        #expect(vm.recallPreviousInput(caretOnFirstLine: false))
+        #expect(vm.input == "older")
+    }
+
+    @Test func `user recall advances composer revision`() {
+        let vm = OmnipolymathChatViewModel(sessionKey: "main", transport: ComposerParityTransport())
+        vm.recordSuccessfulInput("sent", sessionKey: "main")
+        vm.input = "draft"
+        let revision = vm.composerRevision(for: "main")
+
+        #expect(vm.recallPreviousInput(caretOnFirstLine: true))
+
+        #expect(vm.composerRevision(for: "main") != revision)
+    }
+
+    @Test func `session switch clears reply target and history navigation is session scoped`() {
+        let vm = OmnipolymathChatViewModel(sessionKey: "main", transport: ComposerParityTransport())
+        vm.recordSuccessfulInput("main history", sessionKey: "main")
+        vm.setReplyTarget(messageID: UUID(), text: "reply", senderLabel: "Assistant")
+
+        vm.switchSession(to: "other")
+
+        #expect(vm.replyTarget == nil)
+        #expect(!vm.recallPreviousInput(caretOnFirstLine: true))
+        vm.switchSession(to: "main")
+        #expect(vm.recallPreviousInput(caretOnFirstLine: true))
+        #expect(vm.input == "main history")
+    }
+
+    @Test func `accepted normal send quotes and clears reply and stored draft`() async throws {
+        let transport = ComposerParityTransport()
+        let vm = OmnipolymathChatViewModel(sessionKey: "main", transport: transport)
+        vm.healthOK = true
+        vm.input = "continue"
+        vm.setReplyTarget(messageID: UUID(), text: "quoted body", senderLabel: "Assistant")
+
+        try await #require(vm.send()).value
+
+        #expect(transport.sentMessages == ["> **Assistant:** quoted body\n\ncontinue"])
+        #expect(vm.replyTarget == nil && vm.input.isEmpty)
+        vm.switchSession(to: "other")
+        vm.switchSession(to: "main")
+        #expect(vm.input.isEmpty)
+    }
+
+    @Test func `attachment staging blocks UI and programmatic sends`() async throws {
+        let transport = ComposerParityTransport()
+        let vm = OmnipolymathChatViewModel(sessionKey: "main", transport: transport)
+        vm.healthOK = true
+        vm.input = "send with selected image"
+        vm.beginAttachmentStaging()
+
+        #expect(!vm.canSend)
+        await vm.send()?.value
+        #expect(transport.sentMessages.isEmpty)
+
+        vm.endAttachmentStaging()
+        #expect(vm.canSend)
+        try await #require(vm.send()).value
+        #expect(transport.sentMessages.count == 1)
+    }
+
+    @Test func `slash send ignores and preserves reply target`() async throws {
+        let transport = ComposerParityTransport()
+        let vm = OmnipolymathChatViewModel(sessionKey: "main", transport: transport)
+        vm.healthOK = true
+        let targetID = UUID()
+        vm.input = "/remote-command"
+        vm.setReplyTarget(messageID: targetID, text: "quoted body", senderLabel: "Assistant")
+
+        try await #require(vm.send()).value
+
+        #expect(transport.sentMessages == ["/remote-command"])
+        #expect(vm.replyTarget?.messageID == targetID)
+    }
+
+    @Test func `accepted attachment only send quotes and clears reply`() async throws {
+        let transport = ComposerParityTransport()
+        let vm = OmnipolymathChatViewModel(sessionKey: "main", transport: transport)
+        vm.healthOK = true
+        vm.attachments = [OmnipolymathPendingAttachment(
+            url: nil,
+            data: Data([1, 2, 3]),
+            fileName: "image.png",
+            mimeType: "image/png",
+            preview: nil)]
+        vm.setReplyTarget(messageID: UUID(), text: "quoted body", senderLabel: "User")
+
+        try await #require(vm.send()).value
+
+        #expect(transport.sentMessages == ["> **User:** quoted body\n\n"])
+        #expect(vm.replyTarget == nil)
+    }
+}
