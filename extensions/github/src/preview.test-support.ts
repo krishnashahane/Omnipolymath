@@ -73,8 +73,8 @@ export function previewPayload(overrides: Record<string, unknown> = {}): Record<
     state: "closed",
     title: "fix(agents): derive conversation scope from trusted group facts",
     updated_at: "2026-07-04T09:53:55Z",
-    base: { repo: { url: "https://api.github.com/repos/krishnashahane/Omnipolymath" } },
-    repository_url: "https://api.github.com/repos/krishnashahane/Omnipolymath",
+    base: { repo: { url: "https://api.github.com/repos/omnipolymath/omnipolymath" } },
+    repository_url: "https://api.github.com/repos/omnipolymath/omnipolymath",
     user: {
       avatar_url: "https://avatars.githubusercontent.com/u/58493?v=4",
       login: "krishnashahane",
