@@ -1,0 +1,212 @@
+/** Process-local index of session keys that enabled cron jobs are bound to. */
+import { registerSessionMaintenancePreserveKeysProvider } from "../config/sessions/store-maintenance-preserve.js";
+import type { OmnipolymathConfig } from "../config/types.omnipolymath.js";
+import { tryResolveCronJobEffectiveAgentId } from "../cron/agent-id.js";
+import { resolveScheduledPrincipal } from "../cron/execution-context.js";
+import { resolveCronJobSessionBindings } from "../cron/job-session-bindings.js";
+import type { CronStoredJob } from "../cron/types.js";
+import { getChildLogger } from "../logging/logger.js";
+import { normalizeAgentId, parseAgentSessionKey } from "../routing/session-key.js";
+import { sessionChanges } from "../sessions/session-row-changes.js";
+
+type SessionAutomationSource = {
+  /** Current in-memory cron jobs; undefined until the cron store is loaded. */
+  getJobs: () => readonly CronStoredJob[] | undefined;
+  getDefaultAgentId: () => string | undefined;
+};
+
+let source: SessionAutomationSource | null = null;
+// Set whenever this process creates a cron service that will load jobs; cleared when one
+// registers. A replacement built while its predecessor is registered stays pending after
+// the predecessor unregisters.
+// A failed load leaves it set, so automatic archiving waits instead of pausing jobs.
+let awaitingSource = false;
+let loadFailureReported = false;
+
+let memo: {
+  jobs: readonly CronStoredJob[] | undefined;
+  defaultAgentId: string | undefined;
+  cfg: OmnipolymathConfig;
+  keys: ReadonlySet<string>;
+} | null = null;
+// Keep the last publication separate from reader refreshes: cron replaces its
+// jobs array before awaited persistence, so a read must not consume that delta.
+let publishedKeys: ReadonlySet<string> | undefined;
+
+/** The latest started cron service supplies the display-only automation index. */
+export function registerSessionAutomationSource(next: SessionAutomationSource | null): void {
+  source = next;
+  if (next) {
+    awaitingSource = false;
+  }
+  invalidateSessionAutomationIndex();
+}
+
+/** A Gateway cron service exists and its jobs will register once loaded. */
+export function expectSessionAutomationSource(): void {
+  awaitingSource = true;
+}
+
+/**
+ * Builds a cron service's automation source. Hot reloads construct the service
+ * directly, so an enabled one keeps archiving deferred until it registers, and a
+ * disabled replacement releases any deferral left by the service it replaces.
+ */
+export function createSessionAutomationSource(
+  cron: {
+    getLoadedJobs: () => readonly CronStoredJob[] | undefined;
+    getDefaultAgentId: () => string | undefined;
+  },
+  loadsJobs: boolean,
+): SessionAutomationSource {
+  awaitingSource = loadsJobs;
+  return { getJobs: () => cron.getLoadedJobs(), getDefaultAgentId: () => cron.getDefaultAgentId() };
+}
+
+/**
+ * A failed cron load keeps archiving deferred for the whole process, so the
+ * session store can grow past its limits. Warns once per process; true when it warned.
+ */
+export function reportSessionAutomationSourceLoadFailed(error: unknown): boolean {
+  if (source || !awaitingSource || loadFailureReported) {
+    return false;
+  }
+  loadFailureReported = true;
+  getChildLogger({ subsystem: "session-maintenance" }).warn(
+    "automatic session archiving is paused: automations failed to load; archiving resumes after cron starts successfully",
+    { error: String(error) },
+  );
+  return true;
+}
+
+/**
+ * Owner-compare unregistration: a stopped cron service must not clear a
+ * replacement's registration when config reloads race the lazy service build.
+ */
+export function unregisterSessionAutomationSource(owner: SessionAutomationSource): void {
+  if (source !== owner) {
+    return;
+  }
+  source = null;
+  invalidateSessionAutomationIndex();
+}
+
+/** Called from the cron onEvent hook after any job/store change. */
+export function invalidateSessionAutomationIndex(): void {
+  // Even an empty source retains the last reader's config so the first added
+  // binding can invalidate rows that were materialized before cron loaded.
+  if (!memo) {
+    return;
+  }
+  publishAutomationKeys(refreshAutomationKeys(memo.cfg).keys);
+}
+
+/** Publish membership deltas without letting speculative reader refreshes consume them. */
+function publishAutomationKeys(current: ReadonlySet<string>) {
+  const previous = publishedKeys ?? new Set<string>();
+  publishedKeys = current;
+  // Install the complete snapshot before notifying synchronous consumers.
+  for (const identity of new Set([...previous, ...current])) {
+    if (previous.has(identity) === current.has(identity)) {
+      continue;
+    }
+    const separator = identity.indexOf("\0");
+    sessionChanges.emit({
+      scope: "automation",
+      facts: { kind: "unchanged" },
+      sessionKey: separator < 0 ? identity : identity.slice(separator + 1),
+      ...(separator < 0 ? {} : { agentId: identity.slice(0, separator) }),
+    });
+  }
+}
+
+function buildAutomationKeys(
+  jobs: readonly CronStoredJob[],
+  cfg: OmnipolymathConfig,
+  defaultAgentId: string | undefined,
+): ReadonlySet<string> {
+  const keys = new Set<string>();
+  for (const job of jobs) {
+    if (!job.enabled) {
+      continue;
+    }
+    for (const [key, agentId] of resolveCronJobSessionBindings(job, { cfg, defaultAgentId })) {
+      if (parseAgentSessionKey(key)) {
+        keys.add(key);
+      } else {
+        keys.add(`${agentId}\0${key}`);
+      }
+    }
+  }
+  return keys;
+}
+
+/** Replace the existing memo with a snapshot, never retaining mutable job facts. */
+function refreshAutomationKeys(cfg: OmnipolymathConfig) {
+  const jobs = source?.getJobs();
+  const defaultAgentId = source?.getDefaultAgentId();
+  memo = {
+    jobs,
+    cfg,
+    defaultAgentId,
+    keys: buildAutomationKeys(jobs ?? [], cfg, defaultAgentId),
+  };
+  publishedKeys ??= memo.keys;
+  return memo;
+}
+
+/**
+ * Creating conversations of enabled jobs, resolved exactly as occurrence
+ * admission resolves the parent it pauses on when that row is archived.
+ * Disabled or removed jobs release their parent on the next maintenance pass.
+ */
+function* enabledAutomationParentSessionKeys(): Generator<string> {
+  const defaultAgentId = source?.getDefaultAgentId();
+  for (const job of source?.getJobs() ?? []) {
+    if (!job.enabled) {
+      continue;
+    }
+    const agentId = tryResolveCronJobEffectiveAgentId(job, defaultAgentId);
+    if (!agentId) {
+      continue;
+    }
+    const principal = resolveScheduledPrincipal(job, { trigger: "cron", agentId });
+    if (!("error" in principal) && principal.kind === "parent") {
+      yield principal.parent.sessionKey;
+    }
+  }
+}
+
+// Automatic archiving would pause these jobs at their next occurrence.
+registerSessionMaintenancePreserveKeysProvider(async () => ({
+  capture: enabledAutomationParentSessionKeys,
+  // Before the first load, any idle chat could be a parent.
+  isPending: () => awaitingSource && !source,
+  dispose() {},
+}));
+
+/** True when an enabled cron job is bound to the canonical session key. */
+export function sessionHasAutomation(
+  sessionKey: string,
+  cfg: OmnipolymathConfig,
+  agentId?: string,
+): boolean {
+  const jobs = source?.getJobs();
+  const defaultAgentId = source?.getDefaultAgentId();
+  // Config publications rebuild resident rows; their reads adopt the new
+  // routing config even when the cron jobs array itself has not changed.
+  const configChanged = memo && memo.cfg !== cfg;
+  const current =
+    memo && memo.jobs === jobs && memo.cfg === cfg && memo.defaultAgentId === defaultAgentId
+      ? memo
+      : refreshAutomationKeys(cfg);
+  if (configChanged) {
+    publishAutomationKeys(current.keys);
+  }
+  const identity = parseAgentSessionKey(sessionKey)
+    ? sessionKey
+    : agentId
+      ? `${normalizeAgentId(agentId)}\0${sessionKey}`
+      : undefined;
+  return identity ? current.keys.has(identity) : false;
+}

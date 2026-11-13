@@ -1,0 +1,62 @@
+import { normalizeOptionalString } from "@omnipolymath/normalization-core/string-coerce";
+import { resolveAgentIdentity, resolveEffectiveMessagesConfig } from "../agents/identity.js";
+import type { GetReplyOptions } from "../auto-reply/get-reply-options.types.js";
+import {
+  resolveModelResponsePrefixContext,
+  type ResponsePrefixContext,
+} from "../auto-reply/reply/response-prefix-template.js";
+import type { OmnipolymathConfig } from "../config/types.omnipolymath.js";
+
+type ModelSelectionContext = Parameters<NonNullable<GetReplyOptions["onModelSelected"]>>[0];
+
+/**
+ * Mutable response-prefix state shared between reply setup and model selection callbacks.
+ */
+export type ReplyPrefixContextBundle = {
+  prefixContext: ResponsePrefixContext;
+  responsePrefix?: string;
+  responsePrefixContextProvider: () => ResponsePrefixContext;
+  onModelSelected: (ctx: ModelSelectionContext) => void;
+};
+
+export type ReplyPrefixOptions = Pick<
+  ReplyPrefixContextBundle,
+  "responsePrefix" | "responsePrefixContextProvider" | "onModelSelected"
+>;
+
+export function createReplyPrefixContext(params: {
+  cfg: OmnipolymathConfig;
+  agentId: string;
+  channel?: string;
+  accountId?: string;
+}): ReplyPrefixContextBundle {
+  const { cfg, agentId } = params;
+  const prefixContext: ResponsePrefixContext = {
+    identityName: normalizeOptionalString(resolveAgentIdentity(cfg, agentId)?.name),
+  };
+
+  const onModelSelected = (ctx: ModelSelectionContext) => {
+    // Mutate the object directly instead of reassigning to ensure closures see updates.
+    Object.assign(
+      prefixContext,
+      resolveModelResponsePrefixContext({ ...ctx, thinkLevel: ctx.thinkLevel ?? "off" }),
+    );
+  };
+
+  return {
+    prefixContext,
+    responsePrefix: resolveEffectiveMessagesConfig(cfg, agentId, {
+      channel: params.channel,
+      accountId: params.accountId,
+    }).responsePrefix,
+    responsePrefixContextProvider: () => prefixContext,
+    onModelSelected,
+  };
+}
+
+export function createReplyPrefixOptions(
+  params: Parameters<typeof createReplyPrefixContext>[0],
+): ReplyPrefixOptions {
+  const { prefixContext: _prefixContext, ...options } = createReplyPrefixContext(params);
+  return options;
+}

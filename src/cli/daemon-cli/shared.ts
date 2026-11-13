@@ -1,0 +1,286 @@
+import { terminalText } from "../../../packages/terminal-core/src/safe-text.js";
+import { colorize, isRich, theme } from "../../../packages/terminal-core/src/theme.js";
+import { resolveIsNixMode } from "../../config/paths.js";
+import {
+  resolveGatewayLaunchAgentLabel,
+  resolveGatewaySystemdServiceName,
+  resolveGatewayWindowsTaskName,
+} from "../../daemon/constants.js";
+import { resolveDaemonContainerContext } from "../../daemon/container-context.js";
+import { buildPlatformServiceStartHints } from "../../daemon/runtime-hints.js";
+import type { GatewayServiceInstallationDrift } from "../../daemon/service-layout.js";
+import {
+  hasGatewayServiceLauncherOverride,
+  type GatewayServiceCommandConfig,
+} from "../../daemon/service-types.js";
+import { hasSudoToRootSystemdUserManagerMismatch } from "../../daemon/systemd-user-transport.js";
+import { formatGatewayCrash, type GatewayCrashRecord } from "../../infra/gateway-crash.js";
+import { resolveGatewayServiceMutationError } from "../../infra/gateway-supervision.js";
+import { parseTcpPort } from "../../infra/tcp-port.js";
+import { defaultRuntime } from "../../runtime.js";
+import { formatCliCommand } from "../command-format.js";
+import { ExpectedCliError } from "../expected-cli-error.js";
+import { createDaemonActionContext } from "./response.js";
+export { formatRuntimeStatus } from "../../daemon/runtime-format.js";
+
+export function createDaemonInstallActionContext(
+  jsonFlag: unknown,
+  definitionBackup?: Parameters<typeof createDaemonActionContext>[0]["definitionBackup"],
+) {
+  const json = Boolean(jsonFlag);
+  const context = createDaemonActionContext({ action: "install", json, definitionBackup });
+  return {
+    json,
+    ...context,
+    warn: (message: string) => {
+      if (json) {
+        context.warnings.push(message);
+      } else {
+        defaultRuntime.log(message);
+      }
+    },
+  };
+}
+
+/** Resolve installation refusal before service or state inspection. */
+export function resolveDaemonInstallBlockMessage(
+  service: "gateway" | "node",
+  env: NodeJS.ProcessEnv = process.env,
+): string | undefined {
+  if (resolveIsNixMode(env)) {
+    return "Nix mode detected; service install is disabled.";
+  }
+  // Node installation shares the Nix gate, not Gateway ownership policy.
+  if (service === "node") {
+    return undefined;
+  }
+  const mutationError = resolveGatewayServiceMutationError(
+    "install or rewrite the gateway service",
+    env,
+  );
+  if (mutationError) {
+    return `Gateway install blocked: ${String(mutationError)}`;
+  }
+  if (process.platform === "linux" && hasSudoToRootSystemdUserManagerMismatch(env)) {
+    return (
+      "Gateway install blocked: Refusing a sudo-to-root systemd user-service install because " +
+      "Omnipolymath state and service files would belong to root while systemctl targets the " +
+      "invoking user's manager. Rerun the same command without sudo. If [unsafe-permissions] " +
+      "blocked the non-sudo command, repair the reported directory with `chmod go-w <path>` " +
+      "and retry; do not use sudo or --force to bypass it. " +
+      "See https://omnipolymath.vercel.app/docs/cli/gateway#install-identity."
+    );
+  }
+  return undefined;
+}
+
+/** Service-policy refusals carry their own remedy; show it instead of the generic CLI failure. */
+export function assertGatewayServiceActionAllowed(
+  label: "start" | "stop" | "uninstall" | "restart",
+  action: string,
+): void {
+  const refusal = resolveGatewayServiceMutationError(action);
+  if (refusal) {
+    throw new ExpectedCliError({
+      message: refusal.message,
+      humanOutput: `Gateway ${label} blocked: ${refusal.message}`,
+      machineOutput: refusal.message,
+      cause: refusal,
+    });
+  }
+}
+
+export function formatDaemonServiceInstallCommand(env: NodeJS.ProcessEnv, port?: number): string {
+  const servicePort = port ?? parseTcpPort(env.OMNIPOLYMATH_GATEWAY_PORT);
+  return formatCliCommand(
+    `omnipolymath gateway install --force${servicePort ? ` --port ${servicePort}` : ""}`,
+    env,
+  );
+}
+
+export function resolveDaemonServiceInstallGuidance(
+  targetRole?: "target" | "diagnostic-only",
+  env: NodeJS.ProcessEnv = process.env,
+  service?: { stopped?: boolean; port?: number; command?: GatewayServiceCommandConfig | null },
+): string | undefined {
+  if (targetRole === "diagnostic-only") {
+    return undefined;
+  }
+  const block = resolveDaemonInstallBlockMessage("gateway", env);
+  if (block) {
+    return block;
+  }
+  if (hasGatewayServiceLauncherOverride(service?.command)) {
+    return "An operator-owned launcher override prevents automatic repair. Run `omnipolymath gateway status --deep`, then update or remove the override. On systemd, inspect it with systemctl cat (--user for user services) and reload the manager after editing. Reinstalling alone will not fix it.";
+  }
+  return service?.stopped
+    ? `Stopped service definitions are preserved; run \`${formatDaemonServiceInstallCommand(env, service.port)}\` from the active CLI. Installation may start the service.`
+    : `Run \`${formatCliCommand("omnipolymath doctor --fix", env)}\` or \`${formatDaemonServiceInstallCommand(env, service?.port)}\` from the active CLI.`;
+}
+
+export function formatGatewayServiceInstallationDrift(
+  drift: GatewayServiceInstallationDrift,
+  env: NodeJS.ProcessEnv = process.env,
+  service?: { stopped?: boolean; port?: number; command?: GatewayServiceCommandConfig | null },
+): string {
+  const { serviceRoot, serviceVersion, activeRoot, activeVersion } = drift;
+  const recovery = hasGatewayServiceLauncherOverride(service?.command)
+    ? `Use the CLI from ${serviceRoot} to check or repair this Gateway.`
+    : `Run \`${formatCliCommand("omnipolymath update", env)}\` or use the CLI from ${serviceRoot}.`;
+  const facts = `CLI ${activeVersion ?? "version unknown"} at ${activeRoot} differs from the Gateway service's ${serviceVersion ?? "version unknown"} at ${serviceRoot}. ${recovery}`;
+  const guidance = resolveDaemonServiceInstallGuidance(undefined, env, service);
+  return guidance ? `${facts} ${guidance}` : facts;
+}
+
+/** Shared by update progress and JSON/text dry-run notes. */
+export function formatGatewayServiceRootRedirect(redirect: {
+  root: string;
+  previousRoot: string;
+}): string {
+  return `Only the Gateway installation at ${redirect.root} will be updated. Your CLI at ${redirect.previousRoot} will remain unchanged and may become incompatible with shared config and plugins. Use the CLI from ${redirect.root} after updating.`;
+}
+
+export type GatewayCrashHistory = {
+  recentCrashes?: readonly GatewayCrashRecord[];
+  crashHistoryError?: string;
+};
+
+export function formatGatewayCrashHistory(history?: GatewayCrashHistory): string[] {
+  return history?.crashHistoryError
+    ? [terminalText`Recent Gateway crashes unavailable: ${history.crashHistoryError}`]
+    : (history?.recentCrashes ?? []).map(
+        (crash) =>
+          terminalText`Previous Gateway run ended unexpectedly (${new Date(crash.detectedAtMs).toISOString()}): ${formatGatewayCrash(crash)}`,
+      );
+}
+
+export function createCliStatusTextStyles() {
+  const rich = isRich();
+  return {
+    rich,
+    label: (value: string) => colorize(rich, theme.muted, value),
+    accent: (value: string) => colorize(rich, theme.accent, value),
+    infoText: (value: string) => colorize(rich, theme.info, value),
+    okText: (value: string) => colorize(rich, theme.success, value),
+    warnText: (value: string) => colorize(rich, theme.warn, value),
+    errorText: (value: string) => colorize(rich, theme.error, value),
+  };
+}
+
+export function resolveRuntimeStatusColor(status: string | undefined): (value: string) => string {
+  const runtimeStatus = status ?? "unknown";
+  return runtimeStatus === "running"
+    ? theme.success
+    : runtimeStatus === "stopped"
+      ? theme.error
+      : runtimeStatus === "unknown"
+        ? theme.muted
+        : theme.warn;
+}
+
+const SAFE_DAEMON_ENV_KEYS = [
+  "OMNIPOLYMATH_PROFILE",
+  "OMNIPOLYMATH_STATE_DIR",
+  "OMNIPOLYMATH_CONFIG_PATH",
+  "OMNIPOLYMATH_GATEWAY_PORT",
+  "OMNIPOLYMATH_CONFIG_READONLY",
+  "OMNIPOLYMATH_NIX_MODE",
+];
+
+function filterDaemonEnv(env: Record<string, string> | undefined): Record<string, string> {
+  if (!env) {
+    return {};
+  }
+  const filtered: Record<string, string> = {};
+  for (const key of SAFE_DAEMON_ENV_KEYS) {
+    const value = env[key];
+    if (!value?.trim()) {
+      continue;
+    }
+    filtered[key] = value.trim();
+  }
+  return filtered;
+}
+
+export function projectDaemonServiceForJson<
+  T extends { command?: GatewayServiceCommandConfig | null },
+>(service: T, { includeDefinitionPaths }: { includeDefinitionPaths: boolean }) {
+  const command = service.command;
+  if (!command) {
+    return service;
+  }
+  const environment = filterDaemonEnv(command.environment);
+  const publicCommand = {
+    ...command,
+    environment: Object.keys(environment).length > 0 ? environment : undefined,
+  };
+  delete publicCommand.managedDefinition;
+  delete publicCommand.managedOverrides;
+  // Node status retains definition paths in its shipped JSON contract.
+  if (!includeDefinitionPaths) {
+    delete publicCommand.definitionPaths;
+  }
+  return { ...service, command: publicCommand };
+}
+
+export function safeDaemonEnv(env: Record<string, string> | undefined): string[] {
+  return Object.entries(filterDaemonEnv(env)).map(([key, value]) => `${key}=${value}`);
+}
+
+export function resolveLaunchdInspectionWarnings(service: {
+  foreignLaunchdInspectionError?: string;
+  staleLaunchdInspectionError?: string;
+}): string[] {
+  const warnings: string[] = [];
+  if (service.foreignLaunchdInspectionError) {
+    warnings.push(
+      terminalText`Could not inspect foreign launchd jobs: ${service.foreignLaunchdInspectionError}`,
+    );
+  }
+  if (service.staleLaunchdInspectionError) {
+    warnings.push(
+      terminalText`Could not inspect stale Omnipolymath updater launchd jobs: ${service.staleLaunchdInspectionError}; interrupted-update leftovers were NOT checked. Check launchctl availability and rerun ${formatCliCommand("omnipolymath doctor")}.`,
+    );
+  }
+  return warnings;
+}
+
+export function normalizeListenerAddress(raw: string): string {
+  return raw
+    .trim()
+    .replace(/^TCP\s+/i, "")
+    .replace(/\s+\(LISTEN\)\s*$/i, "")
+    .trim();
+}
+
+export function renderGatewayServiceStartHints(env: NodeJS.ProcessEnv = process.env): string[] {
+  const container = resolveDaemonContainerContext(env);
+  if (container) {
+    return [`Restart the container or the service that manages it for ${container}.`];
+  }
+  const profile = env.OMNIPOLYMATH_PROFILE;
+  const installHint =
+    resolveDaemonInstallBlockMessage("gateway", env) ??
+    formatCliCommand("omnipolymath gateway install", env);
+  return buildPlatformServiceStartHints({
+    installHint,
+    startCommand: formatCliCommand("omnipolymath gateway start", env),
+    launchAgentPlistPath: `~/Library/LaunchAgents/${resolveGatewayLaunchAgentLabel(profile)}.plist`,
+    systemdServiceName: resolveGatewaySystemdServiceName(profile),
+    windowsTaskName: resolveGatewayWindowsTaskName(profile),
+  });
+}
+
+export function filterContainerGenericHints(
+  hints: string[],
+  env: NodeJS.ProcessEnv = process.env,
+): string[] {
+  if (!resolveDaemonContainerContext(env)) {
+    return hints;
+  }
+  return hints.filter(
+    (hint) =>
+      !hint.includes("If you're in a container, run the gateway in the foreground instead of") &&
+      !hint.includes("systemd user services are unavailable; install/enable systemd"),
+  );
+}

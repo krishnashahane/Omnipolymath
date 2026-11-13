@@ -1,0 +1,16 @@
+import { normalizeOptionalString } from "@omnipolymath/normalization-core/string-coerce";
+
+export function resolveThreadBindingConversationIdFromBindingId(params: {
+  accountId: string;
+  bindingId?: string;
+}): string | undefined {
+  const bindingId = normalizeOptionalString(params.bindingId);
+  if (!bindingId) {
+    return undefined;
+  }
+  const prefix = `${params.accountId}:`;
+  if (!bindingId.startsWith(prefix)) {
+    return undefined;
+  }
+  return normalizeOptionalString(bindingId.slice(prefix.length));
+}
