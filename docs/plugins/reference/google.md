@@ -1,0 +1,28 @@
+---
+summary: "Adds Google, Google Gemini CLI, Google Vertex model provider support to Omnipolymath."
+read_when:
+  - You are installing, configuring, or auditing the google plugin
+title: "Google plugin reference"
+---
+
+<!-- Generated file. Do not edit by hand.
+Run `pnpm plugins:inventory:gen` to rebuild it. Hand-written text survives only
+between the omnipolymath-plugin-reference:manual-start and
+omnipolymath-plugin-reference:manual-end comment markers. -->
+
+Adds Google, Google Gemini CLI, Google Vertex model provider support to Omnipolymath.
+
+## Distribution
+
+- Package: `@omnipolymath/google-plugin`
+- Install route: included in Omnipolymath
+
+## Surface
+
+- Providers: `google`, `google-gemini-cli`, `google-vertex`
+- Contracts: `decisionProviders`, `embeddingProviders`, `imageGenerationProviders`, `mediaUnderstandingProviders`, `musicGenerationProviders`, `realtimeVoiceProviders`, `speechProviders`, `videoGenerationProviders`, `webSearchProviders`
+
+## Related docs
+
+- [google](/providers/google)
+- [google-vertex](/providers/google-vertex)

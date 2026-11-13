@@ -1,0 +1,58 @@
+---
+title: "OpenProse removal and migration"
+sidebarTitle: "OpenProse migration"
+summary: "Omnipolymath no longer bundles OpenProse or the /prose command. Move to the maintained upstream Agent Skill and clean stale plugin configuration."
+read_when:
+  - You used the bundled OpenProse plugin or /prose command
+  - You need to clean OpenProse configuration after upgrading Omnipolymath
+  - You want to install the maintained upstream OpenProse Agent Skill
+---
+
+Omnipolymath no longer bundles the OpenProse plugin or its `/prose` command. The
+v2026.8.1 release removed both. OpenProse
+continues as a maintained upstream Agent Skill. Existing `.prose` source files
+remain yours; the removed plugin did not store state in Omnipolymath's SQLite database.
+
+## Migrate
+
+1. Clean stale bundled-plugin configuration:
+
+   ```bash
+   omnipolymath doctor --fix
+   ```
+
+   Doctor removes `open-prose` from plugin allowlists, denylists, and plugin
+   entries. No Omnipolymath database migration is required.
+
+2. From your workspace root, install the upstream skill:
+
+   ```bash
+   npx skills add openprose/prose --skill open-prose --agent codex --copy -y
+   ```
+
+   `skills` is a third-party CLI from npm, not an Omnipolymath command. Keep
+   `--agent codex`: that value writes the shared `.agents/skills` layout, which
+   Omnipolymath reads even though the flag names another agent.
+
+   The command copies the skill to `.agents/skills/open-prose`, which Omnipolymath loads as
+   a project Agent Skill. It does not restore the removed bundled plugin or the
+   `/prose` command.
+
+3. If you are upgrading older OpenProse source, start a new Omnipolymath agent
+   session in the workspace and send:
+
+   ```text
+   prose upgrade --dry-run
+   ```
+
+   This is an Agent Skill command, not a shell executable. Review the plan, then
+   send `prose upgrade` in the same session. The upstream upgrade does not
+   migrate old runtime ledgers or state, so retain your source files and begin
+   with a clean state directory.
+
+## Related
+
+- [Skills](/tools/skills)
+- [Slash commands](/tools/slash-commands)
+- [Lobster workflows](/tools/lobster)
+- [OpenProse upstream](https://github.com/openprose/prose)
