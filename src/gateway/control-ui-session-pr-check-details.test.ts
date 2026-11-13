@@ -16,12 +16,12 @@ const target = {
   number: 103469,
   headSha,
 };
-const base = "https://api.github.com/repos/krishnashahane/Omnipolymath";
+const base = "https://api.github.com/repos/omnipolymath/omnipolymath";
 const chip: ControlUiSessionPullRequest = {
   ...target,
   branch: "feature",
   title: "CI details",
-  url: "https://github.com/krishnashahane/Omnipolymath/pull/103469",
+  url: "https://github.com/omnipolymath/omnipolymath/pull/103469",
   state: "open",
 };
 let scope = 0;
