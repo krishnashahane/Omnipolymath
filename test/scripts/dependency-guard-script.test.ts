@@ -27,7 +27,7 @@ const headSha = "a".repeat(40);
 const staleSha = "b".repeat(40);
 const rolloutSha = "c".repeat(40);
 const mergeBaseSha = "d".repeat(40);
-const repoPath = "/repos/omnipolymath/omnipolymath";
+const repoPath = "/repos/krishnashahane/Omnipolymath";
 const comparisonPath = `${repoPath}/compare/${staleSha}...${headSha}`;
 const graphPath = `${repoPath}/dependency-graph/compare/${staleSha}...${headSha}`;
 const statusPath = `${repoPath}/commits/${headSha}/statuses`;
@@ -142,7 +142,7 @@ function runDependencyGuard(
       routes: {
         [`GET ${pullPath}`]: pullRequest,
         [`GET ${statusPath}`]: [],
-        "GET /repos/omnipolymath/omnipolymath/pulls/152415": {
+        "GET /repos/krishnashahane/Omnipolymath/pulls/152415": {
           number: 152415,
           state: "closed",
           merged: true,
@@ -223,7 +223,7 @@ describe("dependency guard script", () => {
           creator: { login: "github-actions[bot]", type: "Bot" },
         },
       ],
-      "GET /repos/omnipolymath/omnipolymath/pulls/8": { ...pullRequest, number: 8 },
+      "GET /repos/krishnashahane/Omnipolymath/pulls/8": { ...pullRequest, number: 8 },
     });
     expect(result.status).toBe(1);
     expect(result.statuses.map((call) => call.body?.state)).toEqual(["pending", "failure"]);
@@ -247,7 +247,7 @@ describe("dependency guard script", () => {
     for (const [role, allowed, overrides] of cases) {
       const author = overrides === null;
       const result = runDependencyGuard({
-        [`GET /repos/omnipolymath/omnipolymath/collaborators/${author ? "contributor" : "maintainer"}/permission`]:
+        [`GET /repos/krishnashahane/Omnipolymath/collaborators/${author ? "contributor" : "maintainer"}/permission`]:
           { role_name: role },
         [`GET ${issuePath}/comments`]: author
           ? []
@@ -748,7 +748,7 @@ describe("dependency guard script", () => {
     expect(commit).toEqual({ sha: staleSha, mergeBaseSha });
     expect(calls.map((call) => `${call.api}:${call.path}`)).toEqual([
       `base:${comparisonPath}?per_page=1&page=2`,
-      `base:/repos/omnipolymath/omnipolymath/contents/pnpm-lock.yaml?ref=${mergeBaseSha}`,
+      `base:/repos/krishnashahane/Omnipolymath/contents/pnpm-lock.yaml?ref=${mergeBaseSha}`,
       "write:graphql",
     ]);
     expect(calls[2]?.variables).toMatchObject({
@@ -806,10 +806,10 @@ describe("dependency guard script", () => {
       const request = githubApi("token", {
         responseMaxBodyBytes: limit,
         fetchImpl: async () => response,
-      }).request("/repos/omnipolymath/omnipolymath");
+      }).request("/repos/krishnashahane/Omnipolymath");
       if (kind === "error-stream") {
         await expect(request).rejects.toMatchObject({
-          message: `GitHub API GET /repos/omnipolymath/omnipolymath failed: 403 Forbidden: GitHub error response body exceeded ${limit} bytes`,
+          message: `GitHub API GET /repos/krishnashahane/Omnipolymath failed: 403 Forbidden: GitHub error response body exceeded ${limit} bytes`,
           status: 403,
         });
       } else {
@@ -851,7 +851,7 @@ describe("dependency guard script", () => {
       const request = githubApi("token", {
         fetchImpl,
         retryDelaysMs: phase === "budget" ? [0, 0, 0] : [0],
-      }).request(phase === "http" ? "/repos/omnipolymath/omnipolymath/pulls/1/files" : pullPath, {
+      }).request(phase === "http" ? "/repos/krishnashahane/Omnipolymath/pulls/1/files" : pullPath, {
         method,
       });
       if (phase === "budget") {
@@ -909,7 +909,7 @@ describe("dependency guard script", () => {
         abort || method === "GET"
           ? pullPath
           : phase === "http"
-            ? "/repos/omnipolymath/omnipolymath/issues/1/comments"
+            ? "/repos/krishnashahane/Omnipolymath/issues/1/comments"
             : issuePath;
       const request = githubApi("token", {
         fetchImpl,
@@ -968,7 +968,7 @@ describe("dependency guard script", () => {
           }
           throw error;
         });
-        const requestPath = backoff ? pullPath : "/repos/omnipolymath/omnipolymath";
+        const requestPath = backoff ? pullPath : "/repos/krishnashahane/Omnipolymath";
         const request = githubApi("token", {
           fetchImpl,
           timeoutMs: 5,

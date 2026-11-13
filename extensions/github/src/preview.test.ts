@@ -89,7 +89,7 @@ it("keeps different commit revisions separate", async () => {
     repo: "omnipolymath",
     sha: "abcdef0123456789",
   } as const;
-  const url = "https://api.github.com/repos/krishnashahane/Omnipolymath/commits/abcdef0123456789?per_page=1";
+  const url = "https://api.github.com/repos/omnipolymath/omnipolymath/commits/abcdef0123456789?per_page=1";
   const fetchMock = responses(
     githubJson({
       sha: "abcdef0123456789abcdef0123456789abcdef01",

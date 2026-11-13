@@ -43,7 +43,7 @@ const chip = (overrides: Record<string, unknown> = {}) => ({
   branch: context.branch,
   headSha: "a".repeat(40),
   title: "fix(macos): tighten the link-browser tab header",
-  url: "https://github.com/krishnashahane/Omnipolymath/pull/103469",
+  url: "https://github.com/omnipolymath/omnipolymath/pull/103469",
   state: "open",
   ...overrides,
 });
@@ -97,7 +97,7 @@ describe("parseGitHubRemoteUrl", () => {
     ["https://github.com/acme/private-repo.git", "ghe.example.test", null],
     ["https://gitlab.com/omnipolymath/omnipolymath.git", undefined, null],
     ["git@github.com:omnipolymath", undefined, null],
-    ["https://github.com/krishnashahane/Omnipolymath/extra", undefined, null],
+    ["https://github.com/omnipolymath/omnipolymath/extra", undefined, null],
     ["/local/path/repo.git", undefined, null],
   ] as const)("resolves GitHub remote %s against host %s", (remote, host, expected) => {
     expect(parseGitHubRemoteUrl(remote, host)).toEqual(expected);
@@ -125,7 +125,7 @@ describe("loadControlUiSessionPullRequests", () => {
   const forkPull = (number: number, head = { owner: forkOwner, repo: "omnipolymath" }) =>
     pullListItem({
       number,
-      html_url: `https://github.com/krishnashahane/Omnipolymath/pull/${number}`,
+      html_url: `https://github.com/omnipolymath/omnipolymath/pull/${number}`,
       head: {
         sha: "b".repeat(40),
         ref: context.branch,
@@ -185,7 +185,7 @@ describe("loadControlUiSessionPullRequests", () => {
           deletions: 3,
           changedFiles: 2,
           checks: { state: "passing", passed: 1, failed: 0, skipped: 1, running: 0 },
-          checksUrl: "https://github.com/krishnashahane/Omnipolymath/pull/103469/checks",
+          checksUrl: "https://github.com/omnipolymath/omnipolymath/pull/103469/checks",
         }),
       ],
       rateLimited: false,
