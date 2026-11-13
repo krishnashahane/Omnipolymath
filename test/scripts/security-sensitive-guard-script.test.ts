@@ -107,8 +107,8 @@ function runGuard(options: Options = {}) {
     "GET /repos/omnipolymath/omnipolymath/pulls/152415": rollout,
     [`GET ${pullPath}/files`]: files,
     [`GET ${pullPath}/reviews`]: options.reviews ?? [],
-    "GET /repos/omnipolymath/omnipolymath/issues/7/comments": options.comments ?? [notice],
-    "GET /repos/omnipolymath/omnipolymath/issues/7/labels": [],
+    "GET /repos/krishnashahane/Omnipolymath/issues/7/comments": options.comments ?? [notice],
+    "GET /repos/krishnashahane/Omnipolymath/issues/7/labels": [],
     "GET /repos/omnipolymath/omnipolymath/collaborators/contributor/permission": {
       role_name: options.authorRole ?? "read",
     },
@@ -213,8 +213,8 @@ describe("security-sensitive guard entry point", () => {
       authorRole: "maintain",
       comments: [],
       routes: {
-        "POST /repos/omnipolymath/omnipolymath/issues/7/comments": { httpError: 403 },
-        "POST /repos/omnipolymath/omnipolymath/issues/7/labels": { httpError: 403 },
+        "POST /repos/krishnashahane/Omnipolymath/issues/7/comments": { httpError: 403 },
+        "POST /repos/krishnashahane/Omnipolymath/issues/7/labels": { httpError: 403 },
       },
     });
     expect(result.status, result.stderr).toBe(0);

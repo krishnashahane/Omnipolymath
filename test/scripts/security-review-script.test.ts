@@ -118,8 +118,8 @@ function evaluate(
         [`GET /repos/omnipolymath/omnipolymath/commits/${head}/statuses`]: [],
         [`GET ${pullPath}/files`]: files,
         "GET /repos/omnipolymath/omnipolymath/pulls/152415": rollout,
-        "GET /repos/omnipolymath/omnipolymath/issues/7/comments": [],
-        "GET /repos/omnipolymath/omnipolymath/issues/7/labels": [],
+        "GET /repos/krishnashahane/Omnipolymath/issues/7/comments": [],
+        "GET /repos/krishnashahane/Omnipolymath/issues/7/labels": [],
         [rolePath]: { role_name: "maintain" },
         [runsPath]: { total_count: 1, workflow_runs: [run] },
         [jobsPath]: jobs,
@@ -276,7 +276,7 @@ describe("combined security review entry point", () => {
         result.requests.filter(
           (entry) =>
             entry.method === "GET" &&
-            entry.path === `/repos/omnipolymath/omnipolymath/issues/7/${inventory}`,
+            entry.path === `/repos/krishnashahane/Omnipolymath/issues/7/${inventory}`,
         ),
       ).toHaveLength(1);
     }
@@ -424,7 +424,7 @@ describe("combined security review entry point", () => {
         [`GET /repos/omnipolymath/omnipolymath/contents/pnpm-lock.yaml`]: lockfileContents,
         "POST /graphql": response,
         ...(noticeFailure
-          ? { "POST /repos/omnipolymath/omnipolymath/issues/7/comments": { httpError: 500 } }
+          ? { "POST /repos/krishnashahane/Omnipolymath/issues/7/comments": { httpError: 500 } }
           : {}),
       },
       "autoscrub",
@@ -436,7 +436,7 @@ describe("combined security review entry point", () => {
   });
 
   it("does not replay a rejected notice write when a sibling read later times out", () => {
-    const commentPath = "/repos/omnipolymath/omnipolymath/issues/7/comments";
+    const commentPath = "/repos/krishnashahane/Omnipolymath/issues/7/comments";
     const result = evaluate({
       [`POST ${commentPath}`]: { httpError: 400 },
       [rolePath]: {
@@ -454,7 +454,7 @@ describe("combined security review entry point", () => {
 
   it.each([
     { name: "status", route: statusPath },
-    { name: "comment", route: "POST /repos/omnipolymath/omnipolymath/issues/7/comments" },
+    { name: "comment", route: "POST /repos/krishnashahane/Omnipolymath/issues/7/comments" },
   ])("does not restart evaluation after an uncertain $name write deadline", ({ route }) => {
     const result = evaluate({
       [`GET ${pullPath}`]: { ...pr, changed_files: 1 },
@@ -722,7 +722,7 @@ describe("combined security review entry point", () => {
   ])(
     "does not restart evaluation for a rejected comment publication: $name",
     ({ statusReplies }) => {
-      const commentPath = "/repos/omnipolymath/omnipolymath/issues/7/comments";
+      const commentPath = "/repos/krishnashahane/Omnipolymath/issues/7/comments";
       const result = evaluate({
         [statusPath]: { responses: statusReplies },
         [`GET ${pullPath}`]: { ...pr, changed_files: 1 },
@@ -739,7 +739,7 @@ describe("combined security review entry point", () => {
     { name: "dependency", file: files[1] },
     { name: "security-sensitive", file: files[0] },
   ])("recovers a failed $name notice without creating a duplicate", ({ file }) => {
-    const commentPath = "/repos/omnipolymath/omnipolymath/issues/7/comments";
+    const commentPath = "/repos/krishnashahane/Omnipolymath/issues/7/comments";
     for (const accepted of [false, true]) {
       const result = evaluate({
         [`GET ${pullPath}`]: { ...pr, changed_files: 1 },
@@ -759,14 +759,14 @@ describe("combined security review entry point", () => {
       expect(commentWrite).toBeGreaterThan(commentRead);
       expect(afterWait[commentWrite]).toMatchObject({
         method: accepted ? "PATCH" : "POST",
-        path: accepted ? "/repos/omnipolymath/omnipolymath/issues/comments/321" : commentPath,
+        path: accepted ? "/repos/krishnashahane/Omnipolymath/issues/comments/321" : commentPath,
       });
       expect(requestsFor(result, `POST ${commentPath}`)).toHaveLength(accepted ? 1 : 2);
     }
   });
 
   it("rereads author authority while recovering an accepted notice write", () => {
-    const commentPath = "/repos/omnipolymath/omnipolymath/issues/7/comments";
+    const commentPath = "/repos/krishnashahane/Omnipolymath/issues/7/comments";
     const result = evaluate({
       [`GET ${pullPath}`]: { ...pr, changed_files: 1 },
       [`GET ${pullPath}/files`]: [files[0]],
@@ -786,7 +786,7 @@ describe("combined security review entry point", () => {
 
   it("recovers rate-limited notice writes instead of treating them as missing permissions", () => {
     const result = evaluate({
-      "POST /repos/omnipolymath/omnipolymath/issues/7/labels": {
+      "POST /repos/krishnashahane/Omnipolymath/issues/7/labels": {
         responses: [{ httpError: 403, headers: { "retry-after": "60" } }, {}],
       },
     });
@@ -1029,7 +1029,7 @@ describe("combined security review entry point", () => {
         [rolePath]: { role_name: "read" },
         ...(kind === "notice"
           ? {
-              "POST /repos/omnipolymath/omnipolymath/issues/7/comments": {
+              "POST /repos/krishnashahane/Omnipolymath/issues/7/comments": {
                 responses: [{ httpError: 500, recordCommentBeforeError: true }, {}],
               },
             }
@@ -1488,7 +1488,7 @@ describe("combined security review entry point", () => {
     const approved = evaluate({
       [rolePath]: { role_name: "write" },
       "GET /repos/omnipolymath/omnipolymath/collaborators/reviewer/permission": { role_name: "maintain" },
-      "GET /repos/omnipolymath/omnipolymath/issues/7/comments": [
+      "GET /repos/krishnashahane/Omnipolymath/issues/7/comments": [
         ...notices.map((entry, index) => ({
           id: index + 1,
           body: entry.body?.body,

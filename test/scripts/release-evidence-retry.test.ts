@@ -238,7 +238,7 @@ describe("release evidence API reads", () => {
       ["api", "repos/omnipolymath/omnipolymath/actions/runs/42/rerun", "--method", "POST"],
       "HTTP 502",
     ],
-    ["implicit POST", ["api", "repos/omnipolymath/omnipolymath/issues", "-f", "title=test"], "HTTP 502"],
+    ["implicit POST", ["api", "repos/krishnashahane/Omnipolymath/issues", "-f", "title=test"], "HTTP 502"],
     ["GraphQL", ["api", "graphql"], "HTTP 502"],
     ["forbidden", ["api", "repos/omnipolymath/omnipolymath/actions/runs/42"], "HTTP 403"],
     ["rate limited", ["api", "repos/omnipolymath/omnipolymath/actions/runs/42"], "HTTP 429"],
