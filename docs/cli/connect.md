@@ -1,0 +1,295 @@
+---
+summary: "Connect a device to an Omnipolymath Gateway with one pasted command"
+read_when:
+  - Pairing a new headless node with a Gateway
+  - Installing a node host from a join URL or setup code
+title: "Connect"
+---
+
+# `omnipolymath connect`
+
+Connect the current machine to an Omnipolymath Gateway as a headless node. The
+command accepts an Omnipolymath ID node invitation or a short-lived Gateway bootstrap
+credential, saves the connection target, and runs the same runtime as
+[`omnipolymath node run`](/cli/node).
+
+## Omnipolymath ID invitations
+
+An `omnipolymath-node://` link from the Gateway owner's browser uses the same flow as
+[`omnipolymath node join`](/cli/node#join-with-omnipolymath-id):
+
+```bash
+omnipolymath connect "omnipolymath-node://join#<invitation>" \
+  --discovery-url https://discovery.example --display-name "Build Node"
+```
+
+The node needs no account sign-in or Gateway token. It generates a private node
+key locally and waits for explicit owner approval. Compare **all six digits**
+in the terminal and browser dialog, review the displayed commands and
+capabilities, then explicitly click **Approve**. If the codes differ, deny the
+request. Merely opening the approval dialog does not approve the node.
+
+Discovery is separate from the link. `--discovery-url` overrides the saved
+Discovery origin; when none is saved, this flag is required because there is no
+default origin. Never substitute the claw hostname or relay URL. The origin must
+use HTTPS (HTTP only for localhost testbeds), without credentials, path, query,
+or fragment. The selected origin is saved with the verified target.
+
+After approval, the node runs in the foreground. Add `--service` to install and
+run a user service instead. `--display-name`, `--commands`, and `--all-commands`
+are forwarded to enrollment. `--ephemeral` and `--session-host` are not supported
+for these invitations and produce an error instead of being ignored.
+
+Treat the full quoted link as a secret. The locally generated private key is
+stored at `$OMNIPOLYMATH_STATE_DIR/node-omnipolymath-id/endpoint.key` with mode `0600`,
+separately from the saved public target. Later connections use that key and the
+saved target, not the single-use invitation; resume with `omnipolymath node run` or
+the installed service.
+
+The following Gateway join-code instructions describe the other accepted target
+forms, not Omnipolymath ID invitations.
+
+## Create a join command
+
+On the Gateway’s computer, use an admin account to mint a single-use join URL:
+
+```bash
+omnipolymath devices join-code
+```
+
+The command prints the URL and a pasteable command that installs a background
+node service and enables it to run agent sessions:
+
+```bash
+npx -y omnipolymath@<gateway-version> connect https://gateway.example/j/<shortcode> --service --session-host
+```
+
+Only use session hosting on a machine you trust as shared Gateway infrastructure.
+The printed command makes that consent explicit with `--session-host`; the node
+runtime's default remains non-hosting. See [Session hosting](/nodes/session-hosting).
+For a command-only node, omit `--session-host` and keep `--service`.
+The `-y` flag skips npm's package-install confirmation, not Omnipolymath pairing or
+session-hosting consent.
+
+The Gateway chooses its own published npm version, even when you run
+`devices join-code` from a different CLI version. Source checkouts and
+unpublished builds use a resolvable matching release-channel tag when available,
+otherwise unpinned `omnipolymath`, with a note to use a matching Gateway build.
+Registry checks are bounded to two seconds; an unavailable registry also shows
+the matching-build note.
+
+Already have Omnipolymath installed? Run: `omnipolymath connect <join-url> --service --session-host`.
+This uses your installed build instead of npx; make sure it matches the Gateway.
+
+The shortcode has 128 bits of entropy, expires with the setup credential after
+about 10 minutes, and can be fetched exactly once. Mint another code if it
+expires or has already been used.
+
+## Connect in the foreground
+
+To connect without installing a service, omit `--service` and `--session-host`:
+
+```bash
+npx omnipolymath connect https://gateway.example/j/<shortcode>
+```
+
+Set the device name during enrollment when useful:
+
+```bash
+npx omnipolymath connect https://gateway.example/j/<shortcode> --display-name "Build Node"
+```
+
+The node stays in the foreground until you stop it.
+
+To expose only selected commands, pass a comma-separated list of exact command
+IDs. For a [Session Share](/plugins/session-share) node:
+
+```bash
+omnipolymath connect <join-url> \
+  --commands omnipolymath.sessions.list.v1,omnipolymath.sessions.read.v1
+```
+
+The flag is repeatable. The allowlist is durable node state and also applies
+after `--service` installation; omitting it preserves a saved list. It filters
+available commands and their required capabilities,
+and disables computer use, skills, plugin-tool publication, MCP servers, and
+worker hosting. Startup fails when no requested command is available. The
+Gateway pairing approval shows the resulting declared commands.
+
+To restore the full default surface, use `omnipolymath node run --all-commands`
+for a foreground node or `omnipolymath node install --force --all-commands` for
+an installed service. When enrolling again, use `omnipolymath connect <join-url>
+--all-commands` (add `--service` for a service). This forgets the saved allowlist;
+`--all-commands` cannot be combined with `--commands`.
+
+To let that foreground process host full worker sessions, give explicit local
+consent with `--session-host`:
+
+```bash
+npx omnipolymath connect https://gateway.example/j/<shortcode> --session-host
+```
+
+Foreground consent applies only to that process. It does not change
+`omnipolymath.json`, so the next normal node-host start remains non-hosting.
+
+## Reconnect a paired node
+
+Join URLs and setup codes are single-use, so rerunning the original
+`omnipolymath connect <join-url>` command after the node stops reports that the
+join code was not found or has expired. The node keeps its paired device token
+and Gateway endpoint in node-host state. Reconnect with
+[`omnipolymath node run`](/cli/node), repeating any process-scoped flags:
+
+```bash
+omnipolymath node run --session-host
+```
+
+Running `omnipolymath connect` without a target does not connect. When node-host
+state has a saved Gateway endpoint and a node device token, it exits with an
+error that prints the matching `omnipolymath node run` command for the flags you
+passed, to use if that pairing is still current, and the `omnipolymath connect`
+command to use with a new join URL otherwise. With `--service`, it prints
+`omnipolymath node install --force` instead, preceded by
+`omnipolymath config set nodeHost.workerRuns.enabled true` when you also passed
+`--session-host`. If the first enrollment never completed, it only points to
+a new join URL. The device token is not tied to one endpoint: after a failed
+enrollment with a different Gateway, the reconnect command can fail, so
+enroll again instead. To enroll the machine again, mint a new join URL with
+`omnipolymath devices join-code`.
+
+## Environment-managed cloud nodes
+
+Worker providers use `--ephemeral` for disposable cloud machines:
+
+```bash
+npx omnipolymath connect <setup-code> --ephemeral
+```
+
+This process hosts worker sessions even when the machine's durable node config has worker hosting disabled. It does not install a service and cannot be combined with `--service` or `--session-host`. The Gateway owns the setup identity and paired-node lifetime: provider replay resumes the persisted device token after the one-shot setup credential is consumed, and environment teardown removes the node role after releasing the cloud lease.
+
+A replayed setup code may already have expired. With `--ephemeral`, it can still
+reconnect using the saved node device token when all setup endpoints match the
+saved Gateway origin and path. The expired bootstrap credential is never sent.
+Without that saved pairing, or when the target Gateway differs, the node rejects
+the expired code even if shared Gateway credentials are available. Join URLs and
+operator-run nodes still require an unexpired setup credential.
+
+`--ephemeral` is intended for provider-managed state directories on throwaway machines, not as a shortcut for enrolling a personal device.
+
+## Install as a service
+
+Pass `--service` to redeem the bootstrap credential and install the node host as
+the platform user service:
+
+```bash
+npx omnipolymath connect https://gateway.example/j/<shortcode> --service
+```
+
+Omnipolymath completes the first authenticated connection before installing the
+service. The short-lived bootstrap token is never stored in the service command
+or node-host configuration; later starts use the durable paired-device token.
+When restarting against that saved endpoint, ambient Gateway credentials from
+the environment or a co-located Gateway's config do not override the pairing.
+For an intentional shared-credential override, use `omnipolymath node run
+--auth-from-env` or `omnipolymath node install --auth-from-env --force`; see
+[node-host authentication](/cli/node#gateway-auth-for-node-host).
+Use [`omnipolymath node status`](/cli/node#service-background) to inspect the
+installed service.
+
+When run through `npx`, service installation first installs the selected
+Omnipolymath release into `npm` under the node's state directory. The service uses
+that durable installation, not npm's temporary `_npx` cache. The installation
+output shows the package version, chosen runtime, service command, and a node
+update command:
+
+```bash
+npx -y omnipolymath@latest node install --force
+```
+
+Run it on the node machine with the same profile and state-directory settings.
+It promotes the selected release into the same prefix and rewrites the service,
+without redeeming another join URL. Use `omnipolymath@beta` or an exact version in
+place of `omnipolymath@latest` when needed. Reinstalling the same version also repairs
+missing package files. This targets the node even when a separate Gateway is
+installed on the machine.
+
+The service does not host worker sessions by default. To consent to full
+worker-session hosting, add `--session-host`:
+
+```bash
+npx omnipolymath connect https://gateway.example/j/<shortcode> --service --session-host
+```
+
+The one-shot bootstrap connection authenticates and saves the durable device
+identity without advertising worker hosting. Only after that connection
+succeeds does Omnipolymath persist `nodeHost.workerRuns.enabled=true`, preserving
+the rest of the config, and install the service. If the config write fails,
+service installation does not start. The installed service advertises worker
+hosting and exact capacity from this durable consent when it starts.
+
+## Accepted targets
+
+| Option                  | Purpose                                                                                                               |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `--commands <ids>`      | Save an exact comma-separated node command allowlist (repeatable). Applies to foreground runs and installed services. |
+| `--all-commands`        | Advertise the full default command surface and forget any saved `--commands` allowlist. Conflicts with `--commands`.  |
+| `--discovery-url <url>` | Select the Discovery API origin for an Omnipolymath ID node invitation only.                                          |
+| `--display-name <name>` | Set the node display name.                                                                                            |
+| `--service`             | Pair first, then install the node as a user service.                                                                  |
+| `--session-host`        | Consent to worker hosting. An explicit command allowlist disables hosting.                                            |
+| `--ephemeral`           | Run a provider-managed disposable worker node.                                                                        |
+| `--target-file <path>`  | Read a join target from a file and consume the handoff after a successful read.                                       |
+
+`omnipolymath connect <target>` accepts:
+
+- an `omnipolymath-node://` Omnipolymath ID node invitation;
+- an `https://<gateway>/j/<shortcode>` join URL;
+- an `oc-pair://<setup-code>` URL;
+- a bare base64url setup code.
+
+`--target-file <path>` accepts a regular file up to 64 KiB. It removes the path
+only after reading a non-empty target. If the file is empty, too large,
+unreadable, or not a regular file, Omnipolymath leaves it in place. A symlink is
+allowed; Omnipolymath reads its target, removes the symlink after a successful read,
+and keeps the backing file. The dormant installer wrapper uses this handoff to
+keep the single-use target out of child-process arguments.
+
+Gateway join URLs must use HTTPS. Plain HTTP is accepted only for loopback Gateway URLs
+such as `http://127.0.0.1/j/<shortcode>`. Direct setup codes can carry the
+Gateway TLS certificate fingerprint, which lets the node host pin a self-signed
+Gateway certificate after decoding the payload.
+
+Ctrl-C or SIGTERM stops an in-progress join HTTP lookup before entering the node
+runtime. A join code already redeemed by the Gateway remains single-use; mint a
+new code before retrying if it was consumed.
+
+The payload determines the saved host, port, TLS mode, WebSocket context path,
+and ordered fallback endpoints. Normal and foreground connections do not add
+`omnipolymath.json` keys; `--service --session-host` explicitly persists the worker
+hosting consent described above.
+
+## Revocation behavior
+
+A join code and a paired device have separate lifecycles:
+
+- Burning or expiring a join code prevents another enrollment with that code.
+- It does not disconnect or remove a node that already redeemed it.
+- To revoke a normal enrolled machine, remove its paired device with
+  [`omnipolymath devices remove <deviceId>`](/cli/devices#omnipolymath-devices-remove-%3Cdeviceid%3E).
+- Environment-managed `--ephemeral` nodes are removed automatically when their owning cloud environment is destroyed.
+
+## Troubleshooting
+
+Startup failures show the redacted top-level reason. Use `--debug` when you need
+stack traces and nested error details.
+
+If the join URL reports that it is missing or expired, mint a new one with
+`omnipolymath devices join-code`. A used code intentionally returns the same result
+as an unknown code. If this machine already redeemed it, reconnect with the
+saved pairing instead; see [Reconnect a paired node](#reconnect-a-paired-node).
+
+If an HTTPS join URL uses a certificate the local machine does not trust, use
+the direct `oc-pair://` or bare setup-code form that includes the TLS pin.
+
+See [Node](/cli/node) for service management, explicit connection flags, node
+state, and exec approval behavior.

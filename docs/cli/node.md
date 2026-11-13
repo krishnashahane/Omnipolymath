@@ -1,0 +1,563 @@
+---
+summary: "CLI reference for `omnipolymath node` (headless node host)"
+read_when:
+  - Running the headless node host
+  - Pairing a non-macOS node for system.run
+title: "Node"
+---
+
+# `omnipolymath node`
+
+Run a **headless node host** that connects to the Gateway WebSocket and exposes
+`system.run` / `system.which` on this machine by default. Use `--commands` to
+restrict the advertised surface, for example to read-only session sharing.
+
+On macOS, the menu bar app already embeds this node-host runtime into its own
+node connection and adds native Mac capabilities. Use `omnipolymath node run` on a
+Mac only when you intentionally want a headless node without the app. Running
+both creates two node identities for the same machine.
+
+## Why use a node host?
+
+Use a node host when you want agents to **run commands on other machines** in your
+network without installing a full macOS companion app there.
+
+Common use cases:
+
+- Run commands on remote Linux/Windows boxes (build servers, lab machines, NAS).
+- Keep exec **sandboxed** on the gateway, but delegate approved runs to other hosts.
+- Provide a lightweight, headless execution target for automation or CI nodes.
+
+Execution is still guarded by **exec approvals** and per-agent allowlists on the
+node host, so you can keep command access scoped and explicit.
+
+`omnipolymath node run` can publish plugin or MCP-backed tools after it connects.
+The Gateway trusts descriptors from the paired node by default, while requiring
+each descriptor's command to remain in the node's approved command surface. The
+agent sees each accepted descriptor as a normal plugin tool, but execution still
+goes through `node.invoke`, so disconnecting the node removes the tool from new
+agent runs. Gateway operators can disable publication with
+`gateway.nodes.pluginTools.enabled: false`.
+
+For declarative MCP tools, add the normal MCP server shape under
+`nodeHost.mcp.servers` in `omnipolymath.json` on the node machine, then restart the
+node host. The node declares the approval-gated `mcp.tools.call.v1` command
+family and publishes listed tools after connecting; changing the server list
+later does not require re-pairing. See
+[Node-hosted MCP servers](/nodes/mcp-and-skills#node-hosted-mcp-servers).
+
+## Browser proxy (zero-config)
+
+Node hosts automatically advertise a browser proxy if `browser.enabled` is not
+disabled on the node. This lets the agent use browser automation on that node
+without extra configuration.
+
+By default, the proxy exposes the node's normal browser profile surface. If you
+set `nodeHost.browserProxy.allowProfiles`, the proxy becomes restrictive:
+non-allowlisted profile targeting is rejected, and persistent profile
+create/delete routes are blocked through the proxy.
+
+Disable it on the node if needed:
+
+```json5
+{
+  nodeHost: {
+    browserProxy: {
+      enabled: false,
+    },
+  },
+}
+```
+
+## Join with Omnipolymath ID
+
+Use an `omnipolymath-node://` invitation from the Gateway owner's browser to enroll
+without an account on the node or a Gateway token:
+
+```bash
+omnipolymath node join "omnipolymath-node://join#<invitation>" \
+  --discovery-url https://discovery.example --display-name "Build Node"
+```
+
+Keep the full link quoted: its fragment contains a single-use secret. The node
+generates its own private key locally, submits a signed description of its name,
+platform, commands, and capabilities, and waits for approval. Compare **all six
+digits** shown in the terminal with the owner's approval dialog. The owner must
+review the advertised surface and explicitly click **Approve**. Deny the request
+if the codes differ; opening the dialog alone does not approve anything.
+
+Pairing assumes the invitation remains secret. The six-digit comparison does not
+protect against wrong-node approval when an attacker has stolen the invitation
+and can observe and control Discovery's pairing-message delivery. If the link
+is exposed, do not approve requests made with that invitation.
+
+After approval, the node verifies and saves the Omnipolymath ID target and runs in
+the foreground. Add `--service` to install and run it as a user service instead.
+The invitation is not a reconnect credential: use `omnipolymath node run` or the
+installed service for later connections. `node join` refuses a node that is
+still admitted and leaves the new invitation unused; to change its commands,
+the owner removes the node on the Access page and sends a new link.
+
+Options:
+
+- `--service`: Install and run the node host as an OS service after approval.
+- `--discovery-url <url>`: Discovery API origin, separate from the invitation.
+  An explicit value overrides the saved target's Discovery origin. There is no
+  default origin; provide this flag when none is saved. Use HTTPS (HTTP is
+  permitted only for localhost testbeds), without credentials, path, query, or
+  fragment. Omnipolymath never infers Discovery from the claw hostname or relay URL.
+- `--display-name <name>`: Set the self-reported node name shown during approval.
+- `--commands <ids>`: Select exact comma-separated command IDs (repeatable), with
+  the same restrictions as `node run`. Omitting it preserves the saved allowlist.
+- `--all-commands`: Forget the saved command allowlist and advertise the full
+  default surface. Cannot be combined with `--commands`.
+
+[`omnipolymath connect <omnipolymath-node-link>`](/cli/connect#omnipolymath-id-invitations)
+uses the same enrollment flow. Neither flow supports `--ephemeral` or
+`--session-host` for Omnipolymath ID invitations.
+
+## Run (foreground)
+
+For one-paste onboarding, use [`omnipolymath connect`](/cli/connect). It accepts an
+Omnipolymath ID invitation, a single-use Gateway join URL, or the same setup code
+forms as `--pair`, then runs this node-host runtime.
+
+```bash
+omnipolymath node run --host <gateway-host> --port 18789
+```
+
+Or paste a short-lived node setup link from the Control UI Devices page:
+
+```bash
+omnipolymath node run --pair "oc-pair://<setup-code>"
+```
+
+Stopping a foreground node also cancels startup. If termination arrives before
+the Gateway connection is ready, the node drains its prepared resources and exits.
+
+Options:
+
+- `--host <host>`: Gateway WebSocket host (default: `127.0.0.1`)
+- `--pair <code-or-url>`: Read the Gateway endpoint, bootstrap token, TLS mode,
+  and optional certificate pin from a setup code or `oc-pair://` URL. Explicit
+  gateway flags override values from `--pair`.
+- `--pair-if-needed <code-or-url>`: Use the same endpoint options as `--pair`, but
+  prefer the saved device token when present. A supervisor can restart the same
+  command after pairing. Cannot be combined with `--pair`.
+- `--port <port>`: Gateway WebSocket port (default: `18789`)
+- `--context-path <path>`: Gateway WebSocket context path (e.g. `/omnipolymath-gw`). Appended to the WebSocket URL.
+- `--tls`: Use TLS for the gateway connection
+- `--no-tls`: Force a plaintext Gateway connection even when the local Gateway config enables TLS
+- `--tls-fingerprint <sha256>`: Expected TLS certificate fingerprint (sha256)
+- `--node-id <id>`: Override the client instance ID stored in shared SQLite state (does not reset pairing)
+- `--display-name <name>`: Override the node display name
+- `--session-host`: Host worker sessions for this foreground process without changing the saved worker-hosting preference
+- `--auth-from-env`: Explicitly use environment Gateway credentials instead of the saved paired credential
+- `--commands <ids>`: Persist an exact comma-separated command allowlist (repeatable); advertise only available matches and their required capabilities. Disables computer use, skills, plugin tools, MCP servers, and worker hosting. Omitting the flag preserves the saved list.
+- `--all-commands`: Advertise the full default command surface and forget any saved `--commands` allowlist. Cannot be combined with `--commands`.
+- `--share-installed-apps`: On macOS, advertise installed applications through `device.apps`
+- `--no-share-installed-apps`: Disable installed application sharing
+
+## Gateway auth for node host
+
+`--pair` uses a 10-minute single-use bootstrap token for the first connection.
+After pairing, reconnects use the durable device credential. Administrator-minted
+bootstrap enrollment approves the device and its first declared command surface,
+including `system.run` when declared. Later command, capability, or permission
+expansion still requires `omnipolymath nodes approve`. Gateway command policy and
+the node host's [exec approvals](/tools/exec-approvals) remain separate gates.
+Local exec approvals default to `full` with `ask: "off"`; configure them before
+using a setup link if that access is too broad. `node install --pair` is
+intentionally unavailable because a short-lived bearer setup link must not be
+persisted in service arguments.
+
+For a managed foreground process, `--pair-if-needed` reuses native device-token
+storage across restarts; it does not keep a separate enrollment marker. Preserve
+the node state directory. After the setup code expires, the node can still reconnect
+when its saved identity and node token exist and every selected Gateway endpoint
+matches the saved Gateway scope. The expired bootstrap token is never sent.
+An expired setup code cannot enroll a new state directory or replace a revoked
+device token; provision a fresh code when needed. Explicit `--pair` still rejects
+expired setup codes.
+
+`omnipolymath node run` and `omnipolymath node install` use the paired device credential
+when reconnecting to the saved Gateway endpoint. Ambient credentials from
+`OMNIPOLYMATH_GATEWAY_TOKEN` / `OMNIPOLYMATH_GATEWAY_PASSWORD`, config `env.vars`,
+the state-directory `.env`, or a co-located Gateway's `gateway.auth.*` do not
+override that pairing. A paired service install does not save those ambient
+Gateway credentials in its service environment.
+
+For an intentional shared-token or password connection, use `--auth-from-env`:
+
+```bash
+omnipolymath node run --auth-from-env
+omnipolymath node install --auth-from-env --force
+```
+
+Set `OMNIPOLYMATH_GATEWAY_TOKEN` or `OMNIPOLYMATH_GATEWAY_PASSWORD` for the target
+Gateway before running these commands. The install command saves the selected
+environment credentials and the explicit flag for restarts. Reapply the flag
+when reinstalling if you want to retain this override. When this replaces an
+available paired credential, startup names the selected environment variable
+in a warning without printing its value.
+
+Without an existing pairing for the selected endpoint, normal config/env
+resolution remains available (there are no `--token`/`--password` flags):
+
+- `OMNIPOLYMATH_GATEWAY_TOKEN` / `OMNIPOLYMATH_GATEWAY_PASSWORD` are checked first.
+- Otherwise, local config fallback applies: `gateway.auth.token` / `gateway.auth.password`.
+- In local mode, node host intentionally does not inherit `gateway.remote.token` / `gateway.remote.password`.
+- If config fallback selects an unresolved `gateway.auth.token` / `gateway.auth.password` SecretRef, node authentication stops without falling back to remote credentials.
+- In `gateway.mode=remote`, remote client fields (`gateway.remote.token` / `gateway.remote.password`) are also eligible per remote precedence rules.
+- Node host auth resolution only honors `OMNIPOLYMATH_GATEWAY_*` env vars.
+- A CWD `.env` cannot supply `OMNIPOLYMATH_*` variables; those are blocked by workspace dotenv policy.
+
+The saved endpoint includes its host, port, TLS mode, and context path. Changing
+any of these restores normal config/env auth resolution. A node can therefore
+share its state directory with a local Gateway while reconnecting to a different
+paired Gateway, without sending the local Gateway's password on restart.
+
+For a Gateway behind Cloudflare Access, set `CF_ACCESS_CLIENT_ID` and
+`CF_ACCESS_CLIENT_SECRET` together before `omnipolymath connect`, `omnipolymath node
+run`, or `omnipolymath node install`. The node stores env SecretRefs under its
+current `gateway.cloudflareAccess.clientId` and `clientSecret` connection
+keys. Installed services keep the values in the managed service environment
+file, not in service arguments or inline supervisor definitions. Access
+credentials require HTTPS/WSS; plaintext HTTP/WS fails before SecretRef
+resolution while credential-free plaintext node routes remain unchanged. See
+[Gateway deployments that cannot host nodes](/nodes/node-host#gateway-deployments-that-cannot-host-nodes).
+
+For a node connecting to a plaintext `ws://` Gateway, loopback, private IP
+literals, `.local`, and Tailnet `*.ts.net` hosts are accepted. For other
+trusted private-DNS names, set `OMNIPOLYMATH_ALLOW_INSECURE_PRIVATE_WS=1`; without
+it, node startup stops and asks you to use `wss://`, an SSH tunnel, or
+Tailscale. This is a process-environment opt-in, not an `omnipolymath.json` config
+key.
+`omnipolymath node install` persists it into the supervised node service when it is
+present in the install command environment.
+
+## Service (background)
+
+Install a headless node host as a user service (launchd on macOS, systemd on
+Linux, Windows Task Scheduler on Windows).
+
+```bash
+omnipolymath node install --host <gateway-host> --port 18789
+```
+
+Options:
+
+- `--host <host>`: Gateway WebSocket host (default: `127.0.0.1`)
+- `--port <port>`: Gateway WebSocket port (default: `18789`)
+- `--context-path <path>`: Gateway WebSocket context path (e.g. `/omnipolymath-gw`). Appended to the WebSocket URL.
+- `--tls`: Use TLS for the gateway connection
+- `--no-tls`: Force a plaintext Gateway connection even when the local Gateway config enables TLS
+- `--tls-fingerprint <sha256>`: Expected TLS certificate fingerprint (sha256)
+- `--node-id <id>`: Override the client instance ID stored in shared SQLite state (does not reset pairing)
+- `--display-name <name>`: Override the node display name
+- `--commands <ids>`: Persist the command allowlist for the installed service (repeatable), with the same restrictions as `node run`.
+- `--all-commands`: Advertise the full default command surface and forget any saved `--commands` allowlist. Cannot be combined with `--commands`.
+- `--share-installed-apps`: On macOS, advertise installed applications through `device.apps`
+- `--no-share-installed-apps`: Disable installed application sharing
+- `--runtime <node|bun>`: Service runtime (default: `node`). Bun 1.4.4+ with WAL-reset-safe `node:sqlite` is an explicit opt-in; Node remains recommended.
+- `--runtime-path <path>`: Pin an absolute Node/Bun executable that passes runtime capability checks.
+- `--auth-from-env`: Persist environment Gateway credentials and select them explicitly on service restarts
+- `--force`: Reinstall/overwrite if already installed
+
+The explicit pin is saved in machine-state metadata and retained
+across restarts and forced reinstalls. Replace it with another `--runtime-path`,
+or use `omnipolymath node install --runtime node --force` without `--runtime-path`
+to return to automatic selection. An unavailable or unsupported pin fails
+instead of silently selecting another runtime. Quote paths containing spaces.
+
+Set `OMNIPOLYMATH_WRAPPER` to an executable wrapper file to use it instead of the
+selected runtime and CLI entrypoint. The wrapper receives `node run` and the
+connection arguments; it must launch Omnipolymath and forward those arguments.
+
+If installation reports a runtime check failure, check the executable and
+working directory named in the error. For example, when switching users with
+`runuser`, first change to a directory that the target user can read. A failed
+check does not mean that the installed Node version is unsupported; upgrade
+advice is reserved for missing or unsupported runtimes.
+
+> **Linux (systemd user service):** Run `sudo loginctl enable-linger <user>` after
+> install. Without lingering, `systemd --user` tears down the node service when
+> your last SSH session ends, so the node silently goes offline after logout.
+> `omnipolymath node install` prints this warning when it detects lingering is
+> disabled.
+
+Manage the service:
+
+```bash
+omnipolymath node status
+omnipolymath node start
+omnipolymath node stop
+omnipolymath node restart
+omnipolymath node uninstall
+```
+
+Use `omnipolymath node run` for a foreground node host (no service).
+To remove a saved command allowlist, run `omnipolymath node run --all-commands`
+in the foreground, or reinstall the service with
+`omnipolymath node install --force --all-commands`. The reset is durable; the
+replacement service arguments no longer carry `--commands`.
+
+Service commands accept `--json` for machine-readable output.
+`node start` and `node restart` print install hints and exit nonzero when no
+managed node service is installed; run `omnipolymath node install` first. Stopping
+an absent service remains a successful no-op.
+
+Profile node commands leave conflicting Gateway service definitions unchanged.
+On Linux, a profile's node name can match another profile's legacy Gateway name
+(for example, profile `work` uses `omnipolymath-node-work.service`). If a command
+reports that the selected service is not a node service, move the conflicting
+Gateway service to its current name before installing or managing the node.
+
+The node host retries Gateway restart and network closes in-process. If the
+Gateway reports a terminal token/password/bootstrap auth pause, the node host
+logs the close detail and exits non-zero so launchd/systemd/Task Scheduler can
+restart it with fresh config and credentials. While device pairing is pending,
+the node keeps reconnecting with exponential backoff capped at 30 seconds and
+connects automatically after approval. Startup failures, such as an expired
+setup code or an unavailable Gateway credential, print a redacted
+`[omnipolymath] Reason:` without requiring debug mode, including in service logs.
+Set `OMNIPOLYMATH_DEBUG=1` to include stack traces.
+
+## Automatic updates
+
+Long-running packaged `node run` processes and installed node services check
+hourly for updates by default. A new version is prepared in a separate node
+runtime, leaving the global CLI package and a co-located Gateway in place.
+Activation waits until commands, terminals, workers, plugin work, pending output,
+and cleanup are idle. The node then restarts with its existing identity, pairing,
+settings, and launch options. Automatic activations are at least 12 hours apart;
+there is no deadline that interrupts busy work.
+
+Disable this on the node machine with:
+
+```bash
+omnipolymath config set nodeHost.autoUpdate.enabled false
+```
+
+`update.checkOnStart: false` and `OMNIPOLYMATH_NO_AUTO_UPDATE=1` also disable node
+automatic updates. The Gateway's `update.auto.enabled` preference is separate.
+Source checkouts, native app nodes, private workers, `dev`, and
+`extended-stable` installs do not auto-apply. Releases requiring database
+migrations defer to the normal update workflow. See
+[Headless node updates](/install/updating/automatic-updates#headless-node-updates).
+
+## Pairing
+
+The first connection creates a pending device pairing request (`role: node`) on the Gateway.
+
+When the Gateway host can SSH to the node host non-interactively (same user,
+trusted host key), the pending request is approved automatically: the Gateway
+runs `omnipolymath node identity --json` on the node host over SSH and approves on
+an exact device-key match. This is on by default; see
+[SSH-verified device auto-approval](/gateway/pairing#ssh-verified-device-auto-approval-default)
+for requirements and how to disable it (`gateway.nodes.pairing.sshVerify: false`).
+
+Otherwise approve manually via:
+
+```bash
+omnipolymath devices list
+omnipolymath devices approve <deviceRequestId>
+```
+
+Device approval admits the connection; the command surface needs separate
+approval. The node keeps reconnecting while device approval is pending, with
+exponential backoff capped at 30 seconds. After approval, its next reconnect
+creates a separate command-surface request on the Gateway:
+
+```bash
+omnipolymath nodes pending
+omnipolymath nodes approve <nodeRequestId>
+omnipolymath nodes describe --node <idOrNameOrIp>
+```
+
+If an older client already reports that reconnect is paused, restart the
+installed node with `omnipolymath node restart`, or stop and rerun its foreground
+`omnipolymath node run` command once.
+
+The device and node request IDs are distinct. An initial unapproved surface has
+no effective commands. SSH-verified and bootstrap enrollment can approve the
+first surface automatically; later expansions require approval. Previously
+approved commands that remain declared and allowed stay effective while an
+expansion waits.
+
+Inspect the local node identity the Gateway verifies against:
+
+```bash
+omnipolymath node identity --json
+```
+
+It prints the device ID and public key from the `primary` row in
+`client/credentials.sqlite` and never creates the database or a new identity.
+Use `--identity node` or `--identity shareExtension` to inspect the corresponding
+native identity profile. An incomplete credential migration requires
+`omnipolymath doctor --fix` from the matching installation.
+
+On tightly controlled node networks, the Gateway operator can explicitly opt in
+to auto-approving first-time node pairing from trusted CIDRs:
+
+```json5
+{
+  gateway: {
+    nodes: {
+      pairing: {
+        autoApproveCidrs: ["192.168.1.0/24"],
+      },
+    },
+  },
+}
+```
+
+This is disabled by default (`autoApproveCidrs` is unset). It only applies to
+fresh `role: node` pairing with no requested scopes, from a client IP the
+Gateway trusts. Operator/browser clients, Control UI, WebChat, and role,
+scope, metadata, or public-key upgrades still require manual approval.
+
+Trusted-network device approval does not approve the node's command surface.
+Inspect `omnipolymath nodes pending` and approve the separate surface request.
+
+If the node retries pairing with changed auth details (role/scopes/public key),
+the previous pending request is superseded and a new `requestId` is created.
+Run `omnipolymath devices list` again before approval.
+
+### Identity and pairing state
+
+The headless node separates its client instance ID from the signed device
+identity that the Gateway uses for pairing and routing. This state lives in the
+Omnipolymath state directory (`~/.omnipolymath` by default, or `$OMNIPOLYMATH_STATE_DIR`
+when set):
+
+| State                                                                              | Purpose                                                                                                                          |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `state/omnipolymath.sqlite` (`config_machine_state`, key `nodeHost.config`)        | Client instance ID, display name, and Gateway connection metadata. The client sends this ID as `instanceId`.                     |
+| `client/credentials.sqlite` (`device_identities`, `primary`)                       | Signed Ed25519 keypair and derived device ID. For signed connections, this device ID is the routed node ID and pairing identity. |
+| `client/credentials.sqlite` (`device_auth_tokens`, `gateway_origin_device_tokens`) | Paired device tokens, keyed by cryptographic device ID, role, and Gateway scope.                                                 |
+
+`gatewayLocal` in `node.list` and `node.describe` marks an exact match with the
+primary device identity in the Gateway's state directory. Overriding `--node-id`
+does not change it. A node with its own state directory and key is separate, even
+on the same machine. Listing or describing nodes does not create identity credentials.
+
+`--node-id` changes only the client instance ID in shared SQLite state. It does
+not change the cryptographic device ID or clear pairing auth. Migrating a retired
+`node.json` with `omnipolymath doctor --fix` likewise does not reset pairing. To
+revoke and re-pair a node:
+
+1. On the Gateway, run `omnipolymath nodes remove --node <id|name|ip>`.
+2. On the node, restart the installed service with `omnipolymath node restart`, or
+   stop and rerun the foreground `omnipolymath node run` command. This starts the
+   device-pairing flow. If `omnipolymath devices list` does not show a request
+   and the node reports `AUTH_DEVICE_TOKEN_MISMATCH`, restart or rerun it once
+   more. The rejected attempt clears the now-revoked local token; the next
+   attempt can request pairing.
+3. On the Gateway, run `omnipolymath devices list`, then
+   `omnipolymath devices approve <deviceRequestId>`.
+4. Wait for the node's automatic reconnect, which creates the separate
+   command-surface request. If an older client already paused for pairing,
+   restart or rerun it once.
+5. On the Gateway, run `omnipolymath nodes pending`, then
+   `omnipolymath nodes approve <nodeRequestId>`.
+
+The two request IDs are distinct. An applicable trusted-CIDR policy can
+auto-approve the first-time device-pairing step; command-surface approval remains
+a separate check.
+
+Older Omnipolymath releases stored node-host state in `node.json`, the signed
+identity in `identity/device.json`, and paired auth in
+`identity/device-auth.json`. Node startup, including the macOS app's worker,
+automatically prepares legacy credentials and exec approvals before capabilities
+are prepared. It uses the same backup and migration owner as Doctor, preserving
+the existing keypair and pairing tokens. Retained credential JSON stays consumed
+even if an older release recreates it; an existing valid stored identity remains
+authoritative. Malformed or conflicting sources remain unchanged and require the
+repair described in the diagnostic. Keep `client/credentials.sqlite` private;
+it contains the device keypair and auth tokens. Other retired node state remains
+part of `omnipolymath doctor --fix`.
+
+Retired `node.json` and interrupted Doctor claims must contain valid UTF-8.
+Doctor reports malformed text as a recoverable warning and preserves its bytes
+for repair. Keep a backup, correct the encoding in a copy, replace the affected
+file, then rerun `omnipolymath doctor --fix` before starting the node host.
+
+## Exec approvals
+
+`system.run` is gated by local exec approvals:
+
+- `$OMNIPOLYMATH_STATE_DIR/state/omnipolymath.sqlite#exec_approvals_config`, or
+  `~/.omnipolymath/state/omnipolymath.sqlite#exec_approvals_config` when the variable is unset
+- [Exec approvals](/tools/exec-approvals)
+- From the Gateway, inspect with `omnipolymath approvals get --node <id|name|ip>` or
+  replace with `omnipolymath approvals set --node <id|name|ip> --file <path>`; see the
+  [Approvals CLI](/cli/approvals).
+
+For approved async node exec, Omnipolymath prepares a `systemRunPlan`
+before prompting. The later approved `system.run` forward reuses that stored
+plan, so edits to command/cwd/session fields after the approval request was
+created are rejected instead of changing what the node executes.
+
+## Related
+
+- [CLI reference](/cli)
+- [Connect a device](/cli/connect)
+- [Nodes](/nodes)
+
+## Labs: Omnipolymath ID tunnel targets
+
+An Omnipolymath ID node target connects through `omnipolymath/tunnel/1` over iroh instead
+of a LAN address, Tailscale, or SSH. This is a Labs transport; enroll with
+[`omnipolymath node join`](#join-with-omnipolymath-id).
+After enrollment has saved an Omnipolymath ID target, `omnipolymath node run` without
+Gateway endpoint flags resumes that target. Explicit `--host` / `--port` options
+continue to select the existing WebSocket transport.
+
+The saved target contains the claw id, root fingerprint, highest verified binding
+sequence and Gateway key, signed ServerBinding, newest verified membership snapshot
+marker, and relay hint. Before each dial or periodic connection probe, the node
+fetches a descriptor with its node key and verifies the binding, snapshot freshness,
+and its own membership. Stronger verified facts are saved before dialing, including
+facts that require refusal, so reconnects and restarts cannot roll back trust.
+A replacement server key closes the old connection. Missing, stale, invalid, or
+replayed evidence refuses the tunnel; a failed tunnel never falls back to a direct WebSocket.
+An invalid relay hint from Discovery also refuses the tunnel, but the signed facts in that
+response are still saved.
+IP transports remain enabled so iroh can establish a direct encrypted path.
+
+The public target requires `discoveryUrl`, the deployment-selected Discovery
+API origin for enrollment and descriptor refresh. A preview target saved without
+it does not connect: ask the owner to remove the node on the Access page, then re-join
+with a new link and `--discovery-url`, which keeps the target's verified trust. The origin is never inferred from
+the claw hostname or relay URL. Enrollment saves the selected origin; an explicit
+`--discovery-url` overrides a saved origin. There is no default Discovery origin.
+The origin must use HTTPS (HTTP is allowed
+only for localhost testbeds), without credentials, a path, query, or fragment.
+
+The node's iroh secret key is generated locally and stored separately at
+`$OMNIPOLYMATH_STATE_DIR/node-omnipolymath-id/endpoint.key` (32 bytes, mode `0600`). It is
+not a Gateway token and is never written into configuration or worker descriptors.
+Do not delete or copy that key to another node: a new key requires new enrollment.
+
+The main WebSocket, worker WebSocket, desktop and portal attachment streams,
+worker bundle downloads, and workspace transfers share the authenticated tunnel through an owner-only Unix socket
+(`0600` inside a `0700` directory). There is no localhost TCP proxy. This preview
+supports Unix hosts and native-process workers; Windows and container-isolated
+workers require a separate transport integration.
+
+Saved Omnipolymath ID targets do not inherit Cloudflare Access or Gateway bearer
+credentials from the installing shell; the service resumes its enrolled key.
+
+The transport sends QUIC keep-alives, periodically refreshes authority and probes connections, and backs off
+when the relay denies admission. A removed or unadmitted node key stops the host
+with **“re-join this node”** rather than retrying indefinitely. If Discovery
+refuses to serve the node's descriptor, for example after a restart once the owner
+removed it, that refusal is not signed. The host then keeps retrying without dialing,
+and prints once how to re-join. Ordinary Gateway
+pairing-pending responses retain the existing wait-and-retry behavior.
+
+Node is the qualified runtime for this preview. The native addon loads and binds
+on Linux Bun 1.4.4, but streaming HTTP integration under the pinned Bun runtime
+stalled and the tunnel child missed health pings; Bun transport qualification is
+still pending.

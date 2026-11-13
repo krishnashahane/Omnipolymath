@@ -1,0 +1,48 @@
+---
+summary: "Deploy Omnipolymath on Northflank with one-click template"
+read_when:
+  - Deploying Omnipolymath to Northflank
+  - You want a one-click cloud deploy with browser-based Control UI
+title: "Northflank"
+---
+
+Deploy Omnipolymath on Northflank with a one-click template and access it through the web Control UI. This is the easiest "no terminal on the server" path: Northflank runs the Gateway for you.
+
+## How to get started
+
+1. Click [Deploy Omnipolymath](https://northflank.com/stacks/deploy-omnipolymath) to open the template.
+2. Create an [account on Northflank](https://app.northflank.com/signup) if you don't already have one.
+3. Click **Deploy Omnipolymath now**.
+4. Set these required environment variables:
+   - `OMNIPOLYMATH_GATEWAY_TOKEN` (use a strong random value)
+   - `OMNIPOLYMATH_STATE_DIR=/data/.omnipolymath`
+   - `OMNIPOLYMATH_WORKSPACE_DIR=/data/workspace`
+5. Click **Deploy stack** to build and run the Omnipolymath template.
+6. Wait for the deployment to complete, then click **View resources**.
+7. Open the Omnipolymath service.
+8. Open the public Omnipolymath URL at `/omnipolymath` and connect using the configured shared secret. This template uses `OMNIPOLYMATH_GATEWAY_TOKEN` by default; if you replace it with password auth, use that password instead.
+
+From the Northflank shell, run the read-only deployment preflight:
+
+```bash
+omnipolymath doctor --json
+```
+
+## What you get
+
+- Hosted Omnipolymath Gateway + Control UI
+- Persistent storage via a Northflank Volume (`/data`) so `omnipolymath.json`, shared and per-agent SQLite auth stores, channel/provider state, sessions, and workspace survive redeploys
+
+## Connect a channel
+
+Use the Control UI at `/omnipolymath`, or run `omnipolymath onboard` via SSH for channel setup instructions:
+
+- [Telegram](/channels/telegram) (fastest, just a bot token)
+- [Discord](/channels/discord)
+- [All channels](/channels)
+
+## Next steps
+
+- Set up messaging channels: [Channels](/channels)
+- Configure the Gateway: [Gateway configuration](/gateway/configuration)
+- Keep Omnipolymath up to date: [Updating](/install/updating)

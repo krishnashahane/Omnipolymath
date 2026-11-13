@@ -1,0 +1,81 @@
+---
+summary: "CLI reference for `omnipolymath docs` (search the live docs index)"
+read_when:
+  - You want to search the live Omnipolymath docs from the terminal
+  - You need to know which hosted search API the docs CLI calls
+title: "Docs"
+---
+
+# `omnipolymath docs`
+
+Search the live Omnipolymath docs index from the terminal.
+
+## Usage
+
+```bash
+omnipolymath docs                              # print docs entrypoint and example search
+omnipolymath docs --json                       # print the same guidance as JSON
+omnipolymath docs [query...] [--json] [--limit <count>]
+```
+
+| Argument/option   | Description                                                                        |
+| ----------------- | ---------------------------------------------------------------------------------- |
+| `[query...]`      | Free-form search query. Multi-word queries are joined with spaces and sent as one. |
+| `--json`          | Emit one machine-readable JSON object on stdout.                                   |
+| `--limit <count>` | Return at most this many results. The value must be a positive integer.            |
+
+With no query, `omnipolymath docs` prints the docs entrypoint URL and a sample search command instead of running a search.
+
+Omit `--limit` to show all results returned by the search service. The limit applies to displayed results and does not reduce the downloaded response size.
+
+## Examples
+
+```bash
+omnipolymath docs browser existing-session
+omnipolymath docs browser existing-session --json
+omnipolymath docs plugin --limit 5
+omnipolymath docs sandbox allowHostControl
+omnipolymath docs gateway token secretref
+```
+
+## How it works
+
+`omnipolymath docs` calls `https://omnipolymath.vercel.app/docs/api/search` and renders the JSON results. The search request uses a fixed 30 second timeout.
+
+Ctrl-C or SIGTERM cancels an in-progress search, including its response download,
+without printing a partial result or a search-failure envelope.
+
+## Output
+
+In a rich (TTY) terminal, results render as a heading followed by a bullet list: page title, linked docs URL, and a short snippet on the next line. Empty results print "No results.".
+
+A response without a results array is malformed and fails the command; it is not treated as a successful search with no matches.
+
+In non-rich output (piped, `--no-color`, scripts), the same data renders as Markdown:
+
+```markdown
+# Docs search: <query>
+
+- [Title](https://omnipolymath.vercel.app/docs/...) - snippet
+- [Title](https://omnipolymath.vercel.app/docs/...) - snippet
+```
+
+With `--json`, stdout contains one object with the normalized query and result
+list. With no query, `query` is `null`, `url` is the docs entrypoint, and
+`results` is empty. Styling and headings are suppressed; request diagnostics
+stay on stderr so stdout can be piped directly to a JSON parser.
+
+On failure, `--json` emits the [CLI JSON failure envelope](/cli#json-failures) on stdout
+while retaining the error message on stderr.
+
+## Exit codes
+
+| Code | Meaning                                                                  |
+| ---- | ------------------------------------------------------------------------ |
+| `0`  | Search succeeded, including zero-result responses.                       |
+| `1`  | The hosted docs search API call failed; stderr prints the error message. |
+
+## Related
+
+- [CLI reference](/cli)
+- [Live docs](https://omnipolymath.vercel.app/docs)
