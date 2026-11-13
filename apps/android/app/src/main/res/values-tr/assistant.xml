@@ -1,0 +1,7 @@
+<resources>
+    <string-array name="ask_omnipolymath_query_patterns">
+        <item>"Omnipolymath\'a sor %1$s"</item>
+        <item>"Omnipolymath\'a %1$s komutunu ver"</item>
+        <item>"Omnipolymath\'ı aç ve %1$s isteğini gönder"</item>
+    </string-array>
+</resources>

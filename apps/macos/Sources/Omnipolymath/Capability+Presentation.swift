@@ -1,0 +1,19 @@
+import OmnipolymathIPC
+
+extension Capability {
+    var permissionDisplayName: String {
+        switch self {
+        case .notifications: "Notifications"
+        case .accessibility: "Accessibility"
+        case .screenRecording: "Screen Recording"
+        case .microphone: "Microphone"
+        case .speechRecognition: "Speech Recognition"
+        case .camera: "Camera"
+        case .cameraEnabled: "Camera in Omnipolymath"
+        case .location: "Location"
+        case .eventPosting: "Event Posting"
+        case .computerControl: "Computer Control"
+        case .canvas: "Canvas"
+        }
+    }
+}

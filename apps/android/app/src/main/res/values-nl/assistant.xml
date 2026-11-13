@@ -1,0 +1,7 @@
+<resources>
+    <string-array name="ask_omnipolymath_query_patterns">
+        <item>"vraag Omnipolymath %1$s"</item>
+        <item>"vraag Omnipolymath om %1$s"</item>
+        <item>"open Omnipolymath en vraag %1$s"</item>
+    </string-array>
+</resources>

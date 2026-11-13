@@ -1,0 +1,4 @@
+/* Omnipolymath source: "Omnipolymath connects this Apple Watch directly to your Gateway on trusted local networks." */
+"NSLocalNetworkUsageDescription" = "Omnipolymath menghubungkan Apple Watch ini langsung ke Gateway Anda di jaringan lokal tepercaya.";
+/* Omnipolymath source: "Omnipolymath uses the microphone for voice conversations you start on Apple Watch." */
+"NSMicrophoneUsageDescription" = "Omnipolymath menggunakan mikrofon untuk percakapan suara yang Anda mulai di Apple Watch.";

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Omnipolymath-Tauri AOT",
+  "identifier": "ai.omnipolymath.tauri.aot",
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["omnipolymath-aot"]
+      }
+    },
+    "updater": {
+      "endpoints": []
+    }
+  },
+  "bundle": {
+    "createUpdaterArtifacts": false,
+    "macOS": {
+      "minimumSystemVersion": "26.2",
+      "entitlements": "aot-test.entitlements.plist"
+    }
+  }
+}

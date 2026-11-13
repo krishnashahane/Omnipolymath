@@ -1,0 +1,33 @@
+// Shared iOS signing defaults for local development + CI.
+#include "../build/Version.xcconfig"
+
+OMNIPOLYMATH_IOS_DEFAULT_TEAM = FWJYW4S8P8
+OMNIPOLYMATH_IOS_SELECTED_TEAM = $(OMNIPOLYMATH_IOS_DEFAULT_TEAM)
+OMNIPOLYMATH_DEVELOPMENT_TEAM = $(OMNIPOLYMATH_IOS_SELECTED_TEAM)
+OMNIPOLYMATH_CODE_SIGN_STYLE = Automatic
+OMNIPOLYMATH_CODE_SIGN_IDENTITY = Apple Development
+OMNIPOLYMATH_CODE_SIGN_ENTITLEMENTS = Sources/Omnipolymath.entitlements
+OMNIPOLYMATH_APP_BUNDLE_ID = ai.omnipolymathfoundation.app
+OMNIPOLYMATH_APP_GROUP_ID = group.ai.omnipolymathfoundation.app.shared
+OMNIPOLYMATH_WATCH_APP_BUNDLE_ID = ai.omnipolymathfoundation.app.watchkitapp
+OMNIPOLYMATH_ACTIVITY_WIDGET_BUNDLE_ID = ai.omnipolymathfoundation.app.activitywidget
+OMNIPOLYMATH_ACTIVITY_WIDGET_PROFILE =
+OMNIPOLYMATH_WATCH_APP_PROFILE =
+
+// Local contributors can override this by running scripts/ios-configure-signing.sh.
+// Keep include after defaults: xcconfig is evaluated top-to-bottom.
+#include? "../.local-signing.xcconfig"
+#include? "../LocalSigning.xcconfig"
+
+// Debug products install alongside release products and keep their app-group data separate.
+OMNIPOLYMATH_DEBUG_APP_BUNDLE_ID = $(OMNIPOLYMATH_APP_BUNDLE_ID).debug
+OMNIPOLYMATH_DEBUG_ACTIVITY_WIDGET_BUNDLE_ID = $(OMNIPOLYMATH_DEBUG_APP_BUNDLE_ID).activitywidget
+OMNIPOLYMATH_DEBUG_WATCH_APP_BUNDLE_ID = $(OMNIPOLYMATH_DEBUG_APP_BUNDLE_ID).watchkitapp
+OMNIPOLYMATH_DEBUG_APP_GROUP_ID = $(OMNIPOLYMATH_APP_GROUP_ID).debug
+
+CODE_SIGN_STYLE = $(OMNIPOLYMATH_CODE_SIGN_STYLE)
+CODE_SIGN_IDENTITY = $(OMNIPOLYMATH_CODE_SIGN_IDENTITY)
+DEVELOPMENT_TEAM = $(OMNIPOLYMATH_DEVELOPMENT_TEAM)
+
+// Let Xcode manage provisioning for the selected local team unless a local override pins one.
+PROVISIONING_PROFILE_SPECIFIER =
