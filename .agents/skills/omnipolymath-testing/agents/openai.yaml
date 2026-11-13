@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omnipolymath Testing"
+  short_description: "Choose cheap, targeted Omnipolymath validation"
+  default_prompt: "Use $omnipolymath-testing to choose the cheapest safe test or CI verification path, inspect failures, and rerun only the relevant Omnipolymath lane."

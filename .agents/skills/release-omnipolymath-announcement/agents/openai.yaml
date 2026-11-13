@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omnipolymath Release Announcement"
+  short_description: "Draft evidence-backed Discord release announcements."
+  default_prompt: "Use $release-omnipolymath-announcement to draft an Omnipolymath beta, stable, or extended-stable Discord announcement from changelog, release notes, npm/GitHub release proof, and validation evidence."
