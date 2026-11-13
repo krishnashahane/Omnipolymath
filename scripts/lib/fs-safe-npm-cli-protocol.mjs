@@ -1,0 +1,1 @@
+export const NPM_CLI_REPORT = "OMNIPOLYMATH_NPM_CLI:";
