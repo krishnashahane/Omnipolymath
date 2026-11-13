@@ -1,0 +1,13 @@
+{
+  "$schema": "../../node_modules/oxlint/configuration_schema.json",
+  "plugins": [],
+  "jsPlugins": [
+    "../../scripts/oxlint-boundary-guards.mjs"
+  ],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "omnipolymath-boundaries/no-recursive-readdir": "error"
+  }
+}
