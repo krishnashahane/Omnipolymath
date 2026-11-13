@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Omnipolymath Team health and update freshness check hourly
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=300
+AccuracySec=1min
+Unit=omnipolymath-hourly-health-check.service
+
+[Install]
+WantedBy=timers.target
