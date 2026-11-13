@@ -57,7 +57,7 @@ export type GithubIssueSubmitHooks = GithubIssueReconcileHooks & {
 };
 
 const GITHUB_REPOSITORY = "github.com/krishnashahane/Omnipolymath";
-const GITHUB_REPOSITORY_ISSUES_API = "repos/omnipolymath/omnipolymath/issues";
+const GITHUB_REPOSITORY_ISSUES_API = "repos/krishnashahane/Omnipolymath/issues";
 const GITHUB_ISSUE_CREATE_TIMEOUT_MS = 30_000;
 const GITHUB_OUTPUT_MAX_BYTES = 1024 * 1024;
 const GITHUB_ISSUE_BODY_MAX_BYTES = 20_000;
