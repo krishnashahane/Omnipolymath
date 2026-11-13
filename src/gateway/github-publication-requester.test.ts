@@ -73,7 +73,7 @@ const request = (f: Fixture, key: string, requester = f.guest) =>
 const identityChanged = { status: "failed", code: "identity_changed" } as const;
 const publicationUrl = (backend: (typeof backends)[number]) =>
   backend === "local"
-    ? "https://github.com/krishnashahane/Omnipolymath/pull/125200"
+    ? "https://github.com/omnipolymath/omnipolymath/pull/125200"
     : "https://github.com/owner/repository/pull/1";
 const pullRequest = (
   overrides: Partial<{

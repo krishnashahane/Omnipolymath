@@ -167,7 +167,7 @@ function installPublicationRecoveryTests(engine: "sqlite" | "postgres") {
     let unavailable = true;
     const transport = githubPublicationTestMocks().runCommand;
     const original = transport.getMockImplementation()!;
-    const url = "https://github.com/krishnashahane/Omnipolymath/pull/125200";
+    const url = "https://github.com/omnipolymath/omnipolymath/pull/125200";
     const message =
       "Resume the publication\n\nCo-authored-by: alice <7+alice@users.noreply.github.com>\n" +
       `Omnipolymath-Publication: ${requestId}\n`;

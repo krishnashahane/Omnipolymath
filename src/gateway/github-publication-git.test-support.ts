@@ -93,7 +93,7 @@ export function createSyntheticPublicationTransport(params: {
   let remotePublished = false;
   let publicationMessage = "";
   const pullRequest = {
-    html_url: "https://github.com/krishnashahane/Omnipolymath/pull/125200",
+    html_url: "https://github.com/omnipolymath/omnipolymath/pull/125200",
     number: 125200,
     user: { id: 42 },
     state: "open",
@@ -116,7 +116,8 @@ export function createSyntheticPublicationTransport(params: {
     ) {
       return commandResult('{"fork":false,"default_branch":"main"}\n');
     }
-    const baseRefPrefix = "gh api --hostname github.com repos/omnipolymath/omnipolymath/git/ref/heads/";
+    const baseRefPrefix =
+      "gh api --hostname github.com repos/omnipolymath/omnipolymath/git/ref/heads/";
     if (command.startsWith(baseRefPrefix)) {
       const selectedBranch = command.slice(baseRefPrefix.length).split(" --jq", 1)[0];
       return commandResult(JSON.stringify({ ref: `refs/heads/${selectedBranch}`, sha: baseHead }));
@@ -156,7 +157,10 @@ export function createSyntheticPublicationTransport(params: {
       remotePublished = true;
       return commandResult();
     }
-    if (command.includes(" repos/omnipolymath/omnipolymath/pulls ") && command.includes("state=all")) {
+    if (
+      command.includes(" repos/omnipolymath/omnipolymath/pulls ") &&
+      command.includes("state=all")
+    ) {
       return commandResult("[]\n");
     }
     if (argv.includes("GET") && argv.includes("repos/omnipolymath/omnipolymath/pulls/125200")) {
@@ -299,7 +303,9 @@ export async function createRealPublicationWorkspace(params: {
       if (
         pr &&
         argv.includes("GET") &&
-        argv.some((arg) => arg === `repos/omnipolymath/omnipolymath/pulls/${pr.url.split("/").at(-1)}`)
+        argv.some(
+          (arg) => arg === `repos/omnipolymath/omnipolymath/pulls/${pr.url.split("/").at(-1)}`,
+        )
       ) {
         return json(
           publicationPullRequestResponse({
