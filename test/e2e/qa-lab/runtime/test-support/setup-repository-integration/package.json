@@ -1,0 +1,10 @@
+{
+  "name": "@omnipolymath/setup-proof-repository",
+  "version": "0.0.0",
+  "type": "module",
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
