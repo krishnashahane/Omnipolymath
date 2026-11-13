@@ -69,7 +69,7 @@ it.each(["list", "warm metadata", "cold metadata"])(
         let failed = false;
         const metadata = failure !== "list";
         const number = failure === "list" ? 103469 : failure === "warm metadata" ? 103470 : 103471;
-        const detailUrl = `https://api.github.com/repos/krishnashahane/Omnipolymath/pulls/${number}`;
+        const detailUrl = `https://api.github.com/repos/omnipolymath/omnipolymath/pulls/${number}`;
         const fetchImpl = routedFetch([
           {
             match: "/pulls?head=",
@@ -79,7 +79,7 @@ it.each(["list", "warm metadata", "cold metadata"])(
                 : githubJson([
                     pullListItem({
                       number,
-                      html_url: `https://github.com/krishnashahane/Omnipolymath/pull/${number}`,
+                      html_url: `https://github.com/omnipolymath/omnipolymath/pull/${number}`,
                       ...(metadata ? {} : { state: "closed", merged_at: "2026-09-01T00:00:00Z" }),
                     }),
                   ]),
@@ -245,7 +245,7 @@ it("retires a repository-only target without falling back to its local workspace
     const repository = await repositories.create({
       agentId: "main",
       sessionKey,
-      url: "https://github.com/krishnashahane/Omnipolymath",
+      url: "https://github.com/omnipolymath/omnipolymath",
       branch: "repository-only",
       assertCurrent: () => {},
     });
