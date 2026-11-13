@@ -59,6 +59,7 @@ import { createWorkerSessionPlacementStore } from "./worker-environments/placeme
 import { seedAttachedPlacementEnvironment } from "./worker-environments/placement-test-fixtures.js";
 
 const mocks = githubPublicationTestMocks();
+const stateDb = () => openOmnipolymathStateDatabase().db;
 
 const table = "github_personal_publication_requests";
 
@@ -80,7 +81,7 @@ describe("personal publication authority and recovery", () => {
     selection: { source: "personal" as const, generation, account },
   });
   const readReceipt = (requestId: string) =>
-    readPersonalGitHubPublicationInDatabase(openOmnipolymathStateDatabase().db, owner, { requestId });
+    readPersonalGitHubPublicationInDatabase(stateDb(), owner, { requestId });
 
   const confirmation = (requestId: string, requestDigest: string) => ({
     sessionKey: SESSION_KEY,
@@ -117,7 +118,7 @@ describe("personal publication authority and recovery", () => {
     const response = await rpc("sessions.github.publish", request());
     expect(response[0], JSON.stringify(response[2])).toBe(true);
     expect(response[1].status).toBe("needs_confirmation");
-    const receipt = readPersonalGitHubPublicationInDatabase(openOmnipolymathStateDatabase().db, owner, {
+    const receipt = readPersonalGitHubPublicationInDatabase(stateDb(), owner, {
       requestId: response[1].requestId,
     })!;
     await session.reset(placements);
@@ -169,7 +170,7 @@ describe("personal publication authority and recovery", () => {
     const response = await pending;
     expect(response[0]).toBe(false);
     expect(
-      readPersonalGitHubPublicationInDatabase(openOmnipolymathStateDatabase().db, owner, {
+      readPersonalGitHubPublicationInDatabase(stateDb(), owner, {
         sessionId: SESSION_ID,
         idempotencyKey: request().idempotencyKey,
       }),
@@ -211,7 +212,7 @@ describe("personal publication authority and recovery", () => {
         isWebchatConnect: () => false,
       });
       expect(respond.mock.calls[0]?.[0]).toBe(false);
-      expect(tableExists(openOmnipolymathStateDatabase().db, table)).toBe(false);
+      expect(tableExists(stateDb(), table)).toBe(false);
       expect(commands).toEqual([]);
     },
   );
@@ -240,7 +241,7 @@ describe("personal publication authority and recovery", () => {
             : null,
         pendingPersonal: null,
       });
-      expect(tableExists(openOmnipolymathStateDatabase().db, table)).toBe(false);
+      expect(tableExists(stateDb(), table)).toBe(false);
     },
   );
 
@@ -288,7 +289,7 @@ describe("personal publication authority and recovery", () => {
         return { source: "system-configured", account: { accountId: 42, login: "roboclaw-bot" } };
       });
       expect((await rpc("sessions.github.options"))[0]).toBe(false);
-      expect(tableExists(openOmnipolymathStateDatabase().db, table)).toBe(false);
+      expect(tableExists(stateDb(), table)).toBe(false);
     },
   );
 
@@ -410,7 +411,7 @@ describe("personal publication authority and recovery", () => {
         github: { host: "ghe.example.test", apiBaseUrl: "https://ghe.example.test/api/v3" },
       },
     });
-    const db = openOmnipolymathStateDatabase().db;
+    const db = stateDb();
     expect(tableExists(db, table)).toBe(false);
     await expect(status(randomUUID())).rejects.toThrow("not found");
     expect(tableExists(db, table)).toBe(false);
@@ -436,7 +437,7 @@ describe("personal publication authority and recovery", () => {
     });
     expect(JSON.stringify(receipt)).not.toMatch(/synthetic|GH_CONFIG_DIR|claim_id|run_id/);
     expect(
-      readPersonalGitHubPublicationInDatabase(openOmnipolymathStateDatabase().db, otherOwner, {
+      readPersonalGitHubPublicationInDatabase(stateDb(), otherOwner, {
         requestId: result.requestId,
       }),
     ).toBeUndefined();
@@ -459,7 +460,7 @@ describe("personal publication authority and recovery", () => {
       result,
     );
     expect(commands).toHaveLength(count);
-    expect(openOmnipolymathStateDatabase().db.prepare("PRAGMA integrity_check").get()).toEqual({
+    expect(stateDb().prepare("PRAGMA integrity_check").get()).toEqual({
       integrity_check: "ok",
     });
   });
@@ -470,9 +471,7 @@ describe("personal publication authority and recovery", () => {
     await expectPersonalPublicationReplay(
       { generation, coordinator, action: prepared },
       (requestId) => ({
-        receipt: readPersonalGitHubPublicationInDatabase(openOmnipolymathStateDatabase().db, owner, {
-          requestId,
-        }),
+        receipt: readPersonalGitHubPublicationInDatabase(stateDb(), owner, { requestId }),
         commandCount: commands.length,
       }),
     );
@@ -485,7 +484,7 @@ describe("personal publication authority and recovery", () => {
     await expect(coordinator.requestPersonalForSessionV2(request(), action)).rejects.toThrow(
       "My GitHub credentials are unavailable; reconnect My GitHub before publishing.",
     );
-    expect(tableExists(openOmnipolymathStateDatabase().db, table)).toBe(false);
+    expect(tableExists(stateDb(), table)).toBe(false);
   });
 
   it.each(["turn", "remote", "reconciliation"] as const)(
@@ -522,7 +521,7 @@ describe("personal publication authority and recovery", () => {
       await expect(
         coordinator.requestPersonalForSessionV2(request(), selectedAction),
       ).rejects.toThrow(/idle local|reconciling/);
-      expect(tableExists(openOmnipolymathStateDatabase().db, table)).toBe(false);
+      expect(tableExists(stateDb(), table)).toBe(false);
       expect(commands).toEqual([]);
     },
   );
@@ -712,7 +711,7 @@ describe("personal publication authority and recovery", () => {
         return commandResult(
           JSON.stringify([
             {
-              url: "https://github.com/krishnashahane/Omnipolymath/pull/125200",
+              url: "https://github.com/omnipolymath/omnipolymath/pull/125200",
               userId: account.accountId,
               state: "open",
               body,
@@ -1023,7 +1022,7 @@ describe("personal publication authority and recovery", () => {
       .run(otherOwner, result.requestId);
     expect(readReceipt(result.requestId)).toBeUndefined();
     expect(() =>
-      readPersonalGitHubPublicationInDatabase(openOmnipolymathStateDatabase().db, otherOwner, {
+      readPersonalGitHubPublicationInDatabase(stateDb(), otherOwner, {
         requestId: result.requestId,
       }),
     ).toThrow("corrupt");
