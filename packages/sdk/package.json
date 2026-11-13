@@ -1,0 +1,30 @@
+{
+  "name": "@omnipolymath/sdk",
+  "version": "0.0.0-private",
+  "private": true,
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "build": "node --import ../../scripts/tsx.mjs ../../scripts/build-workspace-package.mts sdk"
+  },
+  "dependencies": {
+    "@omnipolymath/gateway-client": "workspace:*",
+    "@omnipolymath/gateway-protocol": "workspace:*",
+    "@omnipolymath/normalization-core": "workspace:*",
+    "@omnipolymath/retry": "workspace:*"
+  },
+  "devDependencies": {
+    "@omnipolymath/session-url-contract": "workspace:*"
+  }
+}
