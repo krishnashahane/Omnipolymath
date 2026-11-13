@@ -1,0 +1,28 @@
+---
+summary: "Omnipolymath QQ Bot channel plugin for group and direct-message workflows."
+read_when:
+  - You are installing, configuring, or auditing the qqbot plugin
+title: "QQ Bot plugin reference"
+---
+
+<!-- Generated file. Do not edit by hand.
+Run `pnpm plugins:inventory:gen` to rebuild it. Hand-written text survives only
+between the omnipolymath-plugin-reference:manual-start and
+omnipolymath-plugin-reference:manual-end comment markers. -->
+
+Omnipolymath QQ Bot channel plugin for group and direct-message workflows.
+
+## Distribution
+
+- Package: `@tencent-connect/omnipolymath-qqbot`
+- Install route: npm
+
+## Surface
+
+- Channels: `qqbot`
+- Contracts: `tools`
+- Skills
+
+## Related docs
+
+- [qqbot](/channels/qqbot)

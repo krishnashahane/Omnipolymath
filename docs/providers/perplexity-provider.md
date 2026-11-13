@@ -1,0 +1,166 @@
+---
+summary: "Perplexity web search provider setup (API key, search modes, filtering)"
+title: "Perplexity"
+read_when:
+  - You want to configure Perplexity as a web search provider
+  - You need the Perplexity API key or OpenRouter proxy setup
+---
+
+The Perplexity plugin registers a `web_search` provider with two transports: the
+native Perplexity Search API (structured results with filters) and Perplexity
+Sonar chat completions, direct or via OpenRouter (AI-synthesized answers with
+citations).
+
+<Note>
+This page covers the Perplexity **provider** setup. For the Perplexity **tool** (how the agent uses it), see [Perplexity search](/tools/perplexity-search).
+</Note>
+
+| Property    | Value                                                                  |
+| ----------- | ---------------------------------------------------------------------- |
+| Type        | Web search and native Decision provider                                |
+| Auth        | `PERPLEXITY_API_KEY` (native) or `OPENROUTER_API_KEY` (via OpenRouter) |
+| Config path | `plugins.entries.perplexity.config.webSearch.apiKey`                   |
+| Overrides   | `plugins.entries.perplexity.config.webSearch.baseUrl` / `.model`       |
+| Get a key   | [perplexity.ai/settings/api](https://www.perplexity.ai/settings/api)   |
+
+## Install plugin
+
+```bash
+omnipolymath plugins install @omnipolymath/perplexity-plugin
+```
+
+Installation applies to a running Gateway automatically; otherwise it takes effect
+on the next startup. See [Apply changes and inspect](/plugins/manage-plugins#apply-changes-and-inspect).
+
+## Getting started
+
+<Steps>
+  <Step title="Set the API key">
+    ```bash
+    omnipolymath configure --section web
+    ```
+
+    Or set the key directly:
+
+    ```bash
+    omnipolymath config set plugins.entries.perplexity.config.webSearch.apiKey "pplx-xxxxxxxxxxxx"
+    ```
+
+    A key exported as `PERPLEXITY_API_KEY` or `OPENROUTER_API_KEY` in the Gateway
+    environment also works.
+
+  </Step>
+  <Step title="Start searching">
+    `web_search` auto-detects Perplexity once its key is the available search
+    credential; no further setup is required. To pin the provider explicitly:
+
+    ```bash
+    omnipolymath config set tools.web.search.provider perplexity
+    ```
+
+  </Step>
+</Steps>
+
+## Search modes
+
+The plugin resolves transport in this order:
+
+1. `webSearch.baseUrl` or `webSearch.model` set: always routes through Sonar chat completions against that endpoint, regardless of key type.
+2. Otherwise, key source decides the endpoint: a configured key's prefix picks the transport (config beats environment variables); an environment key uses its matching endpoint directly.
+
+| Key prefix | Transport                                                  | Features                                         |
+| ---------- | ---------------------------------------------------------- | ------------------------------------------------ |
+| `pplx-`    | Native Perplexity Search API (`https://api.perplexity.ai`) | Structured results, domain/language/date filters |
+| `sk-or-`   | OpenRouter (`https://openrouter.ai/api/v1`), Sonar model   | AI-synthesized answers with citations            |
+
+A configured key with any other prefix also uses the native Search API. The
+chat-completions path defaults to the `perplexity/sonar-pro` model; override it
+with `plugins.entries.perplexity.config.webSearch.model`.
+
+## Native API filtering
+
+| Filter                               | Description                                                                             | Transport   |
+| ------------------------------------ | --------------------------------------------------------------------------------------- | ----------- |
+| `count`                              | Results per search, 1-10 (default 5); accepted but ignored on the chat-completions path | Both        |
+| `freshness`                          | Recency window: `day`, `week`, `month`, `year`                                          | Both        |
+| `country`                            | 2-letter country code (`us`, `de`, `jp`)                                                | Native only |
+| `language`                           | ISO 639-1 language code (`en`, `fr`, `zh`)                                              | Native only |
+| `date_after` / `date_before`         | Published-date range in `YYYY-MM-DD`                                                    | Native only |
+| `domain_filter`                      | Max 20 domains; allowlist or `-`-prefixed denylist, never mixed                         | Native only |
+| `max_tokens` / `max_tokens_per_page` | Content budget across all results / per page; `max_tokens` max 1000000                  | Native only |
+
+Native-only filters return a descriptive error on the chat-completions path.
+`freshness` cannot be combined with `date_after`/`date_before`.
+
+## Advanced configuration
+
+<AccordionGroup>
+  <Accordion title="Environment variable for daemon processes">
+    <Warning>
+    A key exported only in an interactive shell is not visible to a
+    launchd/systemd Gateway daemon unless that environment is explicitly
+    imported. Set the key in `~/.omnipolymath/.env` or via `env.shellEnv` so the
+    Gateway process can read it. See [Environment variables](/help/environment)
+    for the full precedence order.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="OpenRouter proxy setup">
+    To route Perplexity searches through OpenRouter, set an `OPENROUTER_API_KEY`
+    (prefix `sk-or-`) instead of a native Perplexity key. Omnipolymath detects the
+    key and switches to the Sonar transport automatically. Useful if you already
+    have OpenRouter billing set up and want to consolidate providers there.
+  </Accordion>
+
+  <Accordion title="Integration header">
+    Requests to the Perplexity API (`api.perplexity.ai`) identify Omnipolymath with
+    `X-Pplx-Integration: omnipolymath/<version>`. Searches routed through OpenRouter
+    send OpenRouter's app-attribution headers instead. A custom proxy `baseUrl`
+    gets neither.
+  </Accordion>
+</AccordionGroup>
+
+## Decision models
+
+The same plugin also connects directly to Perplexity's [Decisions API](https://docs.perplexity.ai/docs/decisions/quickstart),
+using the separate [Decision role](/concepts/decision-models), not Sonar chat completions.
+This requires a plugin/host release containing this integration and the prepared
+Decision V2 contract; older installed versions may provide search only.
+
+Connect with `omnipolymath models auth login --provider perplexity-decisions --method api-key`
+or provide `PERPLEXITY_API_KEY` to the Gateway process. Decision auth uses normal
+the separate `perplexity-decisions` provider profiles; it does **not** reuse the plugin's web-search key,
+`OPENROUTER_API_KEY`, or Sonar search routing. Existing web-search setup remains
+independent. Connecting the key leaves chat and Decision selections unchanged.
+
+Select `perplexity-decisions/pplx-decider-v1.2` in the Decision picker or set
+`agents.defaults.decisionModel` to that reference. Calls use
+`POST https://api.perplexity.ai/v1/decisions` with native `state` and named
+`questions` fields. This is **not** the OpenAI Decisions request format despite
+the matching endpoint suffix.
+
+The adapter supports text/JSON evidence, Boolean probabilities, 2–255 Choice
+options, 2–10 Score levels, and up to 128 questions. JSON state is serialized as
+text rather than interpreted as native image parts. Image input, Flash/latest
+aliases, web grounding, sorting, tags, boxes, and reasoning switches are not
+exposed by this adapter. Perplexity documents a 256K-token state-plus-question
+limit and may group questions internally; there is no client-side splitting,
+truncation, or retry. Normal proxy/TLS policy, cancellation, total deadlines,
+and dispatch-time authority checks apply.
+
+Results preserve expected fractional Score values, original distributions,
+provider-specific confidence, served model identity, and reported token usage.
+Confidence is not the chosen option's probability or a correctness guarantee.
+Use [current API prices](https://docs.perplexity.ai/docs/decisions/quickstart#pricing)
+and reported usage, not benchmark cost per task, for billing expectations.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Perplexity search tool" href="/tools/perplexity-search" icon="magnifying-glass">
+    How the agent invokes Perplexity searches and interprets results.
+  </Card>
+  <Card title="Configuration reference" href="/gateway/configuration-reference" icon="gear">
+    Full configuration reference including plugin entries.
+  </Card>
+</CardGroup>

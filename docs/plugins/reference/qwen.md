@@ -1,0 +1,27 @@
+---
+summary: "Adds Qwen, Qwen Cloud, Model Studio, DashScope, Qwen Token Plan, Bailian Token Plan model provider support to Omnipolymath."
+read_when:
+  - You are installing, configuring, or auditing the qwen plugin
+title: "Qwen plugin reference"
+---
+
+<!-- Generated file. Do not edit by hand.
+Run `pnpm plugins:inventory:gen` to rebuild it. Hand-written text survives only
+between the omnipolymath-plugin-reference:manual-start and
+omnipolymath-plugin-reference:manual-end comment markers. -->
+
+Adds Qwen, Qwen Cloud, Model Studio, DashScope, Qwen Token Plan, Bailian Token Plan model provider support to Omnipolymath.
+
+## Distribution
+
+- Package: `@omnipolymath/qwen-provider`
+- Install route: npm or ClawHub: `@omnipolymath/qwen-provider`
+
+## Surface
+
+- Providers: `qwen`, `qwencloud`, `modelstudio`, `dashscope`, `qwen-token-plan`, `bailian-token-plan`
+- Contracts: `mediaUnderstandingProviders`, `videoGenerationProviders`
+
+## Related docs
+
+- [qwen](/providers/qwen)
