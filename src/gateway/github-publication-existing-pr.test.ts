@@ -40,7 +40,7 @@ async function fixture(fork = false, linked = true, maintainer = false, sameBran
   const { baseRepo, headRepo } = createPublicationRepositories(fork);
   const pr = {
     number: 7,
-    html_url: "https://github.com/krishnashahane/Omnipolymath/pull/7",
+    html_url: "https://github.com/omnipolymath/omnipolymath/pull/7",
     user: { id: 101, login: "contributor" },
     state: "open",
     draft: true,

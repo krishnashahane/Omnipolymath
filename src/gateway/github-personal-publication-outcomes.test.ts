@@ -52,7 +52,7 @@ describe("personal publication definitive outcomes", () => {
     headSha: string,
     overrides: { url?: string; userId?: number; state?: string; body?: string } = {},
   ) => ({
-    url: "https://github.com/krishnashahane/Omnipolymath/pull/125200",
+    url: "https://github.com/omnipolymath/omnipolymath/pull/125200",
     userId: account.accountId,
     state: "open",
     body: "",
@@ -72,7 +72,8 @@ describe("personal publication definitive outcomes", () => {
       let created = false;
       mocks.runCommand.mockImplementation(async (argv: string[], options?: { input?: string }) => {
         let response = await transport(argv, options);
-        const creating = argv.includes("POST") && argv.includes("repos/omnipolymath/omnipolymath/pulls");
+        const creating =
+          argv.includes("POST") && argv.includes("repos/omnipolymath/omnipolymath/pulls");
         if (creating) {
           created = true;
           if (readback) {
@@ -101,11 +102,11 @@ describe("personal publication definitive outcomes", () => {
 
       expect(published).toMatchObject({
         status: "published",
-        url: "https://github.com/krishnashahane/Omnipolymath/pull/125200",
+        url: "https://github.com/omnipolymath/omnipolymath/pull/125200",
       });
       expect(read(published.requestId)).toMatchObject({
         status: "published",
-        pull_request_url: "https://github.com/krishnashahane/Omnipolymath/pull/125200",
+        pull_request_url: "https://github.com/omnipolymath/omnipolymath/pull/125200",
       });
       await fixture.coordinator.resumeSessionRequests();
       expect(workspace.effects).toEqual(["push", "pull_request"]);
@@ -176,7 +177,7 @@ describe("personal publication definitive outcomes", () => {
       };
       const headSha = await workspace.git("rev-parse", "HEAD");
       const marker = `<!-- omnipolymath-publication:${initial.requestId} -->`;
-      const url = "https://github.com/krishnashahane/Omnipolymath/pull/125203";
+      const url = "https://github.com/omnipolymath/omnipolymath/pull/125203";
       const dispatched = { kind: "pull_request", status: "dispatched", headCommit: headSha };
       const remote = mocks.runCommand.getMockImplementation()!;
       let created = false;

@@ -382,7 +382,7 @@ describe("existing PR preparation through the registered agent action", () => {
         }),
       ).rejects.toThrow("without a publication requestId");
       f.pr.number = 8;
-      f.pr.html_url = "https://github.com/krishnashahane/Omnipolymath/pull/8";
+      f.pr.html_url = "https://github.com/omnipolymath/omnipolymath/pull/8";
       await expect(f.invoke()).rejects.toThrow("already continues another PR");
       expect(f.readSession().worktree?.githubPullRequest).toEqual(refreshedAssociation);
       expect(await fs.readFile(path.join(f.projection, "untracked.txt"), "utf8")).toBe(
