@@ -1,0 +1,26 @@
+{
+  "name": "@omnipolymath/crabbox-provider",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath cloud worker provider backed by the Crabbox CLI",
+  "type": "module",
+  "exports": {
+    "./cli-runtime-api.js": "./cli-runtime-api.ts"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "build": {
+      "staticAssets": [
+        {
+          "source": "./assets/omnipolymath-worker-wallpaper.png",
+          "output": "assets/omnipolymath-worker-wallpaper.png"
+        }
+      ]
+    }
+  }
+}

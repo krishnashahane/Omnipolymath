@@ -1,0 +1,53 @@
+{
+  "name": "@omnipolymath/logbook",
+  "version": "2026.11.3",
+  "description": "Omnipolymath automatic work journal plugin",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*",
+    "omnipolymath": "workspace:*"
+  },
+  "peerDependencies": {
+    "omnipolymath": ">=2026.11.3"
+  },
+  "peerDependenciesMeta": {
+    "omnipolymath": {
+      "optional": true
+    }
+  },
+  "omnipolymath": {
+    "build": {
+      "bundledDist": true,
+      "staticAssets": [
+        {
+          "source": "./src/logbook-schema.postgres.sql",
+          "output": "./src/logbook-schema.postgres.sql"
+        }
+      ],
+      "workerEntries": [
+        "./src/store.worker.ts"
+      ],
+      "omnipolymathVersion": "2026.11.3"
+    },
+    "extensions": [
+      "./index.ts"
+    ],
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/logbook",
+      "npmSpec": "@omnipolymath/logbook",
+      "defaultChoice": "clawhub",
+      "minHostVersion": ">=2026.9.5"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  }
+}

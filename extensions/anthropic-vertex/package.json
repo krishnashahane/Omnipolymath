@@ -1,0 +1,40 @@
+{
+  "name": "@omnipolymath/anthropic-vertex-provider",
+  "version": "2026.11.3",
+  "description": "Omnipolymath Anthropic Vertex provider plugin for Claude models on Google Vertex AI.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/vertex-sdk": "0.22.0",
+    "google-auth-library": "11.3.2",
+    "undici": "8.12.3"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/anthropic-vertex-provider",
+      "npmSpec": "@omnipolymath/anthropic-vertex-provider",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.5.12-beta.1"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3",
+      "bundledDist": false
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  }
+}

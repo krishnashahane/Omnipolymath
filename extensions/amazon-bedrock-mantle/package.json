@@ -1,0 +1,39 @@
+{
+  "name": "@omnipolymath/amazon-bedrock-mantle-provider",
+  "version": "2026.11.3",
+  "description": "Omnipolymath Amazon Bedrock Mantle provider plugin for OpenAI-compatible model routing.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.137.0",
+    "@aws/bedrock-token-generator": "1.1.0"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/amazon-bedrock-mantle-provider",
+      "npmSpec": "@omnipolymath/amazon-bedrock-mantle-provider",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.5.12-beta.1"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3",
+      "bundledDist": false
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  }
+}

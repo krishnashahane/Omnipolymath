@@ -1,0 +1,28 @@
+{
+  "name": "@omnipolymath/agentsapi",
+  "version": "2026.11.3",
+  "description": "Omnipolymath OpenAI Agents API harness with hosted or self-hosted sessions.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "dependencies": {
+    "openai": "7.47.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3"
+    }
+  }
+}

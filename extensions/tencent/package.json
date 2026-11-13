@@ -1,0 +1,36 @@
+{
+  "name": "@omnipolymath/tencent-provider",
+  "version": "2026.11.3",
+  "description": "Omnipolymath Tencent Cloud provider plugin (TokenHub + Token Plan)",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "setupEntry": "./setup-api.ts",
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/tencent-provider",
+      "npmSpec": "@omnipolymath/tencent-provider",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.6.9"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3",
+      "bundledDist": false
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  }
+}

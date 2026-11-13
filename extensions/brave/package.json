@@ -1,0 +1,35 @@
+{
+  "name": "@omnipolymath/brave-plugin",
+  "version": "2026.11.3",
+  "description": "Omnipolymath Brave Search provider plugin for web search.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/brave-plugin",
+      "npmSpec": "@omnipolymath/brave-plugin",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.4.10",
+      "allowInvalidConfigRecovery": true
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3"
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  }
+}

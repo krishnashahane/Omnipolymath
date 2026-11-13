@@ -1,0 +1,39 @@
+{
+  "name": "@omnipolymath/copilot",
+  "version": "2026.11.3",
+  "description": "Omnipolymath GitHub Copilot agent runtime plugin (registers a `github-copilot` AgentHarness backed by @github/copilot-sdk over JSON-RPC to the GitHub Copilot CLI)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "dependencies": {
+    "@github/copilot-sdk": "1.0.25"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/copilot",
+      "npmSpec": "@omnipolymath/copilot",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.5.28"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3",
+      "bundledDist": false
+    },
+    "release": {
+      "bundleRuntimeDependencies": false,
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  }
+}

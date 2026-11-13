@@ -1,0 +1,135 @@
+{
+  "name": "@omnipolymath/tlon",
+  "version": "2026.11.3",
+  "description": "Omnipolymath Tlon/Urbit channel plugin for chat workflows.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1161.0",
+    "@aws-sdk/s3-request-presigner": "3.1161.0",
+    "@tloncorp/tlon-skill": "0.9.1",
+    "@urbit/aura": "3.0.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*",
+    "omnipolymath": "workspace:*"
+  },
+  "peerDependencies": {
+    "omnipolymath": ">=2026.11.3"
+  },
+  "peerDependenciesMeta": {
+    "omnipolymath": {
+      "optional": true
+    }
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "setupEntry": "./setup-entry.ts",
+    "setupFeatures": {
+      "configPromotion": true
+    },
+    "channel": {
+      "id": "tlon",
+      "label": "Tlon",
+      "selectionLabel": "Tlon (Urbit)",
+      "docsPath": "/channels/tlon",
+      "docsLabel": "tlon",
+      "blurb": "decentralized messaging on Urbit; install the plugin to enable.",
+      "order": 90,
+      "quickstartAllowFrom": true,
+      "setup": {
+        "fields": [
+          {
+            "key": "ship",
+            "kind": "string",
+            "cli": {
+              "flags": "--ship <ship>",
+              "description": "Tlon ship"
+            }
+          },
+          {
+            "key": "url",
+            "kind": "string",
+            "cli": {
+              "flags": "--url <url>",
+              "description": "Tlon URL"
+            }
+          },
+          {
+            "key": "code",
+            "kind": "string",
+            "sensitive": true,
+            "cli": {
+              "flags": "--code <code>",
+              "description": "Tlon login code"
+            }
+          },
+          {
+            "key": "dangerouslyAllowPrivateNetwork",
+            "kind": "boolean",
+            "cli": {
+              "flags": "--dangerously-allow-private-network",
+              "description": "Allow private-network Tlon URLs"
+            }
+          },
+          {
+            "key": "groupChannels",
+            "kind": "string-list",
+            "cli": {
+              "flags": "--group-channels <list>",
+              "description": "Tlon group channels"
+            }
+          },
+          {
+            "key": "dmAllowlist",
+            "kind": "string-list",
+            "cli": {
+              "flags": "--dm-allowlist <list>",
+              "description": "Tlon DM allowlist"
+            }
+          },
+          {
+            "key": "autoDiscoverChannels",
+            "kind": "boolean",
+            "cli": {
+              "flags": "--auto-discover-channels",
+              "negatedFlags": "--no-auto-discover-channels",
+              "description": "Auto-discover Tlon group channels"
+            }
+          },
+          {
+            "key": "ownerShip",
+            "kind": "string",
+            "cli": {
+              "flags": "--owner-ship <ship>",
+              "description": "Tlon owner ship"
+            }
+          }
+        ]
+      }
+    },
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/tlon",
+      "npmSpec": "@omnipolymath/tlon",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.4.10"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3"
+    },
+    "release": {
+      "bundleRuntimeDependencies": false,
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  }
+}

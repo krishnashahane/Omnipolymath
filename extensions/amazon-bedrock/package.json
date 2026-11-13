@@ -1,0 +1,42 @@
+{
+  "name": "@omnipolymath/amazon-bedrock-provider",
+  "version": "2026.11.3",
+  "description": "Omnipolymath Amazon Bedrock provider plugin with model discovery, embeddings, and guardrail support.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-bedrock": "3.1161.0",
+    "@aws-sdk/client-bedrock-runtime": "3.1161.0",
+    "@aws-sdk/credential-provider-node": "3.972.92",
+    "@smithy/node-http-handler": "4.14.1",
+    "@smithy/types": "4.19.0"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/amazon-bedrock-provider",
+      "npmSpec": "@omnipolymath/amazon-bedrock-provider",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.5.12-beta.1"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3",
+      "bundledDist": false
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  }
+}

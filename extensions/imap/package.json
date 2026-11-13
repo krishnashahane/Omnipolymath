@@ -1,0 +1,21 @@
+{
+  "name": "@omnipolymath/imap",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath inbound IMAP email trigger plugin",
+  "type": "module",
+  "dependencies": {
+    "imapflow": "2.10.0",
+    "mailauth": "7.3.1",
+    "mailparser": "3.14.1"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*",
+    "@types/mailparser": "3.9.0"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

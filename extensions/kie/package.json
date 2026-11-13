@@ -1,0 +1,15 @@
+{
+  "name": "@omnipolymath/kie-provider",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath Kie AI video provider plugin",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

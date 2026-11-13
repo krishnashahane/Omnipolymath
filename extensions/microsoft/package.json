@@ -1,0 +1,18 @@
+{
+  "name": "@omnipolymath/microsoft-speech",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath Microsoft speech plugin",
+  "type": "module",
+  "dependencies": {
+    "node-edge-tts": "1.2.12"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

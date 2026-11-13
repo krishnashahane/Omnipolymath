@@ -1,0 +1,45 @@
+{
+  "name": "@omnipolymath/mxc-sandbox",
+  "version": "2026.11.3",
+  "description": "Omnipolymath MXC sandbox execution plugin for MXC-capable hosts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "dependencies": {
+    "@microsoft/mxc-sdk": "0.9.0",
+    "zod": "4.6.7"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/mxc-sandbox",
+      "npmSpec": "@omnipolymath/mxc-sandbox",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.6.11"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3",
+      "bundledDist": false,
+      "staticAssets": [
+        {
+          "source": "./src/mxc-spawn-launcher.mjs",
+          "output": "mxc-spawn-launcher.mjs"
+        }
+      ]
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  }
+}

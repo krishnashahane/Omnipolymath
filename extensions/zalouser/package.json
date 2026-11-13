@@ -1,0 +1,82 @@
+{
+  "name": "@omnipolymath/zalouser",
+  "version": "2026.11.3",
+  "description": "Omnipolymath Zalo Personal Account plugin via native zca-js integration.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "dependencies": {
+    "typebox": "1.4.3",
+    "zca-js": "2.2.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*",
+    "omnipolymath": "workspace:*"
+  },
+  "peerDependencies": {
+    "omnipolymath": ">=2026.11.3"
+  },
+  "peerDependenciesMeta": {
+    "omnipolymath": {
+      "optional": true
+    }
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "setupEntry": "./setup-entry.ts",
+    "setupFeatures": {
+      "configPromotion": true
+    },
+    "channel": {
+      "id": "zalouser",
+      "configuredState": {
+        "env": {
+          "anyOf": [
+            "ZALOUSER_PROFILE",
+            "ZCA_PROFILE"
+          ]
+        }
+      },
+      "label": "Zalo Personal",
+      "selectionLabel": "Zalo (Personal Account)",
+      "docsPath": "/channels/zalouser",
+      "docsLabel": "zalouser",
+      "blurb": "Zalo personal account via QR code login.",
+      "aliases": [
+        "zlu"
+      ],
+      "order": 85,
+      "quickstartAllowFrom": false,
+      "doctorCapabilities": {
+        "dmAllowFromMode": "topOnly",
+        "groupModel": "hybrid",
+        "groupAllowFromFallbackToAllowFrom": false,
+        "warnOnEmptyGroupSenderAllowlist": false
+      },
+      "setup": {
+        "fields": []
+      }
+    },
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/zalouser",
+      "npmSpec": "@omnipolymath/zalouser",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.4.10"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3"
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  }
+}

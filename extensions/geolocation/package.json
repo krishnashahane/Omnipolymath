@@ -1,0 +1,27 @@
+{
+  "name": "@omnipolymath/geolocation-plugin",
+  "version": "2026.11.3",
+  "description": "Omnipolymath geolocation plugin resolving client IP addresses to a coarse city using a locally cached IP-geolocation database.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "dependencies": {
+    "maxmind": "5.0.7"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3"
+    }
+  }
+}

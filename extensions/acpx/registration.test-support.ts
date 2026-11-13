@@ -1,0 +1,27 @@
+import type { OmnipolymathPluginService } from "omnipolymath/plugin-sdk/core";
+import { createTestPluginApi } from "omnipolymath/plugin-sdk/plugin-test-api";
+import { createPluginRuntimeMock } from "omnipolymath/plugin-sdk/plugin-test-runtime";
+import plugin from "./index.js";
+
+export function createRegisteredAcpxService(
+  options: Parameters<typeof createTestPluginApi>[0] = {},
+) {
+  let service: OmnipolymathPluginService | undefined;
+  plugin.register(
+    createTestPluginApi({
+      id: "acpx",
+      runtime: createPluginRuntimeMock(),
+      ...options,
+      registerService: (registered) => {
+        if (registered.apiVersion === 2 || registered.apiVersion === 3) {
+          throw new Error("Expected ACPX runtime service API version 1");
+        }
+        service = registered;
+      },
+    }),
+  );
+  if (!service) {
+    throw new Error("ACPX runtime service is not registered");
+  }
+  return service;
+}

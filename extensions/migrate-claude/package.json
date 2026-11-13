@@ -1,0 +1,27 @@
+{
+  "name": "@omnipolymath/migrate-claude",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Claude to Omnipolymath migration provider",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*",
+    "omnipolymath": "workspace:*"
+  },
+  "peerDependencies": {
+    "omnipolymath": ">=2026.11.3"
+  },
+  "peerDependenciesMeta": {
+    "omnipolymath": {
+      "optional": true
+    }
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "dependencies": {
+    "@openclaw/fs-safe": "0.27.1"
+  }
+}
