@@ -68,7 +68,7 @@ it.each([`DROP TABLE ${lifecycleTable}`, `DELETE FROM ${lifecycleTable}`])(
       status: "published",
       repository: "krishnashahane/Omnipolymath",
       branch: legacy.branch,
-      url: "https://github.com/krishnashahane/Omnipolymath/pull/12",
+      url: "https://github.com/omnipolymath/omnipolymath/pull/12",
       headCommit: NEW_HEAD,
     });
     const db = openOmnipolymathStateDatabase().db;
