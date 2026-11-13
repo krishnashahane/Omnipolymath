@@ -1,0 +1,349 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "lib": ["DOM", "DOM.Iterable", "ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "noEmitOnError": true,
+    "noUncheckedSideEffectImports": true,
+    "outDir": "dist",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "es2023",
+    "types": ["node"],
+    "useDefineForClassFields": false,
+    "verbatimModuleSyntax": true,
+    "paths": {
+      "omnipolymath/plugin-sdk/*": ["./src/plugin-sdk/*.ts"],
+      "@omnipolymath/ai": ["./packages/ai/src/index.ts"],
+      "@omnipolymath/ai/diagnostics": ["./packages/ai/src/utils/diagnostics.ts"],
+      "@omnipolymath/ai/event-stream": ["./packages/ai/src/utils/event-stream.ts"],
+      "@omnipolymath/ai/providers": ["./packages/ai/src/providers.ts"],
+      "@omnipolymath/ai/provider-types": ["./packages/ai/src/provider-types.ts"],
+      "@omnipolymath/ai/transports": ["./packages/ai/src/transports.ts"],
+      "@omnipolymath/ai/types": ["./packages/ai/src/types.ts"],
+      "@omnipolymath/ai/validation": ["./packages/ai/src/validation.ts"],
+      "@omnipolymath/ai/internal/anthropic": ["./packages/ai/src/internal/anthropic.ts"],
+      "@omnipolymath/ai/internal/google": ["./packages/ai/src/internal/google.ts"],
+      "@omnipolymath/ai/internal/google-model-family": [
+        "./packages/ai/src/internal/google-model-family.ts"
+      ],
+      "@omnipolymath/ai/internal/model-request-body": [
+        "./packages/ai/src/transports/model-request-body.ts"
+      ],
+      "@omnipolymath/ai/internal/openai": ["./packages/ai/src/internal/openai.ts"],
+      "@omnipolymath/ai/internal/openai-completions-compat": [
+        "./packages/ai/src/internal/openai-completions-compat.ts"
+      ],
+      "@omnipolymath/ai/internal/openai-responses-payload-policy": [
+        "./packages/ai/src/internal/openai-responses-payload-policy.ts"
+      ],
+      "@omnipolymath/ai/internal/retry-after": ["./packages/ai/src/internal/retry-after.ts"],
+      "@omnipolymath/ai/internal/runtime": ["./packages/ai/src/internal/runtime.ts"],
+      "@omnipolymath/ai/internal/shared": ["./packages/ai/src/internal/shared.ts"],
+      "@omnipolymath/ai/internal/tool-schema": ["./packages/ai/src/internal/tool-schema.ts"],
+      "@omnipolymath/agent-core": ["./packages/agent-core/src/index.ts"],
+      "@omnipolymath/agent-core/*": ["./packages/agent-core/src/*"],
+      "@omnipolymath/llm-core": ["./packages/llm-core/src/index.ts"],
+      "@omnipolymath/llm-core/diagnostics": ["./packages/llm-core/src/utils/diagnostics.ts"],
+      "@omnipolymath/llm-core/event-stream": ["./packages/llm-core/src/utils/event-stream.ts"],
+      "@omnipolymath/llm-core/model-contracts/anthropic": ["./packages/llm-core/src/model-contracts/anthropic.ts"],
+      "@omnipolymath/llm-core/types": ["./packages/llm-core/src/types.ts"],
+      "@omnipolymath/llm-core/validation": ["./packages/llm-core/src/validation.ts"],
+      "@omnipolymath/llm-core/*": ["./packages/llm-core/src/*"],
+      "@omnipolymath/model-catalog-core": ["./packages/model-catalog-core/src/index.ts"],
+      "@omnipolymath/model-catalog-core/configured-model-refs": [
+        "./packages/model-catalog-core/src/configured-model-refs.ts"
+      ],
+      "@omnipolymath/model-catalog-core/model-catalog-normalize": [
+        "./packages/model-catalog-core/src/model-catalog-normalize.ts"
+      ],
+      "@omnipolymath/model-catalog-core/model-catalog-pricing": [
+        "./packages/model-catalog-core/src/model-catalog-pricing.ts"
+      ],
+      "@omnipolymath/model-catalog-core/model-catalog-refs": [
+        "./packages/model-catalog-core/src/model-catalog-refs.ts"
+      ],
+      "@omnipolymath/model-catalog-core/model-catalog-types": [
+        "./packages/model-catalog-core/src/model-catalog-types.ts"
+      ],
+      "@omnipolymath/model-catalog-core/model-inference-capabilities": [
+        "./packages/model-catalog-core/src/model-inference-capabilities.ts"
+      ],
+      "@omnipolymath/model-catalog-core/provider-id": [
+        "./packages/model-catalog-core/src/provider-id.ts"
+      ],
+      "@omnipolymath/model-catalog-core/provider-model-id-normalization": [
+        "./packages/model-catalog-core/src/provider-model-id-normalization.ts"
+      ],
+      "@omnipolymath/model-catalog-core/provider-model-id-normalize": [
+        "./packages/model-catalog-core/src/provider-model-id-normalize.ts"
+      ],
+      "@omnipolymath/model-catalog-core/*": ["./packages/model-catalog-core/src/*"],
+      "@omnipolymath/gateway-client": ["./packages/gateway-client/src/index.ts"],
+      "@omnipolymath/gateway-client/browser": ["./packages/gateway-client/src/browser.ts"],
+      "@omnipolymath/gateway-client/scope-upgrade": [
+        "./packages/gateway-client/src/scope-upgrade.ts"
+      ],
+      "@omnipolymath/gateway-client/websocket-data": [
+        "./packages/gateway-client/src/websocket-data.ts"
+      ],
+      "@omnipolymath/gateway-client/*": ["./packages/gateway-client/src/*"],
+      "@omnipolymath/gateway-protocol": ["./packages/gateway-protocol/src/index.ts"],
+      "@omnipolymath/gateway-protocol/client-info": [
+        "./packages/gateway-protocol/src/client-info.ts"
+      ],
+      "@omnipolymath/gateway-protocol/connect-error-details": [
+        "./packages/gateway-protocol/src/connect-error-details.ts"
+      ],
+      "@omnipolymath/gateway-protocol/gateway-error-details": [
+        "./packages/gateway-protocol/src/gateway-error-details.ts"
+      ],
+      "@omnipolymath/gateway-protocol/frame-guards": [
+        "./packages/gateway-protocol/src/frame-guards.ts"
+      ],
+      "@omnipolymath/gateway-protocol/schema": ["./packages/gateway-protocol/src/schema.ts"],
+      "@omnipolymath/gateway-protocol/session-row-deltas": ["./packages/gateway-protocol/src/session-row-deltas.ts"],
+      "@omnipolymath/gateway-protocol/restart-unavailable": [
+        "./packages/gateway-protocol/src/restart-unavailable.ts"
+      ],
+      "@omnipolymath/gateway-protocol/startup-unavailable": [
+        "./packages/gateway-protocol/src/startup-unavailable.ts"
+      ],
+      "@omnipolymath/gateway-protocol/system-agent-context": ["./packages/gateway-protocol/src/system-agent-context.ts"],
+      "@omnipolymath/gateway-protocol/version": ["./packages/gateway-protocol/src/version.ts"],
+      "@omnipolymath/gateway-protocol/*": ["./packages/gateway-protocol/src/*"],
+      "@omnipolymath/media-generation-core": ["./packages/media-generation-core/src/index.ts"],
+      "@omnipolymath/media-generation-core/capability-model-ref": [
+        "./packages/media-generation-core/src/capability-model-ref.ts"
+      ],
+      "@omnipolymath/media-generation-core/catalog": [
+        "./packages/media-generation-core/src/catalog.ts"
+      ],
+      "@omnipolymath/media-generation-core/model-ref": [
+        "./packages/media-generation-core/src/model-ref.ts"
+      ],
+      "@omnipolymath/media-generation-core/normalization": [
+        "./packages/media-generation-core/src/normalization.ts"
+      ],
+      "@omnipolymath/media-generation-core/*": ["./packages/media-generation-core/src/*"],
+      "@omnipolymath/media-core": ["./packages/media-core/src/index.ts"],
+      "@omnipolymath/media-core/attachment-classify": [
+        "./packages/media-core/src/attachment-classify.ts"
+      ],
+      "@omnipolymath/media-core/base64": ["./packages/media-core/src/base64.ts"],
+      "@omnipolymath/media-core/constants": ["./packages/media-core/src/constants.ts"],
+      "@omnipolymath/media-core/content-length": ["./packages/media-core/src/content-length.ts"],
+      "@omnipolymath/media-core/file-name": ["./packages/media-core/src/file-name.ts"],
+      "@omnipolymath/media-core/inbound-path-policy": [
+        "./packages/media-core/src/inbound-path-policy.ts"
+      ],
+      "@omnipolymath/media-core/inline-image-data-url": [
+        "./packages/media-core/src/inline-image-data-url.ts"
+      ],
+      "@omnipolymath/media-core/media-source-url": [
+        "./packages/media-core/src/media-source-url.ts"
+      ],
+      "@omnipolymath/media-core/mime": ["./packages/media-core/src/mime.ts"],
+      "@omnipolymath/media-core/read-byte-stream-with-limit": [
+        "./packages/media-core/src/read-byte-stream-with-limit.ts"
+      ],
+      "@omnipolymath/media-core/*": ["./packages/media-core/src/*"],
+      "@omnipolymath/media-understanding-common/*": [
+        "./packages/media-understanding-common/src/*"
+      ],
+      "@omnipolymath/markdown-core": ["./packages/markdown-core/src/index.ts"],
+      "@omnipolymath/markdown-core/code-spans": ["./packages/markdown-core/src/code-spans.ts"],
+      "@omnipolymath/markdown-core/fences": ["./packages/markdown-core/src/fences.ts"],
+      "@omnipolymath/markdown-core/frontmatter": ["./packages/markdown-core/src/frontmatter.ts"],
+      "@omnipolymath/markdown-core/ir": ["./packages/markdown-core/src/ir.ts"],
+      "@omnipolymath/markdown-core/render": ["./packages/markdown-core/src/render.ts"],
+      "@omnipolymath/markdown-core/render-aware-chunking": [
+        "./packages/markdown-core/src/render-aware-chunking.ts"
+      ],
+      "@omnipolymath/markdown-core/tables": ["./packages/markdown-core/src/tables.ts"],
+      "@omnipolymath/markdown-core/types": ["./packages/markdown-core/src/types.ts"],
+      "@omnipolymath/markdown-core/*": ["./packages/markdown-core/src/*"],
+      "@omnipolymath/normalization-core": ["./packages/normalization-core/src/index.ts"],
+      "@omnipolymath/normalization-core/agent-id": [
+        "./packages/normalization-core/src/agent-id.ts"
+      ],
+      "@omnipolymath/normalization-core/agent-run-terminal-outcome": [
+        "./packages/normalization-core/src/agent-run-terminal-outcome.ts"
+      ],
+      "@omnipolymath/normalization-core/boolean-coercion": [
+        "./packages/normalization-core/src/boolean-coercion.ts"
+      ],
+      "@omnipolymath/normalization-core/cjk-chars": [
+        "./packages/normalization-core/src/cjk-chars.ts"
+      ],
+      "@omnipolymath/normalization-core/code-points": [
+        "./packages/normalization-core/src/code-points.ts"
+      ],
+      "@omnipolymath/normalization-core/error-coercion": [
+        "./packages/normalization-core/src/error-coercion.ts"
+      ],
+      "@omnipolymath/normalization-core/expect": ["./packages/normalization-core/src/expect.ts"],
+      "@omnipolymath/normalization-core/grapheme": ["./packages/normalization-core/src/grapheme.ts"],
+      "@omnipolymath/normalization-core/json-coercion": [
+        "./packages/normalization-core/src/json-coercion.ts"
+      ],
+      "@omnipolymath/normalization-core/json-schema": [
+        "./packages/normalization-core/src/json-schema.ts"
+      ],
+      "@omnipolymath/normalization-core/json-schema-validator": [
+        "./packages/normalization-core/src/json-schema-validator.ts"
+      ],
+      "@omnipolymath/normalization-core/markdown-plain-text": [
+        "./packages/normalization-core/src/markdown-plain-text.ts"
+      ],
+      "@omnipolymath/normalization-core/mountinfo-path": [
+        "./packages/normalization-core/src/mountinfo-path.ts"
+      ],
+      "@omnipolymath/normalization-core/node-crypto": [
+        "./packages/normalization-core/src/node-crypto.ts"
+      ],
+      "@omnipolymath/normalization-core/number-coercion": [
+        "./packages/normalization-core/src/number-coercion.ts"
+      ],
+      "@omnipolymath/normalization-core/phone-presentation": [
+        "./packages/normalization-core/src/phone-presentation.ts"
+      ],
+      "@omnipolymath/normalization-core/promise-like": [
+        "./packages/normalization-core/src/promise-like.ts"
+      ],
+      "@omnipolymath/normalization-core/record-coerce": [
+        "./packages/normalization-core/src/record-coerce.ts"
+      ],
+      "@omnipolymath/normalization-core/result": [
+        "./packages/normalization-core/src/result.ts"
+      ],
+      "@omnipolymath/normalization-core/session-key-comparison": [
+        "./packages/normalization-core/src/session-key-comparison.ts"
+      ],
+      "@omnipolymath/normalization-core/stable-node-path": [
+        "./packages/normalization-core/src/stable-node-path.ts"
+      ],
+      "@omnipolymath/normalization-core/stable-stringify": [
+        "./packages/normalization-core/src/stable-stringify.ts"
+      ],
+      "@omnipolymath/normalization-core/string-coerce": [
+        "./packages/normalization-core/src/string-coerce.ts"
+      ],
+      "@omnipolymath/normalization-core/string-normalization": [
+        "./packages/normalization-core/src/string-normalization.ts"
+      ],
+      "@omnipolymath/normalization-core/stringified-error": [
+        "./packages/normalization-core/src/stringified-error.ts"
+      ],
+      "@omnipolymath/normalization-core/utf16-slice": [
+        "./packages/normalization-core/src/utf16-slice.ts"
+      ],
+      "@omnipolymath/normalization-core/uuid": ["./packages/normalization-core/src/uuid.ts"],
+      "@omnipolymath/normalization-core/home-dir": [
+        "./packages/normalization-core/src/home-dir.ts"
+      ],
+      "@omnipolymath/normalization-core/*": ["./packages/normalization-core/src/*"],
+      "@omnipolymath/retry": ["./packages/retry/src/index.ts"],
+      "@omnipolymath/worker-runtime": ["./packages/worker-runtime/src/index.ts"],
+      "@omnipolymath/worker-runtime/worker": ["./packages/worker-runtime/src/worker.ts"],
+      "@omnipolymath/worker-runtime/lifecycle": ["./packages/worker-runtime/src/lifecycle.ts"],
+      "@omnipolymath/mermaid-renderer": ["./packages/mermaid-renderer/src/renderer.ts"],
+      "@omnipolymath/session-url-contract": ["./packages/session-url-contract/src/index.ts"],
+      "@omnipolymath/session-url-contract/parse": ["./packages/session-url-contract/src/parse.ts"],
+      "@omnipolymath/session-url-contract/session-key-normalization": [
+        "./packages/session-url-contract/src/session-key-normalization.ts"
+      ],
+      "@omnipolymath/session-url-contract/share-build": [
+        "./packages/session-url-contract/src/share-build.ts"
+      ],
+      "@omnipolymath/session-url-contract/*": ["./packages/session-url-contract/src/*"],
+      "@omnipolymath/workboard-contract": ["./packages/workboard-contract/src/index.ts"],
+      "@omnipolymath/omnipolymath-id-protocol": ["./packages/omnipolymath-id-protocol/src/index.ts"],
+      "@omnipolymath/omnipolymath-id-protocol/testing": ["./packages/omnipolymath-id-protocol/src/testing.ts"],
+      "@omnipolymath/acp-core": ["./packages/acp-core/src/index.ts"],
+      "@omnipolymath/acp-core/meta": ["./packages/acp-core/src/meta.ts"],
+      "@omnipolymath/acp-core/session": ["./packages/acp-core/src/session.ts"],
+      "@omnipolymath/acp-core/session-interaction-mode": [
+        "./packages/acp-core/src/session-interaction-mode.ts"
+      ],
+      "@omnipolymath/acp-core/session-lineage-meta": [
+        "./packages/acp-core/src/session-lineage-meta.ts"
+      ],
+      "@omnipolymath/acp-core/types": ["./packages/acp-core/src/types.ts"],
+      "@omnipolymath/acp-core/runtime/error-text": [
+        "./packages/acp-core/src/runtime/error-text.ts"
+      ],
+      "@omnipolymath/acp-core/runtime/errors": ["./packages/acp-core/src/runtime/errors.ts"],
+      "@omnipolymath/acp-core/runtime/session-identifiers": [
+        "./packages/acp-core/src/runtime/session-identifiers.ts"
+      ],
+      "@omnipolymath/acp-core/runtime/session-identity": [
+        "./packages/acp-core/src/runtime/session-identity.ts"
+      ],
+      "@omnipolymath/acp-core/runtime/types": ["./packages/acp-core/src/runtime/types.ts"],
+      "@omnipolymath/acp-core/*": ["./packages/acp-core/src/*"],
+      "@omnipolymath/terminal-core": ["./packages/terminal-core/src/index.ts"],
+      "@omnipolymath/terminal-core/ansi": ["./packages/terminal-core/src/ansi.ts"],
+      "@omnipolymath/terminal-core/decorative-emoji": [
+        "./packages/terminal-core/src/decorative-emoji.ts"
+      ],
+      "@omnipolymath/terminal-core/health-style": [
+        "./packages/terminal-core/src/health-style.ts"
+      ],
+      "@omnipolymath/terminal-core/links": ["./packages/terminal-core/src/links.ts"],
+      "@omnipolymath/terminal-core/note": ["./packages/terminal-core/src/note.ts"],
+      "@omnipolymath/terminal-core/osc-progress": ["./packages/terminal-core/src/osc-progress.ts"],
+      "@omnipolymath/terminal-core/palette": ["./packages/terminal-core/src/palette.ts"],
+      "@omnipolymath/terminal-core/progress-line": [
+        "./packages/terminal-core/src/progress-line.ts"
+      ],
+      "@omnipolymath/terminal-core/prompt-select-styled": [
+        "./packages/terminal-core/src/prompt-select-styled.ts"
+      ],
+      "@omnipolymath/terminal-core/prompt-select-styled-params": [
+        "./packages/terminal-core/src/prompt-select-styled-params.ts"
+      ],
+      "@omnipolymath/terminal-core/prompt-style": [
+        "./packages/terminal-core/src/prompt-style.ts"
+      ],
+      "@omnipolymath/terminal-core/restore": ["./packages/terminal-core/src/restore.ts"],
+      "@omnipolymath/terminal-core/safe-text": ["./packages/terminal-core/src/safe-text.ts"],
+      "@omnipolymath/terminal-core/stream-writer": [
+        "./packages/terminal-core/src/stream-writer.ts"
+      ],
+      "@omnipolymath/terminal-core/table": ["./packages/terminal-core/src/table.ts"],
+      "@omnipolymath/terminal-core/terminal-link": [
+        "./packages/terminal-core/src/terminal-link.ts"
+      ],
+      "@omnipolymath/terminal-core/theme": ["./packages/terminal-core/src/theme.ts"],
+      "@omnipolymath/terminal-core/*": ["./packages/terminal-core/src/*"],
+      "@omnipolymath/net-policy": ["./packages/net-policy/src/index.ts"],
+      "@omnipolymath/net-policy/ip": ["./packages/net-policy/src/ip.ts"],
+      "@omnipolymath/net-policy/ipv4": ["./packages/net-policy/src/ipv4.ts"],
+      "@omnipolymath/net-policy/redact-sensitive-url": [
+        "./packages/net-policy/src/redact-sensitive-url.ts"
+      ],
+      "@omnipolymath/net-policy/url-protocol": ["./packages/net-policy/src/url-protocol.ts"],
+      "@omnipolymath/net-policy/url-userinfo": ["./packages/net-policy/src/url-userinfo.ts"],
+      "@omnipolymath/net-policy/*": ["./packages/net-policy/src/*"],
+      "@omnipolymath/sdk": ["./packages/sdk/src/index.ts"],
+      "@omnipolymath/plugin-sdk/*": ["./src/plugin-sdk/*.ts"],
+      "omnipolymath/plugin-sdk/account-id": ["./src/plugin-sdk/account-id.ts"],
+      "@omnipolymath/*": ["./extensions/*"]
+    }
+  },
+  "include": ["src/**/*", "ui/**/*", "extensions/**/*", "packages/**/*"],
+  "exclude": ["node_modules", "dist", "**/dist/**", "**/*.test-compat.d.ts"]
+}
