@@ -120,7 +120,7 @@ async function main() {
         return execGhRead(
           [
             "api",
-            `repos/omnipolymath/omnipolymath/${endpoint}`,
+            `repos/krishnashahane/Omnipolymath/${endpoint}`,
             "-H",
             "Cache-Control: max-age=0",
             ...(endpoint.endsWith("/logs") ? logFlags : []),
