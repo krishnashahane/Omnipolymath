@@ -1,0 +1,74 @@
+/** Tests ACP policy gates for enablement, dispatch, and allowed agents. */
+import { describe, expect, it } from "vitest";
+import type { OmnipolymathConfig } from "../config/config.js";
+import {
+  isAcpEnabledByPolicy,
+  resolveAcpAgentPolicyError,
+  resolveAcpDispatchPolicyError,
+  resolveAcpDispatchPolicyMessage,
+  resolveAcpExplicitTurnPolicyError,
+} from "./policy.js";
+
+describe("acp policy", () => {
+  it("treats ACP + ACP dispatch as enabled by default", () => {
+    const cfg = {} satisfies OmnipolymathConfig;
+    expect(isAcpEnabledByPolicy(cfg)).toBe(true);
+    expect(resolveAcpDispatchPolicyMessage(cfg)).toBeNull();
+    expect(resolveAcpDispatchPolicyError(cfg)).toBeNull();
+  });
+
+  it("reports ACP disabled state when acp.enabled is false", () => {
+    const cfg = {
+      acp: {
+        enabled: false,
+      },
+    } satisfies OmnipolymathConfig;
+    expect(isAcpEnabledByPolicy(cfg)).toBe(false);
+    expect(resolveAcpDispatchPolicyMessage(cfg)).toBe(
+      "ACP is disabled by policy (`acp.enabled=false`).",
+    );
+    expect(resolveAcpDispatchPolicyError(cfg)?.code).toBe("ACP_DISPATCH_DISABLED");
+  });
+
+  it("allows explicit ACP turns when only dispatch is disabled", () => {
+    const cfg = {
+      acp: {
+        enabled: true,
+        dispatch: {
+          enabled: false,
+        },
+      },
+    } satisfies OmnipolymathConfig;
+    expect(resolveAcpDispatchPolicyError(cfg)?.code).toBe("ACP_DISPATCH_DISABLED");
+    expect(resolveAcpExplicitTurnPolicyError(cfg)).toBeNull();
+    expect(resolveAcpDispatchPolicyMessage(cfg)).toBe(
+      "ACP dispatch is disabled by policy (`acp.dispatch.enabled=false`).",
+    );
+  });
+
+  it("blocks explicit ACP turns when ACP is disabled", () => {
+    const cfg = {
+      acp: {
+        enabled: false,
+        dispatch: {
+          enabled: false,
+        },
+      },
+    } satisfies OmnipolymathConfig;
+    expect(resolveAcpExplicitTurnPolicyError(cfg)?.message).toBe(
+      "ACP is disabled by policy (`acp.enabled=false`).",
+    );
+  });
+
+  it("applies allowlist filtering for ACP agents", () => {
+    const cfg = {
+      acp: {
+        allowedAgents: ["Codex", "claude-code", "kimi"],
+      },
+    } satisfies OmnipolymathConfig;
+    expect(resolveAcpAgentPolicyError(cfg, "codex")).toBeNull();
+    expect(resolveAcpAgentPolicyError(cfg, "claude-code")).toBeNull();
+    expect(resolveAcpAgentPolicyError(cfg, "KIMI")).toBeNull();
+    expect(resolveAcpAgentPolicyError(cfg, "gemini")?.code).toBe("ACP_SESSION_INIT_FAILED");
+  });
+});

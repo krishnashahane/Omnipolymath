@@ -1,0 +1,57 @@
+import { listAgentIds, tryResolveAmbientOwnerAgentId } from "../agents/agent-scope.js";
+import { DEFAULT_CRON_ENABLED } from "../config/cron-limits.js";
+import type { OmnipolymathConfig } from "../config/types.omnipolymath.js";
+import { GatewayScheduler } from "../infra/gateway-scheduler.js";
+import { getChildLogger, getResolvedLoggerSettings, toPinoLikeLogger } from "../logging/logger.js";
+import { normalizeAgentId } from "../routing/session-key.js";
+import { CronService } from "./service.js";
+import { resolveCronJobsStorePathAsync } from "./store.js";
+
+/** Offline custody is supplied by the caller; this owner never starts scheduled execution. */
+export async function withLocalCronService<T>(
+  getRuntimeConfig: () => OmnipolymathConfig,
+  run: (service: CronService) => Promise<T>,
+): Promise<T> {
+  const cfg = getRuntimeConfig();
+  const storePath = await resolveCronJobsStorePathAsync();
+  const scheduler = new GatewayScheduler();
+  const service = new CronService({
+    scheduler,
+    storePath,
+    cronEnabled: cfg.cron?.enabled ?? DEFAULT_CRON_ENABLED,
+    cronConfig: cfg.cron,
+    log: toPinoLikeLogger(
+      getChildLogger({ module: "cron", storeKey: storePath }),
+      getResolvedLoggerSettings().level,
+    ),
+    defaultAgentId: tryResolveAmbientOwnerAgentId(cfg),
+    resolveDefaultAgentId: () => tryResolveAmbientOwnerAgentId(getRuntimeConfig()),
+    isAgentAvailable: (id, facts) =>
+      !facts.deletionBlocked &&
+      listAgentIds(getRuntimeConfig()).some(
+        (configuredId) => normalizeAgentId(configuredId) === id,
+      ),
+    enqueueSystemEvent: () => false,
+    runIsolatedAgentJob: async () => {
+      throw new Error("Cron execution is unavailable in local service context.");
+    },
+  });
+  service.pauseScheduling();
+  try {
+    return await run(service);
+  } finally {
+    service.stop();
+    await service.waitForIdle();
+    await scheduler.stop();
+  }
+}
+
+export async function withLocalAgentCronJobsRemoved<T>(
+  agentId: string,
+  getRuntimeConfig: () => OmnipolymathConfig,
+  commit: () => Promise<T>,
+): Promise<T> {
+  return await withLocalCronService(getRuntimeConfig, async (service) =>
+    service.removeAgentJobsTransactional(agentId, commit),
+  );
+}

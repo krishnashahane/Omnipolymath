@@ -1,0 +1,281 @@
+import { formatErrorMessage, toErrorObject } from "../../../infra/errors.js";
+import { createPendingPromiseTracker } from "../../../shared/pending-promises.js";
+import type { createTrajectoryRuntimeRecorder } from "../../../trajectory/runtime.js";
+import { projectAgentRunAttemptTerminal } from "../../agent-run-terminal-outcome.js";
+import { buildExecAutoReviewTranscript } from "../../exec-auto-review-transcript.js";
+import { recordAgentCleanupFailure } from "../../run-cleanup-timeout.js";
+import { isAgentRunRestartAbortReason } from "../../run-termination.js";
+import type { guardSessionManager } from "../../session-tool-result-guard-wrapper.js";
+import type { AgentSession } from "../../sessions/index.js";
+import { sessionManagerReleaseTranscript } from "../../sessions/session-manager-core.js";
+import { clearToolSearchCatalog, type ToolSearchCatalogRef } from "../../tool-search.js";
+import { log } from "../logger.js";
+import type { retainEmbeddedSessionPromptState } from "../session-prompt-state.js";
+import { flushPendingToolResultsAfterIdle } from "../wait-for-idle-before-flush.js";
+import type { UserTranscriptContext } from "./attempt-llm-boundary.types.js";
+import type { EmitDiagnosticRunCompleted } from "./attempt-setup.js";
+import {
+  cleanupEmbeddedAttemptResources,
+  waitForEmbeddedAbortSettle,
+} from "./attempt-subscription-cleanup.js";
+import { flushEmbeddedAttemptTrajectoryRecorder } from "./attempt-trajectory-flush.js";
+import type { createEmbeddedAttemptTranscriptLifecycle } from "./attempt-transcript-lifecycle.js";
+import type { EmbeddedAttemptDeferredLifecycleOwner } from "./deferred-lifecycle-owner.js";
+import type { EmbeddedAttemptExecutionState, EmbeddedRunAttemptParams } from "./types.js";
+
+export function createEmbeddedAttemptSessionSettleTracker(
+  activeSession: Pick<AgentSession, "abort">,
+) {
+  const inFlight = new Set<Promise<void>>();
+  let abortCleanupFailed = false;
+  const recordAbortCleanupFailure = () => {
+    if (abortCleanupFailed) {
+      recordAgentCleanupFailure();
+    }
+  };
+  const trackSettlePromise = createPendingPromiseTracker(inFlight);
+
+  return {
+    abortActiveSession: (reason?: unknown) =>
+      trackSettlePromise(
+        Promise.resolve(activeSession.abort(reason)).catch((error: unknown) => {
+          abortCleanupFailed = true;
+          throw error;
+        }),
+      ),
+    buildAbortSettlePromise: () => {
+      // Abort callbacks can run outside the caller's async context. Record their
+      // retained failure from the cleanup owner that joins settlement.
+      recordAbortCleanupFailure();
+      return inFlight.size === 0
+        ? null
+        : Promise.allSettled(inFlight).then(recordAbortCleanupFailure);
+    },
+    trackPromptSettlePromise: trackSettlePromise,
+  };
+}
+
+type AttemptTranscriptLifecycle = ReturnType<typeof createEmbeddedAttemptTranscriptLifecycle>;
+type TrajectoryRecorder = Awaited<ReturnType<typeof createTrajectoryRuntimeRecorder>>;
+type DisposableRuntime = { dispose(): Promise<void> | void };
+
+export type EmbeddedAttemptSessionResources = {
+  promptStateLease?: ReturnType<typeof retainEmbeddedSessionPromptState>;
+  session?: AgentSession;
+  getUserTranscriptContexts?: () => readonly UserTranscriptContext[] | undefined;
+  sessionManager?: ReturnType<typeof guardSessionManager>;
+  /** False for a caller-supplied manager, whose owner keeps reading it after the attempt. */
+  ownsSessionManager?: boolean;
+  removeToolResultContextGuard?: () => void;
+  trajectoryRecorder: TrajectoryRecorder | null;
+  buildAbortSettlePromise: () => Promise<void> | null;
+};
+
+/** Keep retained review callbacks outside the attempt's tool-execution closure scope. */
+export function createEmbeddedAttemptSessionResources(signal: AbortSignal) {
+  let resources: EmbeddedAttemptSessionResources = {
+    trajectoryRecorder: null,
+    buildAbortSettlePromise: () => null,
+  };
+  return {
+    get resources() {
+      return resources;
+    },
+    reviewTranscript: () => {
+      if (!resources.session || signal.aborted) {
+        return undefined;
+      }
+      return buildExecAutoReviewTranscript({
+        messages: resources.session.messages,
+        userTurnOrigins: new Map(
+          resources
+            .getUserTranscriptContexts?.()
+            ?.map(({ runtimeMessage, transcriptMessage }) => [runtimeMessage, transcriptMessage]),
+        ),
+      });
+    },
+    takeForCleanup: () => {
+      const released = resources;
+      resources = { trajectoryRecorder: null, buildAbortSettlePromise: () => null };
+      return released;
+    },
+  };
+}
+
+type CleanupEmbeddedAttemptSessionInput = EmbeddedAttemptSessionResources & {
+  attempt: Pick<EmbeddedRunAttemptParams, "runId" | "sessionId" | "abortSignal">;
+  transcriptLifecycle: Pick<AttemptTranscriptLifecycle, "beginCleanup" | "dispose">;
+  bundleMcpRuntime?: DisposableRuntime;
+  bundleLspRuntime?: DisposableRuntime;
+  toolSearchCatalogRef?: ToolSearchCatalogRef;
+  trajectoryEndRecorded: boolean;
+  deferredLifecycleOwner?: EmbeddedAttemptDeferredLifecycleOwner;
+  emitDiagnosticRunCompleted?: EmitDiagnosticRunCompleted;
+  state: Pick<
+    EmbeddedAttemptExecutionState,
+    "terminal" | "beforeAgentRunBlockedBy" | "diagnosticFinalResponse"
+  >;
+};
+
+export async function cleanupEmbeddedAttemptSessionPhase(
+  input: CleanupEmbeddedAttemptSessionInput,
+): Promise<void> {
+  using _ = input.promptStateLease;
+  const clearTranscriptRunCallbacks = input.sessionManager?.clearTranscriptRunCallbacks;
+  const { attempt } = input;
+  const initialState = projectAgentRunAttemptTerminal(input.state.terminal);
+  const restartAbort = isAgentRunRestartAbortReason(attempt.abortSignal?.reason);
+  let cleanupError: unknown;
+  let transcriptDrained = false;
+  let resourcesDisposed = false;
+  const releaseSettledTranscript = () => {
+    if (!transcriptDrained || !resourcesDisposed) {
+      return;
+    }
+    const release = () => {
+      if (input.session) {
+        input.session.agent.state.messages = [];
+      }
+      if (input.ownsSessionManager) {
+        input.sessionManager?.[sessionManagerReleaseTranscript]();
+      }
+    };
+    // A bounded abort wait can end before the agent's terminal event. Its listeners may
+    // still read the transcript; release only after they settle, even on prompt failure.
+    if (input.session?.isStreaming) {
+      void input.session.agent.waitForIdle().then(release, release);
+    } else {
+      release();
+    }
+  };
+  try {
+    try {
+      // The prompt's abort race can finish before the provider's terminal write.
+      // Give its terminal reply the existing abort-settle budget before closing the writer.
+      if (restartAbort) {
+        await waitForEmbeddedAbortSettle({
+          promise: input.buildAbortSettlePromise(),
+          runId: attempt.runId,
+          sessionId: attempt.sessionId,
+        });
+      }
+      if (input.trajectoryRecorder && !input.trajectoryEndRecorded) {
+        const sessionEndData = {
+          status: initialState.promptError
+            ? "error"
+            : initialState.aborted || initialState.timedOut
+              ? "interrupted"
+              : "cleanup",
+          aborted: initialState.aborted,
+          externalAbort: initialState.externalAbort,
+          timedOut: initialState.timedOut,
+          idleTimedOut: initialState.idleTimedOut,
+          timedOutDuringCompaction: initialState.timedOutDuringCompaction,
+          timedOutDuringToolExecution: initialState.timedOutDuringToolExecution,
+          timedOutByRunBudget: initialState.timedOutByRunBudget,
+          promptError: initialState.promptError
+            ? formatErrorMessage(initialState.promptError)
+            : undefined,
+        };
+        if (input.deferredLifecycleOwner) {
+          input.deferredLifecycleOwner.recordSessionEnd(sessionEndData);
+        } else {
+          input.trajectoryRecorder.recordEvent("session.ended", sessionEndData);
+        }
+      }
+      if (
+        !input.deferredLifecycleOwner ||
+        input.state.terminal.kind !== "ok" ||
+        input.state.terminal.settlementWarning ||
+        attempt.abortSignal?.aborted ||
+        input.state.beforeAgentRunBlockedBy !== undefined
+      ) {
+        await flushEmbeddedAttemptTrajectoryRecorder({
+          runId: attempt.runId,
+          sessionId: attempt.sessionId,
+          log,
+          trajectoryRecorder: input.trajectoryRecorder,
+        });
+      }
+    } finally {
+      // Drain accepted writes even when recording the terminal trajectory fails.
+      clearToolSearchCatalog({ catalogRef: input.toolSearchCatalogRef });
+      await input.transcriptLifecycle.beginCleanup(() => {
+        transcriptDrained = true;
+        try {
+          clearTranscriptRunCallbacks?.();
+        } finally {
+          releaseSettledTranscript();
+        }
+      });
+    }
+  } catch (err) {
+    recordAgentCleanupFailure();
+    cleanupError = err;
+  }
+
+  // Resource disposal must run even when releasing the transcript owner failed.
+  try {
+    // Cancellation can arrive during trajectory flushing or the transcript drain.
+    // Read it only after both waits before deciding whether to wait for idle.
+    const cleanupState = projectAgentRunAttemptTerminal(input.state.terminal);
+    const cleanupAborted =
+      Boolean(attempt.abortSignal?.aborted) ||
+      cleanupState.aborted ||
+      cleanupState.timedOut ||
+      cleanupState.idleTimedOut ||
+      cleanupState.timedOutDuringCompaction;
+    const cleanupAbortLike = cleanupAborted || initialState.cleanupYieldAborted;
+    await cleanupEmbeddedAttemptResources({
+      ...input,
+      sessionManager: input.sessionManager,
+      flushPendingToolResultsAfterIdle,
+      // Aborted runs skip the idle wait so teardown cannot strand the lock.
+      aborted: cleanupAbortLike,
+      abortSignal: attempt.abortSignal,
+      // Restart consumed this budget before the writer drain; do not wait twice.
+      abortSettlePromise: cleanupAborted && !restartAbort ? input.buildAbortSettlePromise() : null,
+      runId: attempt.runId,
+      sessionId: attempt.sessionId,
+    });
+  } catch (err) {
+    recordAgentCleanupFailure();
+    cleanupError ??= err;
+  } finally {
+    try {
+      await input.transcriptLifecycle.dispose();
+    } catch (err) {
+      recordAgentCleanupFailure();
+      cleanupError ??= err;
+    }
+    // Accepted writes may outlive the teardown budget. Whichever settles last owns release.
+    resourcesDisposed = true;
+    releaseSettledTranscript();
+  }
+
+  const finalState = projectAgentRunAttemptTerminal(input.state.terminal);
+  const beforeAgentRunBlocked = input.state.beforeAgentRunBlockedBy !== undefined;
+  const diagnosticTerminalAborted =
+    finalState.aborted || finalState.timedOut || finalState.idleTimedOut;
+  input.emitDiagnosticRunCompleted?.(
+    cleanupError
+      ? "error"
+      : beforeAgentRunBlocked
+        ? "blocked"
+        : finalState.promptError
+          ? "error"
+          : diagnosticTerminalAborted
+            ? "aborted"
+            : "completed",
+    cleanupError ?? finalState.promptError,
+    beforeAgentRunBlocked
+      ? { blockedBy: input.state.beforeAgentRunBlockedBy }
+      : input.state.diagnosticFinalResponse
+        ? { finalResponse: input.state.diagnosticFinalResponse }
+        : undefined,
+  );
+
+  if (cleanupError) {
+    await Promise.reject(toErrorObject(cleanupError, "Non-Error rejection"));
+  }
+}

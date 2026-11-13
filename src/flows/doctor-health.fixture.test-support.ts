@@ -1,0 +1,98 @@
+import fs from "node:fs";
+import path from "node:path";
+import { afterEach, aroundEach, beforeAll, beforeEach, vi } from "vitest";
+import { openNodeSqliteDatabase } from "../infra/node-sqlite.js";
+import { withSqliteReadOnlyWorkerScope } from "../infra/sqlite-readonly-worker.js";
+import {
+  closeOmnipolymathAgentDatabaseByPathAsync,
+  openOmnipolymathAgentDatabase,
+  resolveOmnipolymathAgentSqlitePath,
+} from "../state/omnipolymath-agent-db.js";
+import { removeCanonicalValidationFromHistoricalAgentFixture } from "../state/omnipolymath-agent-db.test-support.js";
+import { seedOmnipolymathAgentSchemaV21 } from "../state/omnipolymath-agent-schema-v21.test-support.js";
+import {
+  closeOmnipolymathStateDatabaseByPathAsync,
+  openOmnipolymathStateDatabase,
+} from "../state/omnipolymath-state-db.js";
+import { resolveOmnipolymathStateSqlitePath } from "../state/omnipolymath-state-db.paths.js";
+import { withOmnipolymathTestState } from "../test-utils/omnipolymath-test-state.js";
+import { mocks } from "./doctor-health.test-support.js";
+
+export function useDoctorHealthFixture(currentAgentIds: readonly string[] = []) {
+  let sharedStateTemplate: Buffer;
+  const currentAgentTemplates = new Map<string, Buffer>();
+
+  function materializeCurrentAgentDatabases(env: NodeJS.ProcessEnv) {
+    for (const [agentId, bytes] of currentAgentTemplates) {
+      const databasePath = resolveOmnipolymathAgentSqlitePath({ agentId, env });
+      fs.mkdirSync(path.dirname(databasePath), { recursive: true });
+      fs.writeFileSync(databasePath, bytes, { flag: "wx" });
+    }
+  }
+
+  function materializeSharedStateDatabase(env: NodeJS.ProcessEnv) {
+    const databasePath = resolveOmnipolymathStateSqlitePath(env);
+    if (!fs.existsSync(databasePath)) {
+      fs.mkdirSync(path.dirname(databasePath), { recursive: true });
+      fs.writeFileSync(databasePath, sharedStateTemplate, { flag: "wx" });
+    }
+  }
+
+  function openHistoricalAgentDatabase(options: {
+    agentId: string;
+    env: NodeJS.ProcessEnv;
+    path?: string;
+  }) {
+    materializeSharedStateDatabase(options.env);
+    openOmnipolymathStateDatabase({ env: options.env });
+    const databasePath = resolveOmnipolymathAgentSqlitePath(options);
+    fs.mkdirSync(path.dirname(databasePath), { recursive: true });
+    const db = openNodeSqliteDatabase(databasePath);
+    seedOmnipolymathAgentSchemaV21(db, options.agentId);
+    removeCanonicalValidationFromHistoricalAgentFixture(db);
+    db.exec(
+      "DROP TABLE session_participants; PRAGMA user_version = 17; UPDATE schema_meta SET schema_version = 17;",
+    );
+    return { db, path: databasePath };
+  }
+
+  aroundEach((runTest) => withSqliteReadOnlyWorkerScope(runTest));
+  afterEach(() => vi.unstubAllEnvs());
+
+  beforeAll(async () => {
+    await withOmnipolymathTestState({ scenario: "minimal" }, async (state) => {
+      mocks.runtimeTmpDir.mockReturnValue(state.path("runtime"));
+      const database = openOmnipolymathStateDatabase({ env: state.env });
+      await closeOmnipolymathStateDatabaseByPathAsync(database.path);
+      sharedStateTemplate = fs.readFileSync(database.path);
+      for (const agentId of currentAgentIds) {
+        const agent = openOmnipolymathAgentDatabase({ agentId, env: state.env });
+        await closeOmnipolymathAgentDatabaseByPathAsync(agent.path, agentId);
+        currentAgentTemplates.set(agentId, fs.readFileSync(agent.path));
+      }
+    });
+  });
+
+  beforeEach(() => {
+    vi.stubEnv("OMNIPOLYMATH_SERVICE_REPAIR_POLICY", undefined);
+    mocks.config.mockReturnValue({});
+    mocks.packageRoot.mockReturnValue(undefined);
+    mocks.service.mockReset();
+    mocks.probePortUsage.mockReset().mockResolvedValue("free");
+    mocks.restartedHealthy = true;
+    mocks.emulateNativeInstall = true;
+    mocks.servicePlatform = undefined;
+    mocks.taskDefinitelyStopped.mockReset().mockReturnValue(true);
+    mocks.startupFallbackRuntime.mockReset().mockResolvedValue(null);
+    mocks.outro.mockClear();
+    mocks.lint.mockReset().mockResolvedValue(0);
+    mocks.runContributions.mockReset().mockResolvedValue(undefined);
+    mocks.writeUpdatePostInstallDoctorResult.mockClear();
+  });
+
+  return {
+    materializeSharedStateDatabase,
+    materializeCurrentAgentDatabases,
+    openHistoricalAgentDatabase,
+  };
+}
