@@ -1,0 +1,7 @@
+[bindings.swift]
+module_name = "OmnipolymathIroh"
+ffi_module_name = "OmnipolymathIrohFFI"
+
+[bindings.kotlin]
+package_name = "ai.omnipolymath.iroh"
+cdylib_name = "omnipolymath_iroh_ffi"
