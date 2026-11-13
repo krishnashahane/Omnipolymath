@@ -210,7 +210,7 @@ export async function fixture(
   }
   const pr = {
     number: 7,
-    html_url: "https://github.com/krishnashahane/Omnipolymath/pull/7",
+    html_url: "https://github.com/omnipolymath/omnipolymath/pull/7",
     user: { id: 101, login: "contributor" },
     state: "open",
     draft: false,
@@ -240,7 +240,9 @@ export async function fixture(
       if (argv[0] === "gh") {
         const endpoint = argv.find((arg) => /^(repos|user)\//u.test(arg))!;
         const reference =
-          /^repos\/((?:omnipolymath|contributor)\/omnipolymath)\/git\/ref\/heads\/(.+)$/u.exec(endpoint);
+          /^repos\/((?:omnipolymath|contributor)\/omnipolymath)\/git\/ref\/heads\/(.+)$/u.exec(
+            endpoint,
+          );
         if (reference) {
           const [, repository, ref] = reference;
           return commandResult(
