@@ -21,7 +21,7 @@ import {
 import { createWorkerSessionPlacementStore } from "./worker-environments/placement-store.js";
 
 const mocks = githubPublicationTestMocks();
-const url = "https://github.com/krishnashahane/Omnipolymath/pull/125200";
+const url = "https://github.com/omnipolymath/omnipolymath/pull/125200";
 const human = "Co-authored-by: alice <7+alice@users.noreply.github.com>";
 const marker = "Omnipolymath-Publication: previous-writer";
 let f: Awaited<ReturnType<typeof historyFixture>>;
@@ -79,7 +79,9 @@ async function historyFixture() {
       if (argv.includes("state=all")) {
         return commandResult(JSON.stringify(published ? [pr] : []));
       }
-      const commit = argv.find((arg) => arg.startsWith("repos/omnipolymath/omnipolymath/git/commits/"));
+      const commit = argv.find((arg) =>
+        arg.startsWith("repos/omnipolymath/omnipolymath/git/commits/"),
+      );
       if (commit) {
         try {
           return commandResult(
@@ -391,7 +393,10 @@ describe("GitHub publication branch history", () => {
     mocks.runCommand.mockImplementation((argv: string[], options: unknown) =>
       transport(
         argv.map((arg) =>
-          arg.replace(/^repos\/Omnipolymath\/Omnipolymath(?=\/|$)/u, "repos/omnipolymath/omnipolymath"),
+          arg.replace(
+            /^repos\/Omnipolymath\/Omnipolymath(?=\/|$)/u,
+            "repos/omnipolymath/omnipolymath",
+          ),
         ),
         options,
       ),
