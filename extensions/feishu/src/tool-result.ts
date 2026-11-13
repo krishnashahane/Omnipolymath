@@ -1,0 +1,44 @@
+import { formatErrorMessage } from "omnipolymath/plugin-sdk/error-runtime";
+import { wrapExternalContent } from "omnipolymath/plugin-sdk/security-runtime";
+import { isRecord } from "omnipolymath/plugin-sdk/string-coerce-runtime";
+import { jsonResult } from "omnipolymath/plugin-sdk/tool-results";
+import { extractFeishuApiErrorMeta } from "./comment-shared.js";
+
+export function feishuExternalToolResult<TDetails>(details: TDetails) {
+  // Only model-visible text is fenced; structured callers retain the exact remote payload.
+  return {
+    content: [
+      {
+        type: "text" as const,
+        text: wrapExternalContent(JSON.stringify(details), {
+          source: "api",
+          includeWarning: false,
+        }),
+      },
+    ],
+    details,
+  };
+}
+
+export function unknownToolActionResult(action: unknown) {
+  return jsonResult({ error: `Unknown action: ${String(action)}` });
+}
+
+export function toolExecutionErrorResult(error: unknown) {
+  let message = formatErrorMessage(error);
+  const response = isRecord(error) && isRecord(error.response) ? error.response : undefined;
+  const data = isRecord(response?.data) ? response.data : undefined;
+  if (data) {
+    const meta = extractFeishuApiErrorMeta({ message, response });
+    message = formatErrorMessage(
+      JSON.stringify({
+        message,
+        http_status: meta.httpStatus,
+        feishu_code: meta.feishuCode,
+        feishu_msg: meta.feishuMsg,
+        feishu_log_id: meta.feishuLogId || meta.nestedErrorLogId,
+      }),
+    );
+  }
+  return feishuExternalToolResult({ error: message });
+}

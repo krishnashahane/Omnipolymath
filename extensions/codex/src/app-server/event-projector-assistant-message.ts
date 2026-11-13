@@ -1,0 +1,166 @@
+import { createAgentHarnessAssistantMessage } from "omnipolymath/plugin-sdk/agent-harness-attempt-runtime";
+import {
+  AgentHarnessModelRequestPolicyError,
+  formatErrorMessage,
+  type AgentMessage,
+  type NormalizedUsage,
+  type AgentHarnessAttemptParamsV2,
+} from "omnipolymath/plugin-sdk/agent-harness-runtime";
+import type { AssistantMessage } from "omnipolymath/plugin-sdk/llm";
+import type { CodexAsyncQuestion } from "./async-questions.js";
+import {
+  codexProviderRefusalDiagnostics,
+  type CodexProviderRefusal,
+} from "./event-projector-values.js";
+import {
+  resolveCodexLocalRuntimeAttribution,
+  type CodexLocalRuntimeAttributionParams,
+} from "./local-runtime-attribution.js";
+
+type CodexAssistantMessageParams = CodexLocalRuntimeAttributionParams &
+  Pick<AgentHarnessAttemptParamsV2, "modelId">;
+type CodexAssistantAttribution = {
+  provider: string;
+  modelId: string;
+  api?: AssistantMessage["api"];
+};
+
+export type AssistantMessageOptions = {
+  tokenUsage: NormalizedUsage | undefined;
+  aborted: boolean;
+  promptError: unknown;
+  providerRefusal?: CodexProviderRefusal;
+};
+
+export type CodexAsyncAssistantMessage = AssistantMessage & {
+  omnipolymathAsyncDelivery: { itemId: string; questions?: CodexAsyncQuestion[] };
+};
+
+/** Apply final failure enrichment before transcript hooks consume this turn's rows. */
+export function applyCodexAssistantTerminalOutcome(
+  message: AgentMessage | undefined,
+  aborted: boolean,
+  promptError: unknown,
+): void {
+  if (message?.role !== "assistant") {
+    return;
+  }
+  const providerRefusal = message.diagnostics?.some(
+    (diagnostic) => diagnostic.type === "provider_refusal",
+  );
+  // Preserve the projector's refusal unless a stronger local failure supersedes it.
+  if (providerRefusal && !aborted && !promptError) {
+    return;
+  }
+  message.stopReason = aborted ? "aborted" : promptError ? "error" : "stop";
+  if (promptError instanceof AgentHarnessModelRequestPolicyError) {
+    message.errorCode = promptError.code;
+  } else if (message.errorCode === "model_request_policy_denied") {
+    delete message.errorCode;
+  }
+  message.errorMessage = promptError ? formatErrorMessage(promptError) : undefined;
+}
+
+export function createAssistantMessage(
+  params: CodexAssistantMessageParams,
+  text: string,
+  options: AssistantMessageOptions,
+): AssistantMessage {
+  const attribution = resolveCodexLocalRuntimeAttribution(params);
+  return createAttributedCodexAssistantMessage(
+    { ...attribution, modelId: params.modelId },
+    text,
+    options,
+  );
+}
+
+/** Creates a Codex assistant row when a bounded call already owns attribution. */
+export function createAttributedCodexAssistantMessage(
+  attribution: CodexAssistantAttribution,
+  text: string,
+  options: AssistantMessageOptions,
+): AssistantMessage {
+  const refusal = options.providerRefusal;
+  return createAgentHarnessAssistantMessage(
+    { ...attribution, api: attribution.api ?? "openai-chatgpt-responses" },
+    text,
+    {
+      tokenUsage: options.tokenUsage,
+      aborted: options.aborted,
+      promptError: options.promptError,
+      errorMessage: refusal?.message,
+      ...(refusal ? codexProviderRefusalDiagnostics(refusal, Date.now()) : {}),
+    },
+  );
+}
+
+export function createAssistantCommentaryMessage(
+  params: CodexAssistantMessageParams,
+  text: string,
+  itemId: string,
+  timestamp: number,
+): AssistantMessage {
+  const message: AssistantMessage & {
+    omnipolymathStreamFallback: { replacementText: string; source: "segment"; itemId: string };
+  } = {
+    ...createNonterminalAssistantMessage(params, [{ type: "text", text }], timestamp),
+    // Keep this unphased: gateway history hides commentary-phase assistant rows.
+    // The keyed fallback persists Control UI narration without channel delivery.
+    omnipolymathStreamFallback: {
+      replacementText: text,
+      source: "segment",
+      itemId,
+    },
+  };
+  return message;
+}
+
+export function createAssistantAsyncDelivery(
+  params: CodexAssistantMessageParams,
+  text: string | undefined,
+  itemId: string,
+  timestamp: number | undefined,
+  questions?: CodexAsyncQuestion[],
+): { itemId: string; message: CodexAsyncAssistantMessage; text: string } | undefined {
+  if (!text?.trim() || timestamp === undefined) {
+    return undefined;
+  }
+  return {
+    itemId,
+    message: {
+      ...createNonterminalAssistantMessage(params, [{ type: "text", text }], timestamp),
+      omnipolymathAsyncDelivery: { itemId, ...(questions ? { questions } : {}) },
+    },
+    text,
+  };
+}
+
+export function createAssistantReasoningMessage(
+  params: CodexAssistantMessageParams,
+  text: string,
+  timestamp: number,
+): AssistantMessage {
+  // Shared history and visibility controls need reasoning, not final-answer text.
+  return createNonterminalAssistantMessage(
+    params,
+    [{ type: "thinking", thinking: text }],
+    timestamp,
+  );
+}
+
+function createNonterminalAssistantMessage(
+  params: CodexAssistantMessageParams,
+  content: AssistantMessage["content"],
+  timestamp?: number,
+): AssistantMessage {
+  const attribution = resolveCodexLocalRuntimeAttribution(params);
+  return createAgentHarnessAssistantMessage(
+    {
+      ...attribution,
+      api: attribution.api ?? "openai-chatgpt-responses",
+      modelId: params.modelId,
+    },
+    "",
+    { content, aborted: false, timestamp },
+  );
+}

@@ -1,0 +1,35 @@
+{
+  "name": "@omnipolymath/fastino-provider",
+  "version": "2026.11.3",
+  "description": "Omnipolymath Fastino GLiDE Decision provider plugin.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/fastino-provider",
+      "npmSpec": "@omnipolymath/fastino-provider",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.11.2"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3",
+      "bundledDist": false
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  }
+}

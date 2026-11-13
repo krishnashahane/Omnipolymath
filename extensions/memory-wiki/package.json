@@ -1,0 +1,54 @@
+{
+  "name": "@omnipolymath/memory-wiki",
+  "version": "2026.11.3",
+  "description": "Omnipolymath persistent wiki plugin",
+  "type": "module",
+  "dependencies": {
+    "mdast-util-from-markdown": "2.1.0",
+    "typebox": "1.4.3",
+    "yaml": "2.9.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@omnipolymath/memory-core": "workspace:*",
+    "@omnipolymath/plugin-sdk": "workspace:*",
+    "omnipolymath": "workspace:*"
+  },
+  "peerDependencies": {
+    "omnipolymath": ">=2026.11.3"
+  },
+  "peerDependenciesMeta": {
+    "omnipolymath": {
+      "optional": true
+    }
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/memory-wiki",
+      "npmSpec": "@omnipolymath/memory-wiki",
+      "defaultChoice": "clawhub",
+      "minHostVersion": ">=2026.9.4"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "bundledDist": true,
+      "omnipolymathVersion": "2026.11.3",
+      "workerEntries": [
+        "./src/query-reader.worker.ts"
+      ]
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  }
+}

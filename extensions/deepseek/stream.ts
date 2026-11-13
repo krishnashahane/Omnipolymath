@@ -1,0 +1,20 @@
+import type { ProviderWrapStreamFnContext } from "omnipolymath/plugin-sdk/plugin-entry";
+import { createDeepSeekV4OpenAICompatibleThinkingWrapper } from "omnipolymath/plugin-sdk/provider-stream-shared";
+import { isDeepSeekV4ModelRef } from "./models.js";
+
+export function createDeepSeekV4ThinkingWrapper(
+  baseStreamFn: ProviderWrapStreamFnContext["streamFn"],
+  thinkingLevel: ProviderWrapStreamFnContext["thinkingLevel"],
+): ProviderWrapStreamFnContext["streamFn"] {
+  return createDeepSeekV4OpenAICompatibleThinkingWrapper({
+    baseStreamFn,
+    thinkingLevel,
+    shouldPatchModel: isDeepSeekV4ModelRef,
+    resolveReasoningEffort: (level) => {
+      if (level === "minimal" || level === "low") {
+        return "low";
+      }
+      return level === "max" ? "max" : "high";
+    },
+  });
+}

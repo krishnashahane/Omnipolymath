@@ -1,0 +1,132 @@
+import type { OmnipolymathConfig } from "omnipolymath/plugin-sdk/config-contracts";
+import { resolveProviderWebSearchPluginConfig } from "omnipolymath/plugin-sdk/provider-web-search-config-contract";
+import {
+  coerceSecretRef,
+  normalizeSecretInputString,
+  readProviderEnvValue,
+  resolveNonEnvSecretRefApiKeyMarker,
+} from "omnipolymath/plugin-sdk/secret-input";
+import {
+  resolveReadOnlyEnvSecretRef,
+  type ReadOnlyEnvSecretRefResolution,
+} from "omnipolymath/plugin-sdk/secret-ref-readonly";
+
+type XaiFallbackAuth = {
+  apiKey: string;
+  source: string;
+};
+const XAI_API_KEY_ENV_VAR = "XAI_API_KEY";
+const XAI_PROVIDER_ID = "xai";
+
+type XaiToolAuthQuery = { credentialType?: "api_key" | "oauth" | "token" };
+
+export type XaiToolAuthContext = {
+  hasAuthForProvider?: (providerId: string, query?: XaiToolAuthQuery) => boolean;
+  resolveApiKeyForProvider?: (
+    providerId: string,
+    query?: XaiToolAuthQuery,
+  ) => Promise<string | undefined>;
+};
+
+const XAI_SUBSCRIPTION_AUTH_QUERY: XaiToolAuthQuery = { credentialType: "oauth" };
+
+/** Grok OAuth signs in with the user's SuperGrok/X Premium subscription, not Console API credits. */
+export function hasXaiSubscriptionToolAuth(auth?: XaiToolAuthContext): boolean {
+  return auth?.hasAuthForProvider?.(XAI_PROVIDER_ID, XAI_SUBSCRIPTION_AUTH_QUERY) === true;
+}
+
+/** Resolves only a Grok OAuth credential; configured keys, API-key profiles and env never substitute. */
+export async function resolveXaiSubscriptionToolApiKey(
+  auth?: XaiToolAuthContext,
+): Promise<string | undefined> {
+  return normalizeSecretInputString(
+    await auth?.resolveApiKeyForProvider?.(XAI_PROVIDER_ID, XAI_SUBSCRIPTION_AUTH_QUERY),
+  );
+}
+
+function readConfiguredOrManagedApiKey(value: unknown): string | undefined {
+  const literal = normalizeSecretInputString(value);
+  if (literal) {
+    return literal;
+  }
+  const ref = coerceSecretRef(value);
+  return ref ? resolveNonEnvSecretRefApiKeyMarker(ref.source) : undefined;
+}
+
+function readPluginXaiWebSearchApiKeyResult(cfg?: OmnipolymathConfig): ReadOnlyEnvSecretRefResolution {
+  return resolveReadOnlyEnvSecretRef({
+    value: resolveProviderWebSearchPluginConfig(cfg as Record<string, unknown> | undefined, "xai")
+      ?.apiKey,
+    path: "plugins.entries.xai.config.webSearch.apiKey",
+    cfg,
+    expectedEnvId: XAI_API_KEY_ENV_VAR,
+    normalizeValue: normalizeSecretInputString,
+  });
+}
+
+function resolveConfiguredXaiToolApiKeyResult(params: {
+  runtimeConfig?: OmnipolymathConfig;
+  sourceConfig?: OmnipolymathConfig;
+}): ReadOnlyEnvSecretRefResolution {
+  const runtimePlugin = readPluginXaiWebSearchApiKeyResult(params.runtimeConfig);
+  return runtimePlugin.status === "missing"
+    ? readPluginXaiWebSearchApiKeyResult(params.sourceConfig)
+    : runtimePlugin;
+}
+
+async function resolveXaiAuthProfileApiKey(auth?: XaiToolAuthContext): Promise<string | undefined> {
+  const value = await auth?.resolveApiKeyForProvider?.(XAI_PROVIDER_ID);
+  return normalizeSecretInputString(value);
+}
+
+export function resolveFallbackXaiAuth(cfg?: OmnipolymathConfig): XaiFallbackAuth | undefined {
+  const pluginApiKey = readConfiguredOrManagedApiKey(
+    resolveProviderWebSearchPluginConfig(cfg as Record<string, unknown> | undefined, "xai")?.apiKey,
+  );
+  if (pluginApiKey) {
+    return {
+      apiKey: pluginApiKey,
+      source: "plugins.entries.xai.config.webSearch.apiKey",
+    };
+  }
+  return undefined;
+}
+
+export async function resolveXaiToolApiKeyWithAuth(params: {
+  runtimeConfig?: OmnipolymathConfig;
+  sourceConfig?: OmnipolymathConfig;
+  auth?: XaiToolAuthContext;
+}): Promise<string | undefined> {
+  const configured = resolveConfiguredXaiToolApiKeyResult(params);
+  if (configured.status === "available") {
+    return configured.value;
+  }
+  if (configured.status === "blocked") {
+    return undefined;
+  }
+  return (
+    (await resolveXaiAuthProfileApiKey(params.auth)) ?? readProviderEnvValue([XAI_API_KEY_ENV_VAR])
+  );
+}
+
+export function isXaiToolEnabled(params: {
+  enabled?: boolean;
+  runtimeConfig?: OmnipolymathConfig;
+  sourceConfig?: OmnipolymathConfig;
+  auth?: XaiToolAuthContext;
+}): boolean {
+  if (params.enabled === false) {
+    return false;
+  }
+  const configured = resolveConfiguredXaiToolApiKeyResult(params);
+  if (configured.status === "available") {
+    return true;
+  }
+  if (configured.status === "blocked") {
+    return false;
+  }
+  return (
+    params.auth?.hasAuthForProvider?.(XAI_PROVIDER_ID) === true ||
+    Boolean(readProviderEnvValue([XAI_API_KEY_ENV_VAR]))
+  );
+}

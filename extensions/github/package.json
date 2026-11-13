@@ -1,0 +1,24 @@
+{
+  "name": "@omnipolymath/github",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath GitHub link reader plugin",
+  "type": "module",
+  "author": {
+    "name": "Omnipolymath"
+  },
+  "homepage": "https://omnipolymath.vercel.app/docs/plugins/github",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath",
+    "directory": "extensions/github"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

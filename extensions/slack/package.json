@@ -1,0 +1,168 @@
+{
+  "name": "@omnipolymath/slack",
+  "version": "2026.11.3",
+  "description": "Omnipolymath Slack channel plugin for channels, DMs, commands, and app events.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "dependencies": {
+    "@slack/bolt": "5.1.0",
+    "@slack/types": "3.3.0",
+    "@slack/web-api": "8.3.0",
+    "get-east-asian-width": "1.7.0",
+    "typebox": "1.4.3",
+    "undici": "8.12.3",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*",
+    "omnipolymath": "workspace:*"
+  },
+  "peerDependencies": {
+    "omnipolymath": ">=2026.11.3"
+  },
+  "peerDependenciesMeta": {
+    "omnipolymath": {
+      "optional": true
+    }
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "setupEntry": "./setup-entry.ts",
+    "setupFeatures": {
+      "configPromotion": true
+    },
+    "channel": {
+      "id": "slack",
+      "configuredState": {
+        "env": {
+          "anyOf": [
+            "SLACK_BOT_TOKEN",
+            "SLACK_APP_TOKEN",
+            "SLACK_USER_TOKEN"
+          ]
+        },
+        "specifier": "./configured-state",
+        "exportName": "hasConfiguredSlackChannelState"
+      },
+      "approvalFlags": [
+        "native"
+      ],
+      "label": "Slack",
+      "selectionLabel": "Slack (Socket Mode)",
+      "detailLabel": "Slack Bot",
+      "docsPath": "/channels/slack",
+      "docsLabel": "slack",
+      "blurb": "supported (Socket Mode).",
+      "systemImage": "number",
+      "markdownCapable": true,
+      "doctorCapabilities": {
+        "dmAllowFromMode": "topOnly",
+        "groupModel": "route",
+        "groupAllowFromFallbackToAllowFrom": false,
+        "warnOnEmptyGroupSenderAllowlist": false
+      },
+      "commands": {
+        "nativeCommandsAutoEnabled": false,
+        "nativeSkillsAutoEnabled": false
+      },
+      "setup": {
+        "fields": [
+          {
+            "key": "botToken",
+            "kind": "string",
+            "sensitive": true,
+            "cli": {
+              "flags": "--bot-token <token>",
+              "description": "Slack bot token"
+            }
+          },
+          {
+            "key": "appToken",
+            "kind": "string",
+            "sensitive": true,
+            "cli": {
+              "flags": "--app-token <token>",
+              "description": "Slack app token"
+            }
+          },
+          {
+            "key": "userToken",
+            "kind": "string",
+            "sensitive": true,
+            "cli": {
+              "flags": "--user-token <token>",
+              "description": "Slack user token"
+            }
+          },
+          {
+            "key": "signingSecret",
+            "kind": "string",
+            "sensitive": true,
+            "cli": {
+              "flags": "--signing-secret <secret>",
+              "description": "Slack signing secret"
+            }
+          },
+          {
+            "key": "identity",
+            "kind": "choice",
+            "choices": [
+              "bot",
+              "user"
+            ],
+            "cli": {
+              "flags": "--identity <kind>",
+              "description": "Slack identity"
+            }
+          },
+          {
+            "key": "mode",
+            "kind": "choice",
+            "choices": [
+              "socket",
+              "http"
+            ],
+            "cli": {
+              "flags": "--mode <mode>",
+              "description": "Slack connection mode"
+            }
+          },
+          {
+            "key": "useEnv",
+            "kind": "boolean",
+            "cli": {
+              "flags": "--use-env",
+              "description": "Use Slack environment credentials"
+            },
+            "envVars": [
+              "SLACK_BOT_TOKEN"
+            ]
+          }
+        ]
+      }
+    },
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/slack",
+      "npmSpec": "@omnipolymath/slack",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.9.8",
+      "allowInvalidConfigRecovery": true
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3",
+      "bundledDist": false
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  }
+}

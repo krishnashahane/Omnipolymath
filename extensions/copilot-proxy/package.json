@@ -1,0 +1,15 @@
+{
+  "name": "@omnipolymath/copilot-proxy",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath Copilot Proxy provider plugin",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+import { describeAccountSnapshot } from "omnipolymath/plugin-sdk/account-helpers";
+import type { ChannelPlugin } from "omnipolymath/plugin-sdk/channel-core";
+import { listBuzzAccountIds, resolveDefaultBuzzAccountId } from "./account-config.js";
+import { BuzzConfigSchema } from "./config-schema.js";
+import { buzzSetupContract } from "./setup-core.js";
+import { buzzSetupWizard } from "./setup-surface.js";
+import { resolveBuzzAccount, type ResolvedBuzzAccount } from "./types.js";
+
+export const buzzSetupPlugin: ChannelPlugin<ResolvedBuzzAccount> = {
+  id: "buzz",
+  meta: {
+    id: "buzz",
+    label: "Buzz",
+    selectionLabel: "Buzz",
+    docsPath: "/channels/buzz",
+    docsLabel: "buzz",
+    blurb: "Connect Omnipolymath agents to Buzz team rooms.",
+    markdownCapable: true,
+    order: 56,
+  },
+  capabilities: { chatTypes: ["group"], threads: true },
+  reload: { configPrefixes: ["channels.buzz"], accountScopedRestart: true },
+  configSchema: BuzzConfigSchema,
+  setupContract: buzzSetupContract,
+  setupWizard: buzzSetupWizard,
+  config: {
+    listAccountIds: listBuzzAccountIds,
+    resolveAccount: (cfg, accountId) => resolveBuzzAccount({ cfg, accountId }),
+    defaultAccountId: resolveDefaultBuzzAccountId,
+    isConfigured: (account) => account.configured,
+    describeAccount: (account) =>
+      describeAccountSnapshot({
+        account,
+        configured: account.configured,
+        extra: { baseUrl: account.relayUrl, publicKey: account.publicKey },
+      }),
+  },
+};

@@ -1,0 +1,15 @@
+{
+  "name": "@omnipolymath/requesty-provider",
+  "version": "2026.11.3",
+  "description": "Omnipolymath Requesty provider plugin.",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "private": true
+}

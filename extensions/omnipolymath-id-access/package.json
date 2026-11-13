@@ -1,0 +1,31 @@
+{
+  "name": "@omnipolymath/omnipolymath-id-access",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath ID remote access page for the Control UI",
+  "type": "module",
+  "dependencies": {
+    "@omnipolymath/omnipolymath-id-protocol": "workspace:*",
+    "@solidjs/web": "2.0.0-rc.18",
+    "solid-js": "2.0.0-rc.18"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*",
+    "@solidjs/compiler": "2.0.0-rc.18",
+    "esbuild": "0.28.2",
+    "omnipolymath": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "controlUi": "./browser/index.tsx",
+    "assetScripts": {
+      "build": "cd ../.. && node --import ./scripts/tsx.mjs scripts/build-plugin-control-ui.mts extensions/omnipolymath-id-access",
+      "copy": "cd ../.. && node --import ./scripts/tsx.mjs scripts/build-plugin-control-ui.mts extensions/omnipolymath-id-access --copy",
+      "buildOutputs": [
+        "dist/omnipolymath.plugin.json"
+      ]
+    }
+  }
+}

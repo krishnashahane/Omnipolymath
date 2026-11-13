@@ -1,0 +1,19 @@
+{
+  "name": "@omnipolymath/xai-plugin",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath xAI plugin",
+  "type": "module",
+  "dependencies": {
+    "typebox": "1.4.3",
+    "ws": "8.22.0"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

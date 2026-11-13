@@ -1,0 +1,23 @@
+{
+  "name": "@omnipolymath/mcp-relay",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath outbound MCP relay plugin",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "controlUi": "./src/control-ui.ts",
+    "assetScripts": {
+      "build": "cd ../.. && node --import ./scripts/tsx.mjs scripts/build-plugin-control-ui.mts extensions/mcp-relay",
+      "copy": "cd ../.. && node --import ./scripts/tsx.mjs scripts/build-plugin-control-ui.mts extensions/mcp-relay --copy",
+      "buildOutputs": [
+        "dist/omnipolymath.plugin.json"
+      ]
+    }
+  }
+}

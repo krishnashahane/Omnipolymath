@@ -1,0 +1,15 @@
+{
+  "name": "@omnipolymath/advisor",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath periodic agent advisor",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

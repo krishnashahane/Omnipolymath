@@ -1,0 +1,49 @@
+{
+  "name": "@omnipolymath/onepassword",
+  "version": "2026.11.3",
+  "description": "1Password SecretRef resolver and audited agent secrets broker for Omnipolymath",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "build": {
+      "bundledDist": true,
+      "staticAssets": [
+        {
+          "source": "./onepassword-op-path.js",
+          "output": "onepassword-op-path.js"
+        },
+        {
+          "source": "./onepassword-secret-ref-resolver.js",
+          "output": "onepassword-secret-ref-resolver.js"
+        },
+        {
+          "source": "./onepassword-secret-id.js",
+          "output": "onepassword-secret-id.js"
+        }
+      ],
+      "omnipolymathVersion": "2026.11.3"
+    },
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/onepassword",
+      "npmSpec": "@omnipolymath/onepassword",
+      "defaultChoice": "clawhub",
+      "minHostVersion": ">=2026.9.4"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  }
+}
