@@ -1,0 +1,11 @@
+{
+  "name": "@omnipolymath/omnipolymath-id-protocol",
+  "version": "0.0.0-private",
+  "private": true,
+  "description": "Omnipolymath ID remote access protocol contracts (v1-draft).",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing.ts"
+  }
+}
