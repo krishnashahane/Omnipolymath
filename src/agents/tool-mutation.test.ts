@@ -94,7 +94,7 @@ it.each([
   ["exec", "gh pr create --title fix --body body", true],
   ["exec", "gh pr view 123 -w", true],
   ["exec", "gh issue comment 123 --body fixed", true],
-  ["exec", "gh api --method POST repos/omnipolymath/omnipolymath/issues", true],
+  ["exec", "gh api --method POST repos/krishnashahane/Omnipolymath/issues", true],
 ] as const)("classifies shell mutation for %s %s", (name, command, mutating) => {
   expect(isMutatingToolCall(name, { command })).toBe(mutating);
 });

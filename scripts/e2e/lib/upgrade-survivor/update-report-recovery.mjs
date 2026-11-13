@@ -131,7 +131,7 @@ async function fakeGh(cell, callsFile, args) {
     "--include",
     "--method",
     "POST",
-    "repos/omnipolymath/omnipolymath/issues",
+    "repos/krishnashahane/Omnipolymath/issues",
     "--input",
     "-",
     "--jq",
