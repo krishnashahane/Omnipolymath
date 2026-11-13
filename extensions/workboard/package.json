@@ -1,0 +1,55 @@
+{
+  "name": "@omnipolymath/workboard",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath dashboard workboard plugin",
+  "type": "module",
+  "dependencies": {
+    "@omnipolymath/gateway-protocol": "workspace:*",
+    "@omnipolymath/workboard-contract": "workspace:*",
+    "@solidjs/web": "2.0.0-rc.18",
+    "solid-js": "2.0.0-rc.18",
+    "typebox": "1.4.3",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@omnipolymath/gateway-client": "workspace:*",
+    "@omnipolymath/normalization-core": "workspace:*",
+    "@omnipolymath/plugin-sdk": "workspace:*",
+    "@solidjs/compiler": "2.0.0-rc.18",
+    "esbuild": "0.28.2",
+    "omnipolymath": "workspace:*"
+  },
+  "peerDependencies": {
+    "omnipolymath": ">=2026.11.3"
+  },
+  "peerDependenciesMeta": {
+    "omnipolymath": {
+      "optional": true
+    }
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "controlUi": "./browser/index.ts",
+    "assetScripts": {
+      "build": "cd ../.. && node --import ./scripts/tsx.mjs scripts/build-plugin-control-ui.mts extensions/workboard",
+      "copy": "cd ../.. && node --import ./scripts/tsx.mjs scripts/build-plugin-control-ui.mts extensions/workboard --copy",
+      "buildOutputs": [
+        "dist/omnipolymath.plugin.json"
+      ]
+    },
+    "build": {
+      "staticAssets": [
+        {
+          "source": "./src/workboard-schema.postgres.sql",
+          "output": "./src/workboard-schema.postgres.sql"
+        }
+      ],
+      "workerEntries": [
+        "./src/sqlite-store.worker.ts"
+      ]
+    }
+  }
+}

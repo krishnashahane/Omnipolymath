@@ -1,0 +1,15 @@
+{
+  "name": "@omnipolymath/tts-local-cli",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath local CLI TTS plugin",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

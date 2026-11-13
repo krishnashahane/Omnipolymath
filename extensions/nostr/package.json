@@ -1,0 +1,109 @@
+{
+  "name": "@omnipolymath/nostr",
+  "version": "2026.11.3",
+  "description": "Omnipolymath Nostr channel plugin for NIP-04 encrypted direct messages.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "dependencies": {
+    "@solidjs/web": "2.0.0-rc.18",
+    "nostr-tools": "2.25.4",
+    "solid-js": "2.0.0-rc.18",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*",
+    "@solidjs/compiler": "2.0.0-rc.18",
+    "esbuild": "0.28.2",
+    "omnipolymath": "workspace:*"
+  },
+  "peerDependencies": {
+    "omnipolymath": ">=2026.11.3"
+  },
+  "peerDependenciesMeta": {
+    "omnipolymath": {
+      "optional": true
+    }
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "setupEntry": "./setup-entry.ts",
+    "channel": {
+      "id": "nostr",
+      "configuredState": {
+        "env": {
+          "anyOf": [
+            "NOSTR_PRIVATE_KEY"
+          ]
+        }
+      },
+      "label": "Nostr",
+      "selectionLabel": "Nostr (NIP-04 DMs)",
+      "docsPath": "/channels/nostr",
+      "docsLabel": "nostr",
+      "blurb": "Decentralized protocol; encrypted DMs via NIP-04.",
+      "order": 55,
+      "quickstartAllowFrom": true,
+      "setup": {
+        "fields": [
+          {
+            "key": "privateKey",
+            "kind": "string",
+            "sensitive": true,
+            "cli": {
+              "flags": "--private-key <key>",
+              "description": "Nostr private key"
+            }
+          },
+          {
+            "key": "relayUrls",
+            "kind": "string",
+            "cli": {
+              "flags": "--relay-urls <urls>",
+              "description": "Nostr relay URLs"
+            }
+          },
+          {
+            "key": "useEnv",
+            "kind": "boolean",
+            "cli": {
+              "flags": "--use-env",
+              "description": "Use NOSTR_PRIVATE_KEY"
+            },
+            "envVars": [
+              "NOSTR_PRIVATE_KEY"
+            ]
+          }
+        ]
+      }
+    },
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/nostr",
+      "npmSpec": "@omnipolymath/nostr",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.4.10"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3"
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    },
+    "controlUi": "./browser/index.tsx",
+    "assetScripts": {
+      "build": "cd ../.. && node --import ./scripts/tsx.mjs scripts/build-plugin-control-ui.mts extensions/nostr",
+      "copy": "cd ../.. && node --import ./scripts/tsx.mjs scripts/build-plugin-control-ui.mts extensions/nostr --copy",
+      "buildOutputs": [
+        "dist/omnipolymath.plugin.json"
+      ]
+    }
+  }
+}

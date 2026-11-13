@@ -1,0 +1,379 @@
+{
+  "id": "trust-firewall",
+  "name": "Trust Firewall",
+  "description": "Least-privilege approvals, prompt-injection shield with a model second opinion, tamper-evident action log with undo, dry-run mode, daily spend cap, agent wallets, self-cleaning memory, skill install checks and a receipt for every run.",
+  "categories": [
+    "security"
+  ],
+  "activation": {
+    "onStartup": true
+  },
+  "cliCommands": [
+    {
+      "name": "firewall",
+      "description": "Inspect, verify and undo what agents did (Trust Firewall)",
+      "hasSubcommands": true
+    }
+  ],
+  "commandAliases": [
+    {
+      "name": "firewall",
+      "kind": "cli"
+    }
+  ],
+  "contracts": {
+    "tools": [
+      "fact_save",
+      "fact_search"
+    ]
+  },
+  "toolMetadata": {
+    "fact_save": {
+      "optional": true
+    },
+    "fact_search": {
+      "optional": true
+    }
+  },
+  "enabledByDefault": true,
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "mode": {
+        "type": "string",
+        "enum": [
+          "enforce",
+          "monitor",
+          "dry-run"
+        ],
+        "default": "enforce"
+      },
+      "approveTiers": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+          "type": "string",
+          "enum": [
+            "read",
+            "write",
+            "external",
+            "spend",
+            "irreversible"
+          ]
+        }
+      },
+      "taintedApproveTiers": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+          "type": "string",
+          "enum": [
+            "read",
+            "write",
+            "external",
+            "spend",
+            "irreversible"
+          ]
+        }
+      },
+      "blockedTools": {
+        "type": "array",
+        "maxItems": 256,
+        "items": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "agentToolAllowlist": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        }
+      },
+      "injection": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "threshold": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "default": 0.5
+          },
+          "classifier": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1
+              },
+              "timeoutMs": {
+                "type": "integer",
+                "minimum": 1000,
+                "maximum": 14000,
+                "default": 8000
+              },
+              "maxChars": {
+                "type": "integer",
+                "minimum": 500,
+                "maximum": 100000,
+                "default": 12000
+              },
+              "minConfidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.6
+              }
+            }
+          }
+        }
+      },
+      "dailySpendCapUsd": {
+        "type": "number",
+        "minimum": 0,
+        "default": 25
+      },
+      "prices": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "inputPerMTok",
+            "outputPerMTok"
+          ],
+          "properties": {
+            "inputPerMTok": {
+              "type": "number",
+              "minimum": 0
+            },
+            "outputPerMTok": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cacheReadPerMTok": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cacheWritePerMTok": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        }
+      },
+      "defaultPrice": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "inputPerMTok",
+          "outputPerMTok"
+        ],
+        "properties": {
+          "inputPerMTok": {
+            "type": "number",
+            "minimum": 0
+          },
+          "outputPerMTok": {
+            "type": "number",
+            "minimum": 0
+          },
+          "cacheReadPerMTok": {
+            "type": "number",
+            "minimum": 0
+          },
+          "cacheWritePerMTok": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "routing": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "routineModel": {
+            "type": "string",
+            "minLength": 1
+          },
+          "routineProvider": {
+            "type": "string",
+            "minLength": 1
+          },
+          "hardModel": {
+            "type": "string",
+            "minLength": 1
+          },
+          "hardProvider": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "receipts": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "approvalTimeoutMs": {
+        "type": "integer",
+        "minimum": 5000,
+        "maximum": 3600000,
+        "default": 120000
+      },
+      "wallet": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "perTransactionUsd": {
+            "type": "number",
+            "minimum": 0,
+            "default": 100
+          },
+          "dailyUsd": {
+            "type": "number",
+            "minimum": 0,
+            "default": 250
+          },
+          "allowedPayees": {
+            "type": "array",
+            "maxItems": 256,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        }
+      },
+      "memory": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "halfLifeDays": {
+            "type": "number",
+            "minimum": 0.01,
+            "default": 30
+          },
+          "minConfidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.2
+          },
+          "maxFacts": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000,
+            "default": 2000
+          }
+        }
+      },
+      "skills": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "scanOnInstall": {
+            "type": "boolean",
+            "default": true
+          },
+          "blockHighRisk": {
+            "type": "boolean",
+            "default": false
+          },
+          "requireSignature": {
+            "type": "boolean",
+            "default": false
+          },
+          "trustedPublishers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      },
+      "snapshots": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "sandboxNudge": {
+        "type": "boolean",
+        "default": true
+      }
+    }
+  },
+  "uiHints": {
+    "mode": {
+      "label": "Mode",
+      "help": "enforce blocks and asks; monitor only logs; dry-run never runs anything that writes."
+    },
+    "dailySpendCapUsd": {
+      "label": "Daily spend cap (USD)",
+      "help": "Hard stop for model spend per day. 0 turns the cap off."
+    },
+    "approveTiers": {
+      "label": "Always ask before",
+      "help": "Risk tiers that need your approval every time."
+    },
+    "routing": {
+      "label": "Cost routing",
+      "help": "Send routine prompts to a cheap model and hard ones to your strongest model."
+    },
+    "wallet": {
+      "label": "Agent wallet",
+      "help": "Per-transaction and daily USD limits for any tool that pays, charges or orders."
+    },
+    "injection": {
+      "label": "Injection shield",
+      "help": "Pattern scan plus a second opinion from your model on web, email and chat content."
+    }
+  },
+  "recommendedPrompts": [
+    "Show me what the Trust Firewall blocked today.",
+    "Switch the Trust Firewall to dry-run mode while I test a new skill.",
+    "Remember that I prefer morning meetings, using fact_save."
+  ]
+}

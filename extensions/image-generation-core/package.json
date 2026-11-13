@@ -1,0 +1,10 @@
+{
+  "name": "@omnipolymath/image-generation-core",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath image generation runtime package",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  }
+}

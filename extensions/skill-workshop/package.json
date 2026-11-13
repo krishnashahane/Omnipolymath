@@ -1,0 +1,19 @@
+{
+  "name": "@omnipolymath/skill-workshop",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath Skill Workshop plugin",
+  "type": "module",
+  "dependencies": {
+    "@omnipolymath/gateway-protocol": "workspace:*",
+    "typebox": "1.4.3"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

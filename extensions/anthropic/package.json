@@ -1,0 +1,15 @@
+{
+  "name": "@omnipolymath/anthropic-provider",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath Anthropic provider, Claude CLI, and native session catalog plugin",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@omnipolymath/senseaudio-provider",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath SenseAudio media-understanding provider",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

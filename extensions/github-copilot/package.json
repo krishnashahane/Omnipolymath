@@ -1,0 +1,15 @@
+{
+  "name": "@omnipolymath/github-copilot-provider",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath GitHub Copilot provider plugin",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@omnipolymath/file-transfer",
+  "version": "2026.11.3",
+  "description": "Omnipolymath file transfer plugin (file_fetch, dir_list, dir_fetch, file_write)",
+  "type": "module",
+  "dependencies": {
+    "@openclaw/fs-safe": "0.27.1",
+    "minimatch": "11.0.4",
+    "typebox": "1.4.3"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "build": {
+      "workerEntries": [
+        "./src/node-host/dir-fetch-archive.worker.ts",
+        "./src/node-host/dir-list.worker.ts"
+      ]
+    }
+  }
+}

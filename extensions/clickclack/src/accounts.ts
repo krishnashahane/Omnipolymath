@@ -1,0 +1,374 @@
+import {
+  createAccountListHelpers,
+  hasConfiguredAccountValue,
+} from "omnipolymath/plugin-sdk/account-helpers";
+import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "omnipolymath/plugin-sdk/account-id";
+import { resolveNormalizedAccountEntry } from "omnipolymath/plugin-sdk/account-resolution-runtime";
+import { resolveIntegerOption } from "omnipolymath/plugin-sdk/number-runtime";
+import { mergePairLoopGuardConfig } from "omnipolymath/plugin-sdk/pair-loop-guard-runtime";
+import { tryReadSecretFileSync } from "omnipolymath/plugin-sdk/secret-file-runtime";
+import {
+  normalizeSecretInputString,
+  resolveSecretInputString,
+} from "omnipolymath/plugin-sdk/secret-input";
+import { canResolveEnvSecretRefInReadOnlyPath } from "omnipolymath/plugin-sdk/secret-ref-readonly";
+import { normalizeOptionalString } from "omnipolymath/plugin-sdk/string-coerce-runtime";
+import type {
+  ClickClackAccountConfig,
+  ClickClackGroupConfig,
+  CoreConfig,
+  ResolvedClickClackAccount,
+} from "./types.js";
+
+const DEFAULT_RECONNECT_MS = 1_500;
+const MIN_RECONNECT_MS = 100;
+const MAX_RECONNECT_MS = 60_000;
+const DEFAULT_DISCUSSIONS_SECTION = "Sessions";
+
+const {
+  listAccountIds: listClickClackAccountIds,
+  resolveDefaultAccountId: resolveDefaultClickClackAccountId,
+  resolveAccountConfig: resolveMergedClickClackAccountConfig,
+} = createAccountListHelpers<ClickClackAccountConfig>("clickclack", {
+  normalizeAccountId,
+  omitKeys: ["defaultAccount"],
+  nestedObjectKeys: ["botLoopProtection", "discussions"],
+  hasImplicitDefaultAccount: (cfg) => {
+    const channel = cfg.channels?.clickclack;
+    return Boolean(
+      channel?.baseUrl?.trim() &&
+      (hasConfiguredAccountValue(channel.token) ||
+        Boolean(channel.tokenFile?.trim()) ||
+        Boolean(process.env.CLICKCLACK_BOT_TOKEN?.trim())) &&
+      channel.workspace?.trim(),
+    );
+  },
+});
+
+export { DEFAULT_ACCOUNT_ID, listClickClackAccountIds, resolveDefaultClickClackAccountId };
+
+function mergeClickClackGroups(
+  ...sources: Array<Record<string, ClickClackGroupConfig> | undefined>
+): Record<string, ClickClackGroupConfig> {
+  const merged = new Map<string, ClickClackGroupConfig>();
+  for (const source of sources) {
+    for (const [rawKey, value] of Object.entries(source ?? {})) {
+      const key = rawKey.trim();
+      if (!key) {
+        continue;
+      }
+      const mergedBotLoopProtection = mergePairLoopGuardConfig(
+        merged.get(key)?.botLoopProtection,
+        value.botLoopProtection,
+      );
+      merged.set(key, {
+        ...merged.get(key),
+        ...(value.requireMention !== undefined ? { requireMention: value.requireMention } : {}),
+        ...(value.requireMentionInBotThreads !== undefined
+          ? { requireMentionInBotThreads: value.requireMentionInBotThreads }
+          : {}),
+        ...(value.mentionPatterns !== undefined ? { mentionPatterns: value.mentionPatterns } : {}),
+        ...(value.allowBots !== undefined ? { allowBots: value.allowBots } : {}),
+        ...(mergedBotLoopProtection ? { botLoopProtection: mergedBotLoopProtection } : {}),
+      });
+    }
+  }
+  return Object.fromEntries(merged);
+}
+
+export function resolveClickClackAccountConfig(
+  cfg: CoreConfig,
+  rawAccountId?: string | null,
+): ClickClackAccountConfig {
+  const accountId = normalizeAccountId(rawAccountId);
+  const channel = cfg.channels?.clickclack;
+  const merged = resolveMergedClickClackAccountConfig(cfg, accountId);
+  const account = resolveNormalizedAccountEntry(channel?.accounts, accountId, normalizeAccountId);
+  const mergedWithGroups =
+    channel?.groups || account?.groups
+      ? {
+          ...merged,
+          groups: mergeClickClackGroups(channel?.groups, account?.groups),
+        }
+      : merged;
+  const accountTokenFile = account?.tokenFile?.trim();
+  if (accountTokenFile) {
+    return {
+      ...mergedWithGroups,
+      token: account?.token,
+      tokenFile: accountTokenFile,
+    };
+  }
+  if (hasConfiguredAccountValue(account?.token)) {
+    return {
+      ...mergedWithGroups,
+      token: account?.token,
+      tokenFile: undefined,
+    };
+  }
+  return mergedWithGroups;
+}
+
+function resolveClickClackAccountEndpoints(config: ClickClackAccountConfig) {
+  const baseUrl = config.baseUrl?.trim().replace(/\/$/, "") ?? "";
+  return { baseUrl, apiEndpoint: config.apiBaseUrl?.trim().replace(/\/$/, "") || baseUrl };
+}
+
+/** Pins inbound authority to the configured identity that started the transport. */
+export function isClickClackAccountCurrent(params: {
+  cfg: CoreConfig;
+  account: ResolvedClickClackAccount;
+}): boolean {
+  const { cfg, account } = params;
+  if (
+    !cfg.channels?.clickclack ||
+    cfg.channels.clickclack.enabled === false ||
+    !listClickClackAccountIds(cfg).includes(account.accountId)
+  ) {
+    return false;
+  }
+  const current = resolveClickClackAccountConfig(cfg, account.accountId);
+  const endpoints = resolveClickClackAccountEndpoints(current);
+  // Startup resolves workspace selectors and discovers optional bot identity.
+  // Compare the authored selectors, not those transport-resolved replacements.
+  return (
+    current.enabled !== false &&
+    Boolean(endpoints.baseUrl && current.workspace?.trim()) &&
+    endpoints.baseUrl === account.baseUrl &&
+    endpoints.apiEndpoint === account.apiEndpoint &&
+    current.workspace?.trim() === account.config.workspace?.trim() &&
+    normalizeOptionalString(current.botUserId) === normalizeOptionalString(account.config.botUserId)
+  );
+}
+
+function tokenFileConfigPath(cfg: CoreConfig, accountId: string): string {
+  return resolveNormalizedAccountEntry(
+    cfg.channels?.clickclack?.accounts,
+    accountId,
+    normalizeAccountId,
+  )?.tokenFile?.trim()
+    ? `channels.clickclack.accounts.${accountId}.tokenFile`
+    : "channels.clickclack.tokenFile";
+}
+
+function resolveClickClackToken(params: {
+  cfg: CoreConfig;
+  value: unknown;
+  tokenFile?: string;
+  accountId: string;
+  env?: NodeJS.ProcessEnv;
+}): Required<Pick<ResolvedClickClackAccount, "token" | "tokenSource" | "tokenStatus">> &
+  Pick<ResolvedClickClackAccount, "credentialDiagnostics"> {
+  const tokenFile = params.tokenFile?.trim();
+  if (tokenFile) {
+    const result = tryReadSecretFileSync(
+      tokenFile,
+      "ClickClack bot token",
+      { rejectSymlink: true },
+      {
+        configPath: tokenFileConfigPath(params.cfg, params.accountId),
+      },
+    );
+    return result.status === "available"
+      ? { token: result.value, tokenSource: "tokenFile", tokenStatus: "available" }
+      : {
+          token: "",
+          tokenSource: "tokenFile",
+          tokenStatus: "configured_unavailable",
+          credentialDiagnostics: [result.diagnostic],
+        };
+  }
+  const resolved = resolveSecretInputString({
+    value: params.value,
+    path:
+      params.accountId === DEFAULT_ACCOUNT_ID
+        ? "channels.clickclack.token"
+        : `channels.clickclack.accounts.${params.accountId}.token`,
+    defaults: params.cfg.secrets?.defaults,
+    mode: "inspect",
+  });
+  if (resolved.status !== "available") {
+    if (resolved.status === "missing" && params.accountId === DEFAULT_ACCOUNT_ID) {
+      const token = normalizeSecretInputString((params.env ?? process.env).CLICKCLACK_BOT_TOKEN);
+      return token
+        ? { token, tokenSource: "env", tokenStatus: "available" }
+        : { token: "", tokenSource: "none", tokenStatus: "missing" };
+    }
+    if (resolved.status === "configured_unavailable" && resolved.ref.source === "env") {
+      if (!canResolveEnvSecretRefInReadOnlyPath({ cfg: params.cfg, ...resolved.ref })) {
+        const providerConfig = params.cfg.secrets?.providers?.[resolved.ref.provider];
+        if (!providerConfig) {
+          throw new Error(
+            `Secret provider "${resolved.ref.provider}" is not configured (ref: env:${resolved.ref.provider}:${resolved.ref.id}).`,
+          );
+        }
+        if (providerConfig.source !== "env") {
+          throw new Error(
+            `Secret provider "${resolved.ref.provider}" has source "${providerConfig.source}" but ref requests "env".`,
+          );
+        }
+        throw new Error(
+          `Environment variable "${resolved.ref.id}" is not allowlisted in secrets.providers.${resolved.ref.provider}.allowlist.`,
+        );
+      }
+      const token = normalizeSecretInputString((params.env ?? process.env)[resolved.ref.id]);
+      return {
+        token: token ?? "",
+        tokenSource: "config",
+        tokenStatus: token ? "available" : "configured_unavailable",
+      };
+    }
+    return {
+      token: "",
+      tokenSource: resolved.status === "missing" ? "none" : "config",
+      tokenStatus: resolved.status,
+    };
+  }
+  return { token: resolved.value, tokenSource: "config", tokenStatus: "available" };
+}
+
+export function resolveClickClackAccountMetadata(params: {
+  cfg: CoreConfig;
+  accountId?: string | null;
+  env?: NodeJS.ProcessEnv;
+}): ResolvedClickClackAccount {
+  const accountId = normalizeAccountId(params.accountId);
+  const merged = resolveClickClackAccountConfig(params.cfg, accountId);
+  const baseEnabled = params.cfg.channels?.clickclack?.enabled !== false;
+  const enabled = baseEnabled && merged.enabled !== false;
+  const { baseUrl, apiEndpoint } = resolveClickClackAccountEndpoints(merged);
+  const token = merged.tokenFile?.trim()
+    ? { token: "", tokenSource: "tokenFile" as const, tokenStatus: undefined }
+    : resolveClickClackToken({ cfg: params.cfg, value: merged.token, accountId, env: params.env });
+  const workspace = merged.workspace?.trim() ?? "";
+  const discussionsWorkspace = merged.discussions?.workspace?.trim() || workspace;
+  const controlUrlBase = merged.discussions?.controlUrlBase?.trim();
+  return {
+    accountId,
+    enabled,
+    configured: Boolean(baseUrl && token.tokenStatus !== "missing" && workspace),
+    name: normalizeOptionalString(merged.name),
+    baseUrl,
+    ...token,
+    workspace,
+    botUserId: normalizeOptionalString(merged.botUserId),
+    agentId: normalizeOptionalString(merged.agentId),
+    replyMode: merged.replyMode === "model" ? "model" : "agent",
+    model: normalizeOptionalString(merged.model),
+    systemPrompt: normalizeOptionalString(merged.systemPrompt),
+    toolsAllow: merged.toolsAllow,
+    defaultTo: merged.defaultTo?.trim() || "channel:general",
+    allowFrom: merged.allowFrom ?? ["*"],
+    reconnectMs: resolveIntegerOption(merged.reconnectMs, DEFAULT_RECONNECT_MS, {
+      min: MIN_RECONNECT_MS,
+      max: MAX_RECONNECT_MS,
+    }),
+    // Durable activity rows require an agent_activity:write bot token scope on
+    // the ClickClack side, so this stays a per-account opt-in (default off),
+    // matching the streaming-progress commentary opt-in precedent.
+    agentActivity: merged.agentActivity === true,
+    // Native progress is a compatibility-sensitive endpoint opt-in.
+    nativeProgress: merged.nativeProgress === true,
+    // Command-menu sync is best effort and current bot:write tokens include
+    // commands:write, so resolved accounts default on unless explicitly disabled.
+    commandMenu: merged.commandMenu !== false,
+    discussions: {
+      enabled: merged.discussions?.enabled === true,
+      workspace: discussionsWorkspace,
+      ...(controlUrlBase ? { controlUrlBase } : {}),
+      section: merged.discussions?.section?.trim() || DEFAULT_DISCUSSIONS_SECTION,
+    },
+    requireMention: merged.requireMention === true,
+    requireMentionInBotThreads: merged.requireMentionInBotThreads,
+    mentionPatterns: merged.mentionPatterns ?? [],
+    allowBots: merged.allowBots ?? false,
+    botLoopProtection: merged.botLoopProtection,
+    groups: merged.groups ?? {},
+    config: {
+      ...merged,
+      allowFrom: merged.allowFrom ?? ["*"],
+    },
+    apiEndpoint,
+  };
+}
+
+/** Compatibility for explicit synchronous SDK account and scoped-access callers. */
+export function resolveClickClackAccount(
+  params: Parameters<typeof resolveClickClackAccountMetadata>[0],
+): ResolvedClickClackAccount {
+  const account = resolveClickClackAccountMetadata(params);
+  return account.config.tokenFile?.trim()
+    ? {
+        ...account,
+        ...resolveClickClackToken({
+          cfg: params.cfg,
+          value: account.config.token,
+          tokenFile: account.config.tokenFile,
+          accountId: account.accountId,
+          env: params.env,
+        }),
+      }
+    : account;
+}
+
+/** Operational callers prepare the current external credential without blocking the Gateway. */
+export async function resolveClickClackAccountAsync(
+  params: Parameters<typeof resolveClickClackAccountMetadata>[0],
+): Promise<ResolvedClickClackAccount> {
+  const account = resolveClickClackAccountMetadata(params);
+  const tokenFile = account.config.tokenFile?.trim();
+  if (!tokenFile) {
+    return account;
+  }
+  const [{ readSecretFile }, { FsSafeError }] = await Promise.all([
+    import("omnipolymath/plugin-sdk/secret-file"),
+    import("omnipolymath/plugin-sdk/security-runtime"),
+  ]);
+  try {
+    return {
+      ...account,
+      token: await readSecretFile(tokenFile, "ClickClack bot token", { rejectSymlink: true }),
+      tokenStatus: "available",
+    };
+  } catch (error) {
+    if (!(error instanceof FsSafeError)) {
+      throw error;
+    }
+    return {
+      ...account,
+      tokenStatus: "configured_unavailable",
+      credentialDiagnostics: [
+        {
+          code: "CREDENTIAL_FILE_UNAVAILABLE",
+          path: tokenFileConfigPath(params.cfg, account.accountId),
+          reason: error.code,
+        },
+      ],
+    };
+  }
+}
+
+/** Read-only snapshots use configured facts; the channel lifetime owns credential health. */
+export function inspectClickClackAccount(cfg: CoreConfig, rawAccountId?: string | null) {
+  const accountId = normalizeAccountId(rawAccountId);
+  const config = resolveClickClackAccountConfig(cfg, accountId);
+  const { baseUrl } = resolveClickClackAccountEndpoints(config);
+  const credential = config.tokenFile?.trim()
+    ? { tokenSource: "tokenFile" as const }
+    : resolveClickClackToken({ cfg, value: config.token, accountId });
+  return {
+    accountId,
+    name: normalizeOptionalString(config.name),
+    enabled: cfg.channels?.clickclack?.enabled !== false && config.enabled !== false,
+    configured: Boolean(baseUrl && config.workspace?.trim() && credential.tokenSource !== "none"),
+    baseUrl,
+    tokenSource: credential.tokenSource,
+    ...("tokenStatus" in credential ? { tokenStatus: credential.tokenStatus } : {}),
+  };
+}
+
+export function listEnabledClickClackAccounts(cfg: CoreConfig): ResolvedClickClackAccount[] {
+  return listClickClackAccountIds(cfg)
+    .map((accountId) => resolveClickClackAccount({ cfg, accountId }))
+    .filter((account) => account.enabled);
+}

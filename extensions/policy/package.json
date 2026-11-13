@@ -1,0 +1,27 @@
+{
+  "name": "@omnipolymath/policy",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath policy doctor checks for workspace conformance",
+  "type": "module",
+  "dependencies": {
+    "json5": "2.2.3"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*",
+    "omnipolymath": "workspace:*"
+  },
+  "peerDependencies": {
+    "omnipolymath": ">=2026.11.3"
+  },
+  "peerDependenciesMeta": {
+    "omnipolymath": {
+      "optional": true
+    }
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

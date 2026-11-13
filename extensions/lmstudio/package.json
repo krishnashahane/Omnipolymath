@@ -1,0 +1,12 @@
+{
+  "name": "@omnipolymath/lmstudio-provider",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath LM Studio provider plugin",
+  "type": "module",
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

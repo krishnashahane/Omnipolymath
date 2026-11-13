@@ -1,0 +1,55 @@
+{
+  "name": "@omnipolymath/memory-lancedb",
+  "version": "2026.11.3",
+  "description": "Omnipolymath LanceDB-backed long-term memory plugin with auto-recall, auto-capture, and vector search.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "bundleDependencies": [
+    "apache-arrow"
+  ],
+  "dependencies": {
+    "apache-arrow": "21.2.0",
+    "openai": "7.47.0",
+    "typebox": "1.4.3"
+  },
+  "devDependencies": {
+    "@lancedb/lancedb": "0.41.0",
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "optionalDependencies": {
+    "@lancedb/lancedb-darwin-arm64": "0.41.0",
+    "@lancedb/lancedb-linux-arm64-gnu": "0.41.0",
+    "@lancedb/lancedb-linux-arm64-musl": "0.41.0",
+    "@lancedb/lancedb-linux-x64-gnu": "0.41.0",
+    "@lancedb/lancedb-linux-x64-musl": "0.41.0",
+    "@lancedb/lancedb-win32-arm64-msvc": "0.41.0",
+    "@lancedb/lancedb-win32-x64-msvc": "0.41.0"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/memory-lancedb",
+      "npmSpec": "@omnipolymath/memory-lancedb",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.5.31"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3",
+      "workerEntries": [
+        "./memory-stats.worker.ts"
+      ]
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  }
+}

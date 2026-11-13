@@ -1,0 +1,39 @@
+{
+  "name": "@omnipolymath/muse",
+  "version": "2026.11.3",
+  "description": "Omnipolymath Muse Code agent runtime plugin (registers a `muse` AgentHarness backed by @muse-code/sdk over the Muse Session Protocol to the Muse Code CLI)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "dependencies": {
+    "@muse-code/sdk": "1.4.14"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/muse",
+      "npmSpec": "@omnipolymath/muse",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.10.2"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3",
+      "bundledDist": false
+    },
+    "release": {
+      "bundleRuntimeDependencies": false,
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@omnipolymath/admin-http-rpc",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath admin HTTP RPC endpoint",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

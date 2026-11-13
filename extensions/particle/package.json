@@ -1,0 +1,35 @@
+{
+  "name": "@omnipolymath/particle-provider",
+  "version": "2026.11.3",
+  "description": "Omnipolymath Particle provider plugin",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/particle-provider",
+      "npmSpec": "@omnipolymath/particle-provider",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.10.8"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3",
+      "bundledDist": false
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "name": "@omnipolymath/onnx",
+  "version": "2026.11.3",
+  "description": "Local ONNX decision models for Omnipolymath",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "dependencies": {
+    "@huggingface/tokenizers": "0.2.0",
+    "typebox": "1.4.3"
+  },
+  "optionalDependencies": {
+    "onnxruntime-node": "1.31.1"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/onnx",
+      "npmSpec": "@omnipolymath/onnx",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.9.6"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "bundledDist": false,
+      "omnipolymathVersion": "2026.11.3",
+      "workerEntries": [
+        "./src/inference.worker.ts"
+      ],
+      "staticAssets": [
+        {
+          "source": "scripts/export-gliclass-instruct.py",
+          "output": "scripts/export-gliclass-instruct.py"
+        }
+      ]
+    },
+    "release": {
+      "bundleRuntimeDependencies": false,
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  }
+}

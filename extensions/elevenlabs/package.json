@@ -1,0 +1,15 @@
+{
+  "name": "@omnipolymath/elevenlabs-speech",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath ElevenLabs speech plugin",
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

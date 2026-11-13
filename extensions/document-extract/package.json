@@ -1,0 +1,23 @@
+{
+  "name": "@omnipolymath/document-extract-plugin",
+  "version": "2026.11.3",
+  "private": true,
+  "description": "Omnipolymath local document extraction plugin",
+  "type": "module",
+  "dependencies": {
+    "clawpdf": "0.3.2"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "build": {
+      "workerEntries": [
+        "./document-extractor.worker.ts"
+      ]
+    },
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

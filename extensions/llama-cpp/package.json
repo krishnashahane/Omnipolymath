@@ -1,0 +1,38 @@
+{
+  "name": "@omnipolymath/llama-cpp-provider",
+  "version": "2026.11.3",
+  "description": "Omnipolymath provider for managed and external llama.cpp servers",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*"
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/llama-cpp-provider",
+      "npmSpec": "@omnipolymath/llama-cpp-provider",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.6.2"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3"
+    },
+    "release": {
+      "bundleRuntimeDependencies": false,
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  },
+  "dependencies": {
+    "@openclaw/fs-safe": "0.27.1"
+  }
+}

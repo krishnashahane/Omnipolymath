@@ -1,0 +1,86 @@
+import { readRuntimeConfig as getRuntimeConfig } from "omnipolymath/plugin-sdk/runtime-config-snapshot";
+import { isRecord } from "omnipolymath/plugin-sdk/string-coerce-runtime";
+import type { TelegramBotInfo } from "./bot-info.js";
+import { runWithTelegramUpdateProcessingFrame } from "./bot-processing-outcome.js";
+import { startTelegramCallbackQueryAnswer } from "./callback-query-answer-state.js";
+import {
+  createTelegramIngressMonitor,
+  resolveTelegramAdoptionStallTimeoutMs,
+} from "./telegram-ingress-drain.js";
+import { openTelegramIngressQueue } from "./telegram-ingress-spool.js";
+import { readTelegramWidgetQueryId, telegramWidgetApi } from "./widgets/widget-bot-api.js";
+
+type TelegramSpooledBot = {
+  handleUpdate: (update: never) => Promise<void>;
+  api: {
+    answerCallbackQuery: (callbackQueryId: string) => Promise<unknown>;
+    raw: object;
+  };
+};
+
+type CreateTelegramTransportIngressMonitorParams = {
+  stateDir?: string;
+  bot: TelegramSpooledBot;
+  accountId: string;
+  botInfo?: TelegramBotInfo;
+  adoptionStallTimeoutMs?: number;
+  pollIntervalMs?: number;
+  onLog?: (message: string) => void;
+  onError?: (error: unknown) => void;
+  abortSignal?: AbortSignal;
+};
+
+/**
+ * One monitor for polling + webhook: channel-owned append, shared claim →
+ * dispatch with turnAdoptionLifecycle → complete at adoption.
+ */
+export function createTelegramTransportIngressMonitor(
+  params: CreateTelegramTransportIngressMonitorParams,
+) {
+  const queue = openTelegramIngressQueue(params);
+  const adoptionStallTimeoutMs = resolveTelegramAdoptionStallTimeoutMs({
+    configured: params.adoptionStallTimeoutMs,
+    env: process.env,
+  });
+  return createTelegramIngressMonitor({
+    queue,
+    getConfig: getRuntimeConfig,
+    accountId: params.accountId,
+    botInfo: params.botInfo,
+    adoptionStallTimeoutMs,
+    ...(params.pollIntervalMs === undefined ? {} : { pollIntervalMs: params.pollIntervalMs }),
+    ...(params.onLog ? { onLog: params.onLog } : {}),
+    ...(params.onError ? { onError: params.onError } : {}),
+    ...(params.abortSignal ? { abortSignal: params.abortSignal } : {}),
+    // Core runs this after append commit and before dispatch, so callback acknowledgement
+    // cannot erase Telegram's redelivery path or wait behind the handler lane.
+    onDurableAdmission: (update, context) => {
+      // A widget waits at most 15 seconds for an answer. Acknowledge receipt now; the agent's
+      // result reaches the widget later as a state edit.
+      const widgetQueryId = readTelegramWidgetQueryId(update);
+      if (widgetQueryId && context.isNew) {
+        void telegramWidgetApi(params.bot.api)
+          .answerWidgetQuery({ widget_query_id: widgetQueryId })
+          .catch((error: unknown) => params.onError?.(error));
+        return;
+      }
+      const callbackQuery = isRecord(update) ? update.callback_query : undefined;
+      if (!isRecord(callbackQuery)) {
+        return;
+      }
+      const callbackQueryId = callbackQuery.id;
+      if (typeof callbackQueryId !== "string" || callbackQueryId.trim().length === 0) {
+        return;
+      }
+      void startTelegramCallbackQueryAnswer(params.bot, callbackQueryId, context.isNew);
+    },
+    dispatch: async (update) => {
+      // grammY returns void, so carry its middleware-owned outcome back to durable ingress.
+      // The spooled lifecycle remains on its existing frame for complete-at-adoption.
+      const { result } = await runWithTelegramUpdateProcessingFrame(async () => {
+        await params.bot.handleUpdate(update as never);
+      });
+      return result;
+    },
+  });
+}

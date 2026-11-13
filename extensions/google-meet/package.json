@@ -1,0 +1,47 @@
+{
+  "name": "@omnipolymath/google-meet",
+  "version": "2026.11.3",
+  "description": "Omnipolymath Google Meet participant plugin for joining calls through Chrome or Twilio transports.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krishnashahane/Omnipolymath"
+  },
+  "type": "module",
+  "dependencies": {
+    "jszip": "3.10.2",
+    "typebox": "1.4.3"
+  },
+  "devDependencies": {
+    "@omnipolymath/plugin-sdk": "workspace:*",
+    "omnipolymath": "workspace:*"
+  },
+  "peerDependencies": {
+    "omnipolymath": ">=2026.11.3"
+  },
+  "peerDependenciesMeta": {
+    "omnipolymath": {
+      "optional": true
+    }
+  },
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "install": {
+      "clawhubSpec": "clawhub:@omnipolymath/google-meet",
+      "npmSpec": "@omnipolymath/google-meet",
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.4.20"
+    },
+    "compat": {
+      "pluginApi": ">=2026.11.3"
+    },
+    "build": {
+      "omnipolymathVersion": "2026.11.3"
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    }
+  }
+}
