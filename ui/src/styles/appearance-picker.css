@@ -1,0 +1,18 @@
+omnipolymath-appearance-glyph {
+  color: var(--appearance-color, inherit);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+}
+
+omnipolymath-appearance-glyph svg,
+omnipolymath-appearance-glyph img {
+  width: 100%;
+  height: 100%;
+}
+
+omnipolymath-appearance-glyph img {
+  object-fit: contain;
+}
