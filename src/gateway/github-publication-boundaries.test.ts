@@ -45,7 +45,8 @@ function createLocalCoordinator(database = localDatabase()) {
   });
 }
 
-const localDatabase = () => openOmnipolymathStateDatabase({ env: { OMNIPOLYMATH_STATE_DIR: root } });
+const localDatabase = () =>
+  openOmnipolymathStateDatabase({ env: { OMNIPOLYMATH_STATE_DIR: root } });
 const receipt = (database: ReturnType<typeof localDatabase>, requestId: string) =>
   readGitHubPublicationRequest(database.db, { requestId });
 const cloudRequest = (idempotencyKey: string) => ({
@@ -329,7 +330,9 @@ describe("Gateway GitHub publication boundaries", () => {
         status,
         head_commit: headCommit,
         pull_request_url:
-          boundary === "pull_request" ? "https://github.com/krishnashahane/Omnipolymath/pull/125200" : null,
+          boundary === "pull_request"
+            ? "https://github.com/omnipolymath/omnipolymath/pull/125200"
+            : null,
       });
       expect(workspace.effects).toEqual(effects);
     },
