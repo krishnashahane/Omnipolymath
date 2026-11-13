@@ -1,0 +1,23 @@
+{
+  "name": "omnipolymath-inline-incident-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "omnipolymath": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "controlUi": "./control-ui.ts"
+  },
+  "scripts": {
+    "build": "omnipolymath plugins build --root .",
+    "validate": "omnipolymath plugins validate --root ."
+  },
+  "peerDependencies": {
+    "omnipolymath": "*"
+  },
+  "devDependencies": {
+    "omnipolymath": "workspace:*",
+    "esbuild": "0.28.2"
+  }
+}
