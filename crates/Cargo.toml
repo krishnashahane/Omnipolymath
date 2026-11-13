@@ -1,0 +1,3 @@
+[workspace]
+members = ["omnipolymath-gateway-client", "omnipolymath-node-host"]
+resolver = "2"
