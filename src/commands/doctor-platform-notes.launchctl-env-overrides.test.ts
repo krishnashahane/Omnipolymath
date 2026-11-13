@@ -1,0 +1,525 @@
+import { execFileSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { expectDefined } from "@omnipolymath/normalization-core/expect";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useAutoCleanupTempDirTracker } from "../../test/helpers/temp-dir.js";
+import type { OmnipolymathConfig } from "../config/config.js";
+import { LAUNCH_AGENT_ENV_FILE_HEADER } from "../daemon/launchd-env-wrapper.js";
+import { runGatewayServicesHealth } from "../flows/doctor-health-contribution-runners.gateway.js";
+import { prepareDoctorInteractiveMaintenance } from "../flows/doctor-health-startup.js";
+import { defaultRuntime } from "../runtime.js";
+import { createDoctorPrompter } from "./doctor-prompter.js";
+import * as doctorPrompter from "./doctor-prompter.js";
+
+const mocks = vi.hoisted(() => ({
+  runExec: vi.fn(),
+  note: vi.fn(),
+  readCommand: vi.fn(),
+  findJobs: vi.fn(),
+  execLaunchctl: vi.fn(),
+  schemaPreflight: vi.fn(async () => {}),
+}));
+
+vi.mock("../process/exec.js", () => ({
+  runExec: mocks.runExec,
+}));
+vi.mock("../../packages/terminal-core/src/note.js", () => ({ note: mocks.note }));
+vi.mock("../daemon/service.js", () => ({
+  resolveGatewayService: () => ({ readCommand: mocks.readCommand }),
+}));
+// Spy on the real scanner so the warning collector runs the production scan path;
+// the native launchctl result is controlled through execLaunchctl below.
+vi.mock("../daemon/launchd.js", async (importActual) => {
+  const actual = await importActual<typeof import("../daemon/launchd.js")>();
+  mocks.findJobs = vi.fn(actual.findStaleOmnipolymathUpdateLaunchdJobs);
+  return {
+    ...actual,
+    findStaleOmnipolymathUpdateLaunchdJobs: mocks.findJobs,
+  };
+});
+vi.mock("../daemon/launchd-exec.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../daemon/launchd-exec.js")>()),
+  execLaunchctl: mocks.execLaunchctl,
+}));
+// mock-isolation: keep real service locks in this test invocation's temporary directory.
+vi.mock("../infra/tmp-omnipolymath-dir.js", async () => ({
+  resolvePreferredOmnipolymathTmpDir: (await import("node:os")).tmpdir,
+}));
+// mock-isolation: foreign launchd inventory is a separate native boundary from env-file repair.
+vi.mock("./doctor-foreign-launchd-jobs.js", () => ({ noteMacForeignLaunchdJobs: async () => {} }));
+// mock-isolation: startup reads synthetic authored config, never operator files.
+vi.mock("../config/io.runtime.js", () => ({ readSourceConfigBestEffort: async () => ({}) }));
+// mock-isolation: supply schema availability without opening unrelated databases.
+vi.mock("./doctor-database-preflight.js", () => ({
+  prepareDoctorDatabasePreflight: mocks.schemaPreflight,
+}));
+// mock-isolation: this repair must not check for or install a release.
+vi.mock("./doctor-update.js", () => ({ maybeOfferUpdateBeforeDoctor: async () => false }));
+
+import {
+  collectGatewayPlatformWarnings,
+  noteMacGatewayPlatformWarnings,
+  noteStartupOptimizationHints,
+} from "./doctor-platform-notes.js";
+
+const platformDescriptor = Object.getOwnPropertyDescriptor(process, "platform");
+const tempDirs = useAutoCleanupTempDirTracker(afterEach);
+
+it.each(["gateway", "node"])(
+  "repairs confirmed quote corruption in the profiled %s env file with a private backup",
+  async (kind) => {
+    const home = tempDirs.make("doctor-env-quotes-");
+    vi.spyOn(os, "userInfo").mockReturnValue({
+      username: "doctor-fixture",
+      homedir: home,
+      uid: 1000,
+      gid: 1000,
+      shell: "/bin/sh",
+    });
+    const env = { HOME: home, OMNIPOLYMATH_PROFILE: "quoteproof" };
+    vi.stubEnv("HOME", home);
+    vi.stubEnv("OMNIPOLYMATH_STATE_DIR", undefined);
+    vi.stubEnv("OMNIPOLYMATH_CONFIG_PATH", undefined);
+    vi.stubEnv("OMNIPOLYMATH_HOME", undefined);
+    vi.stubEnv("OMNIPOLYMATH_PROFILE", "quoteproof");
+    vi.stubEnv("OMNIPOLYMATH_LAUNCHD_LABEL", undefined);
+    const label = kind === "node" ? "ai.omnipolymath.node.quoteproof" : "ai.omnipolymath.quoteproof";
+    const directory = path.join(home, ".omnipolymath-quoteproof", "service-env");
+    const file = path.join(directory, `${label}.env`);
+    fs.mkdirSync(directory, { recursive: true });
+    const before = `${LAUNCH_AGENT_ENV_FILE_HEADER}\nexport AWS_REGION='"us-east-1"'\nexport API_KEY='"synthetic-private-key"'\nexport UNRELATED='has "inner" quotes'\nexport MULTILINE='prefix\nexport INSIDE='\\''"keep"'\\''\nsuffix'\n`;
+    fs.writeFileSync(file, before, { mode: 0o600 });
+    const prompter = {
+      ...createDoctorPrompter({ runtime: defaultRuntime, options: {} }),
+      confirmRuntimeRepair: vi.fn().mockResolvedValue(true),
+    };
+
+    await runGatewayServicesHealth({
+      cfg: {},
+      cfgForPersistence: {},
+      configResult: { cfg: {} },
+      configPath: path.join(home, ".omnipolymath-quoteproof", "omnipolymath.json"),
+      sourceConfigValid: true,
+      runtime: defaultRuntime,
+      options: {},
+      prompter,
+      env,
+      gatewayMaintenanceActive: true,
+    });
+    expect(fs.readFileSync(file, "utf8")).toBe(before);
+    expect(fs.readdirSync(directory)).toHaveLength(1);
+    expect(JSON.stringify(mocks.note.mock.calls)).toContain("API_KEY");
+    vi.spyOn(doctorPrompter, "createDoctorPrompter").mockReturnValue(prompter);
+    const admission = {
+      runtime: defaultRuntime,
+      options: {},
+      databasePreflight: undefined,
+      root: null,
+      outro: () => {},
+    };
+    mocks.schemaPreflight.mockRejectedValueOnce(new Error("synthetic incompatible schema"));
+    await expect(prepareDoctorInteractiveMaintenance(admission)).rejects.toThrow(
+      "synthetic incompatible schema",
+    );
+    expect(fs.readFileSync(file, "utf8")).toBe(before);
+    expect(fs.readdirSync(directory)).toHaveLength(1);
+    await expect(prepareDoctorInteractiveMaintenance(admission)).resolves.toBe("accepted");
+
+    expect(fs.readFileSync(file, "utf8")).toBe(
+      before
+        .replace("'\"us-east-1\"'", "'us-east-1'")
+        .replace("'\"synthetic-private-key\"'", "'synthetic-private-key'"),
+    );
+    const backups = fs.readdirSync(directory).filter((name) => name.endsWith(".bak"));
+    expect(backups).toHaveLength(1);
+    const backup = path.join(directory, backups[0]!);
+    expect(fs.readFileSync(backup, "utf8")).toBe(before);
+    expect(fs.statSync(backup).mode & 0o777).toBe(0o600);
+    expect(fs.statSync(file).mode & 0o777).toBe(0o600);
+    execFileSync("/bin/sh", [
+      "-c",
+      '. "$1"; test "$AWS_REGION" = us-east-1 && test "$API_KEY" = synthetic-private-key',
+      "proof",
+      file,
+    ]);
+    expect(JSON.stringify(mocks.note.mock.calls)).toContain(
+      `omnipolymath --profile quoteproof ${kind} restart`,
+    );
+    expect(JSON.stringify(mocks.note.mock.calls)).not.toContain("synthetic-private-key");
+    await noteMacGatewayPlatformWarnings({}, prompter, env);
+    expect(fs.readdirSync(directory)).toHaveLength(2);
+  },
+);
+
+it.each([
+  { repair: true, nonInteractive: true },
+  { repair: true, yes: true },
+])("reports ambiguous quote shapes without auto-approving them: %j", async (options) => {
+  const home = tempDirs.make("doctor-env-quotes-");
+  const file = path.join(home, ".omnipolymath", "service-env", "ai.omnipolymath.gateway.env");
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const before = `${LAUNCH_AGENT_ENV_FILE_HEADER}\nexport API_KEY='"synthetic-private-key"'\n`;
+  fs.writeFileSync(file, before, { mode: 0o600 });
+  await noteMacGatewayPlatformWarnings(
+    {},
+    createDoctorPrompter({ runtime: defaultRuntime, options }),
+    { HOME: home },
+  );
+  expect(JSON.stringify(mocks.note.mock.calls)).toContain("API_KEY");
+  expect(JSON.stringify(mocks.note.mock.calls)).not.toContain("synthetic-private-key");
+  expect(fs.readFileSync(file, "utf8")).toBe(before);
+  expect(fs.readdirSync(path.dirname(file))).toHaveLength(1);
+});
+
+it("does not overwrite service env changed while the operator considers the repair", async () => {
+  const home = tempDirs.make("doctor-env-quotes-");
+  const directory = path.join(home, ".omnipolymath", "service-env");
+  const file = path.join(directory, "ai.omnipolymath.gateway.env");
+  fs.mkdirSync(directory, { recursive: true });
+  fs.writeFileSync(file, `${LAUNCH_AGENT_ENV_FILE_HEADER}\nexport AWS_REGION='"us-east-1"'\n`);
+  const replacement = `${LAUNCH_AGENT_ENV_FILE_HEADER}\nexport AWS_REGION='eu-west-1'\n`;
+  const prompter = {
+    ...createDoctorPrompter({ runtime: defaultRuntime, options: {} }),
+    confirmRuntimeRepair: async () => {
+      fs.writeFileSync(file, replacement);
+      return true;
+    },
+  };
+  await noteMacGatewayPlatformWarnings({}, prompter, { HOME: home });
+  expect(fs.readFileSync(file, "utf8")).toBe(replacement);
+  expect(fs.readdirSync(directory)).toEqual(["ai.omnipolymath.gateway.env"]);
+  expect(JSON.stringify(mocks.note.mock.calls)).toContain("rerun doctor");
+});
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  Object.defineProperty(process, "platform", { ...platformDescriptor, value: "darwin" });
+  vi.stubEnv("HOME", "/tmp/omnipolymath-doctor-host");
+  vi.stubEnv("OMNIPOLYMATH_STATE_DIR", "/tmp/omnipolymath-doctor-host-state");
+  vi.spyOn(fs, "existsSync").mockReturnValue(false);
+  mocks.runExec.mockResolvedValue({ stdout: "", stderr: "" });
+  mocks.readCommand.mockResolvedValue(null);
+  mocks.execLaunchctl.mockResolvedValue({ code: 0, stdout: "", stderr: "" });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+  if (platformDescriptor) {
+    Object.defineProperty(process, "platform", platformDescriptor);
+  }
+});
+
+describe("macOS Gateway environment warnings", () => {
+  it("prints clear unsetenv instructions for token override", async () => {
+    mocks.runExec.mockImplementation(async (_command, [, name]) => ({
+      stdout: name === "OMNIPOLYMATH_GATEWAY_TOKEN" ? " \tlaunchctl-token\n" : " \n",
+      stderr: "",
+    }));
+    const cfg: OmnipolymathConfig = {
+      gateway: {
+        auth: {
+          token: "config-token",
+        },
+      },
+    };
+
+    await noteMacGatewayPlatformWarnings(cfg);
+
+    expect(mocks.note).toHaveBeenCalledTimes(1);
+    expect(mocks.runExec).toHaveBeenCalledTimes(2);
+
+    const [message, title] = expectDefined<unknown[]>(mocks.note.mock.calls[0], "note call 0");
+    expect(title).toBe("Gateway (macOS)");
+    expect(message).toContain("Host-wide launchctl gateway auth overrides detected");
+    expect(message).toContain("Current managed Gateway installs do not need these values");
+    expect(message).toContain("OMNIPOLYMATH_GATEWAY_TOKEN");
+    expect(message).toContain("launchctl unsetenv OMNIPOLYMATH_GATEWAY_TOKEN");
+    expect(message).not.toContain("OMNIPOLYMATH_GATEWAY_PASSWORD");
+    expect(message).not.toContain("launchctl-token");
+    expect(message).not.toContain("config-token");
+  });
+
+  it("treats SecretRef-backed credentials as configured", async () => {
+    mocks.runExec.mockImplementation(async (_command, [, name]) => ({
+      stdout: name === "OMNIPOLYMATH_GATEWAY_PASSWORD" ? " \tlaunchctl-password\n" : " \n",
+      stderr: "",
+    }));
+    const cfg: OmnipolymathConfig = {
+      gateway: {
+        auth: {
+          password: { source: "env", provider: "default", id: "OMNIPOLYMATH_GATEWAY_PASSWORD" },
+        },
+      },
+      secrets: {
+        providers: {
+          default: { source: "env" },
+        },
+      },
+    };
+
+    await noteMacGatewayPlatformWarnings(cfg);
+
+    expect(mocks.note).toHaveBeenCalledTimes(1);
+    const [message] = expectDefined<unknown[]>(mocks.note.mock.calls[0], "note call 0");
+    expect(message).toContain("OMNIPOLYMATH_GATEWAY_PASSWORD");
+    expect(message).not.toContain("OMNIPOLYMATH_GATEWAY_TOKEN");
+    expect(message).not.toContain("launchctl-password");
+  });
+
+  it("does nothing on non-darwin platforms", async () => {
+    Object.defineProperty(process, "platform", { ...platformDescriptor, value: "linux" });
+    mocks.runExec.mockResolvedValue({ stdout: "launchctl-token", stderr: "" });
+    const cfg: OmnipolymathConfig = {
+      gateway: {
+        auth: {
+          token: "config-token",
+        },
+      },
+    };
+
+    await noteMacGatewayPlatformWarnings(cfg);
+
+    expect(mocks.runExec).not.toHaveBeenCalled();
+    expect(mocks.note).not.toHaveBeenCalled();
+  });
+
+  it("bounds launchctl getenv calls and ignores timeout failures", async () => {
+    mocks.runExec.mockRejectedValue(new Error("timed out"));
+    const cfg: OmnipolymathConfig = {
+      gateway: {
+        auth: {
+          token: "config-token",
+        },
+      },
+    };
+
+    await noteMacGatewayPlatformWarnings(cfg);
+
+    expect(mocks.runExec).toHaveBeenNthCalledWith(
+      1,
+      "/bin/launchctl",
+      ["getenv", "OMNIPOLYMATH_GATEWAY_TOKEN"],
+      { logOutput: false, timeoutMs: 5_000 },
+    );
+    expect(mocks.runExec).toHaveBeenNthCalledWith(
+      2,
+      "/bin/launchctl",
+      ["getenv", "OMNIPOLYMATH_GATEWAY_PASSWORD"],
+      { logOutput: false, timeoutMs: 5_000 },
+    );
+    expect(mocks.note).not.toHaveBeenCalled();
+  });
+});
+
+describe("macOS stale updater warnings", () => {
+  it("scans the installed service without caller state selectors", async () => {
+    vi.stubEnv("OMNIPOLYMATH_HOME", "/tmp/caller-home");
+    vi.stubEnv("OMNIPOLYMATH_PROFILE", "caller");
+    vi.stubEnv("OMNIPOLYMATH_CONFIG_PATH", "/tmp/caller.json");
+    mocks.readCommand.mockResolvedValue({
+      programArguments: ["node", "omnipolymath.mjs", "gateway"],
+      environment: { HOME: "/tmp/service-home" },
+    });
+    await collectGatewayPlatformWarnings({});
+    const [env] = expectDefined<NodeJS.ProcessEnv[]>(
+      mocks.findJobs.mock.calls[0],
+      "scan environment",
+    );
+    expect(
+      Object.fromEntries(
+        [
+          "HOME",
+          "OMNIPOLYMATH_HOME",
+          "OMNIPOLYMATH_STATE_DIR",
+          "OMNIPOLYMATH_PROFILE",
+          "OMNIPOLYMATH_CONFIG_PATH",
+        ].map((key) => [key, env?.[key]]),
+      ),
+    ).toEqual({
+      HOME: "/tmp/service-home",
+      OMNIPOLYMATH_HOME: undefined,
+      OMNIPOLYMATH_STATE_DIR: undefined,
+      OMNIPOLYMATH_PROFILE: undefined,
+      OMNIPOLYMATH_CONFIG_PATH: undefined,
+    });
+  });
+  it("uses service env for gateway platform stale updater warnings", async () => {
+    const serviceEnv = {
+      OMNIPOLYMATH_STATE_DIR: "/tmp/omnipolymath-daemon",
+      OMNIPOLYMATH_LAUNCHD_LABEL: "ai.omnipolymath.manual-update.gateway",
+    };
+    mocks.readCommand.mockResolvedValue({
+      programArguments: ["/bin/node", "cli", "gateway"],
+      environment: serviceEnv,
+    });
+
+    const warnings = await collectGatewayPlatformWarnings({});
+
+    expect(warnings).toEqual([]);
+    expect(mocks.runExec).not.toHaveBeenCalled();
+    expect(mocks.readCommand).toHaveBeenCalledTimes(1);
+    expect(mocks.findJobs).toHaveBeenCalledWith(
+      expect.objectContaining({
+        HOME: "/tmp/omnipolymath-doctor-host",
+        OMNIPOLYMATH_STATE_DIR: "/tmp/omnipolymath-daemon",
+        OMNIPOLYMATH_LAUNCHD_LABEL: "ai.omnipolymath.manual-update.gateway",
+      }),
+    );
+  });
+
+  it("prints stale updater job cleanup guidance on macOS", async () => {
+    mocks.execLaunchctl.mockResolvedValue({
+      code: 0,
+      stdout: [
+        "- 127 ai.omnipolymath.update.2026.5.12",
+        "- 0 ai.omnipolymath.manual-update.1717168800",
+      ].join("\n"),
+      stderr: "",
+    });
+
+    await noteMacGatewayPlatformWarnings({});
+
+    expect(mocks.execLaunchctl).toHaveBeenCalledWith(["list"]);
+    const [message, title] = expectDefined<unknown[]>(mocks.note.mock.calls[0], "note call 0");
+    expect(title).toBe("Gateway (macOS)");
+    expect(message).toContain("Stale Omnipolymath updater launchd job(s) detected");
+    expect(message).toContain("ai.omnipolymath.update.2026.5.12");
+    expect(message).toContain("ai.omnipolymath.manual-update.1717168800");
+    expect(message).toContain("launchctl remove <label>");
+    expect(message).toContain("omnipolymath gateway restart");
+  });
+
+  it.each(["exit", "reject"])(
+    "warns without private paths when the stale updater scan fails (%s)",
+    async (failure) => {
+      const privatePath = "/Users/private owner/Library/LaunchAgents/updater.plist";
+      const detail = `Operation not permitted: "${privatePath}"`;
+      if (failure === "exit") {
+        mocks.execLaunchctl.mockResolvedValue({ code: 1, stdout: "", stderr: detail });
+      } else {
+        mocks.execLaunchctl.mockRejectedValueOnce(new Error(detail));
+      }
+
+      await noteMacGatewayPlatformWarnings({});
+
+      const [message, title] = expectDefined<unknown[]>(mocks.note.mock.calls[0], "note call 0");
+      expect(title).toBe("Gateway (macOS)");
+      expect(message).toBe(
+        `Could not inspect stale Omnipolymath updater launchd jobs: ${failure === "exit" ? "launchctl list failed (exit 1): " : ""}Operation not permitted: [redacted-path]; interrupted-update leftovers were NOT checked. Check launchctl availability and rerun omnipolymath doctor.`,
+      );
+      expect(message).not.toContain(privatePath);
+      expect(message).not.toContain("private owner");
+    },
+  );
+});
+
+describe("collectGatewayPlatformWarnings", () => {
+  it.each([false, true])(
+    "reports only the active state's launch-agent marker (present: %s)",
+    async (activeMarkerExists) => {
+      const activeMarker = "/tmp/omnipolymath-doctor-host-state/disable-launchagent";
+      const defaultMarker = "/tmp/omnipolymath-doctor-host/.omnipolymath/disable-launchagent";
+      vi.mocked(fs.existsSync).mockImplementation(
+        (candidate) =>
+          candidate === defaultMarker || (candidate === activeMarker && activeMarkerExists),
+      );
+      mocks.readCommand.mockResolvedValue({
+        environment: { HOME: "/tmp/omnipolymath-doctor-service" },
+      });
+
+      const warnings = await collectGatewayPlatformWarnings({});
+      await noteMacGatewayPlatformWarnings({});
+
+      expect(fs.existsSync).not.toHaveBeenCalledWith(defaultMarker);
+      if (activeMarkerExists) {
+        expect(warnings).toEqual([expect.stringContaining(`disabled via ${activeMarker}`)]);
+        expect(mocks.note).toHaveBeenCalledWith(warnings[0], "Gateway (macOS)");
+      } else {
+        expect(warnings).toEqual([]);
+        expect(mocks.note).not.toHaveBeenCalled();
+      }
+    },
+  );
+});
+
+describe("noteStartupOptimizationHints", () => {
+  beforeEach(() => {
+    Object.defineProperty(process, "platform", { ...platformDescriptor, value: "linux" });
+    vi.spyOn(os, "arch").mockReturnValue("arm64");
+    vi.spyOn(os, "totalmem").mockReturnValue(4 * 1024 ** 3);
+  });
+
+  it("does not warn when compile cache and no-respawn are configured", () => {
+    noteStartupOptimizationHints({
+      NODE_COMPILE_CACHE: "/var/tmp/omnipolymath-compile-cache",
+      OMNIPOLYMATH_NO_RESPAWN: "1",
+    });
+
+    expect(mocks.note).not.toHaveBeenCalled();
+  });
+
+  it("warns when compile cache is under /tmp and no-respawn is not set", () => {
+    noteStartupOptimizationHints({
+      NODE_COMPILE_CACHE: "/tmp/omnipolymath-compile-cache",
+    });
+
+    expect(mocks.note).toHaveBeenCalledTimes(1);
+    const [message, title] = expectDefined<unknown[]>(mocks.note.mock.calls[0], "note call 0");
+    expect(title).toBe("Startup optimization");
+    expect(message).toBe(
+      [
+        "- NODE_COMPILE_CACHE points to /tmp; use /var/tmp so cache survives reboots and warms startup reliably.",
+        "- OMNIPOLYMATH_NO_RESPAWN is not set to 1; set it when you want routine gateway restarts to stay in-process instead of handing off to a managed supervisor.",
+        "- Suggested env for low-power hosts:",
+        "  export NODE_COMPILE_CACHE=/var/tmp/omnipolymath-compile-cache",
+        "  mkdir -p /var/tmp/omnipolymath-compile-cache",
+        "  export OMNIPOLYMATH_NO_RESPAWN=1",
+      ].join("\n"),
+    );
+  });
+
+  it("warns when compile cache is disabled via env override", () => {
+    noteStartupOptimizationHints({
+      NODE_COMPILE_CACHE: "/var/tmp/omnipolymath-compile-cache",
+      OMNIPOLYMATH_NO_RESPAWN: "1",
+      NODE_DISABLE_COMPILE_CACHE: "1",
+    });
+
+    expect(mocks.note).toHaveBeenCalledTimes(1);
+    const [message] = expectDefined<unknown[]>(mocks.note.mock.calls[0], "note call 0");
+    expect(message).toBe(
+      [
+        "- NODE_DISABLE_COMPILE_CACHE is set; startup compile cache is disabled.",
+        "- Suggested env for low-power hosts:",
+        "  export NODE_COMPILE_CACHE=/var/tmp/omnipolymath-compile-cache",
+        "  mkdir -p /var/tmp/omnipolymath-compile-cache",
+        "  export OMNIPOLYMATH_NO_RESPAWN=1",
+        "  unset NODE_DISABLE_COMPILE_CACHE",
+      ].join("\n"),
+    );
+  });
+
+  it("skips startup optimization note on win32", () => {
+    Object.defineProperty(process, "platform", { ...platformDescriptor, value: "win32" });
+
+    noteStartupOptimizationHints({
+      NODE_COMPILE_CACHE: "/tmp/omnipolymath-compile-cache",
+    });
+
+    expect(mocks.note).not.toHaveBeenCalled();
+  });
+
+  it("skips startup optimization note on non-target linux hosts", () => {
+    vi.mocked(os.arch).mockReturnValue("x64");
+    vi.mocked(os.totalmem).mockReturnValue(32 * 1024 ** 3);
+
+    noteStartupOptimizationHints({
+      NODE_COMPILE_CACHE: "/tmp/omnipolymath-compile-cache",
+    });
+
+    expect(mocks.note).not.toHaveBeenCalled();
+  });
+});

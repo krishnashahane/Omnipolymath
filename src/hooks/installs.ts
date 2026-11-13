@@ -1,0 +1,96 @@
+import { expectDefined } from "@omnipolymath/normalization-core";
+import type { HookInstallRecord } from "../config/types.hooks.js";
+import { updateConfigMachineState } from "../state/config-machine-state-write.js";
+import { readConfigMachineState } from "../state/config-machine-state.js";
+import { executeExistingOmnipolymathStateRead } from "../state/omnipolymath-state-db-readonly.js";
+import type { OmnipolymathStateDatabaseOptions } from "../state/omnipolymath-state-db.js";
+
+export type HookInstallUpdate = HookInstallRecord & { hookId: string };
+
+export type HookInstallWriteReceipt = {
+  hookId: string;
+  previous?: HookInstallRecord;
+  writtenJson: string;
+  bucketExisted: boolean;
+};
+
+export function readHookInstalls(
+  options: OmnipolymathStateDatabaseOptions = {},
+): Record<string, HookInstallRecord> {
+  return (
+    readConfigMachineState<Record<string, HookInstallRecord>>("hooks.internal.installs", options) ??
+    {}
+  );
+}
+
+export async function readHookInstallsAsync(
+  options: OmnipolymathStateDatabaseOptions = {},
+): Promise<Record<string, HookInstallRecord>> {
+  const result = await executeExistingOmnipolymathStateRead(options, {
+    type: "hooks.internal.installs",
+  });
+  if (!result) {
+    return {};
+  }
+  // SAFETY: The hook-install owner writes this key as Record<string, HookInstallRecord>.
+  return result.row ? (JSON.parse(result.row.value_json) as Record<string, HookInstallRecord>) : {};
+}
+
+export function recordHookInstall(
+  update: HookInstallUpdate,
+  options: OmnipolymathStateDatabaseOptions = {},
+): HookInstallWriteReceipt {
+  const { hookId, ...record } = update;
+  let receipt: HookInstallWriteReceipt | undefined;
+  updateConfigMachineState<Record<string, HookInstallRecord>>(
+    "hooks.internal.installs",
+    (current) => {
+      const previous = current && Object.hasOwn(current, hookId) ? current[hookId] : undefined;
+      const written = {
+        ...previous,
+        ...record,
+        installedAt: record.installedAt ?? new Date().toISOString(),
+      };
+      receipt = {
+        hookId,
+        previous,
+        // Compare the persisted shape: optional undefined fields disappear in SQLite JSON.
+        writtenJson: JSON.stringify(written),
+        bucketExisted: current !== undefined,
+      };
+      return { ...current, [hookId]: written };
+    },
+    options,
+  );
+  return expectDefined(receipt, "hook install write receipt");
+}
+
+/** Undo only this install's record, preserving unrelated or newer writers. */
+export function restoreHookInstallIfCurrent(
+  receipt: HookInstallWriteReceipt,
+  options: OmnipolymathStateDatabaseOptions = {},
+): boolean {
+  let restored = false;
+  updateConfigMachineState<Record<string, HookInstallRecord>>(
+    "hooks.internal.installs",
+    (current) => {
+      if (
+        !current ||
+        !Object.hasOwn(current, receipt.hookId) ||
+        JSON.stringify(current[receipt.hookId]) !== receipt.writtenJson
+      ) {
+        return current;
+      }
+      const next = { ...current };
+      if (receipt.previous) {
+        next[receipt.hookId] = receipt.previous;
+      } else {
+        delete next[receipt.hookId];
+      }
+      restored = true;
+      return !receipt.bucketExisted && Object.keys(next).length === 0 ? undefined : next;
+    },
+    options,
+  );
+  return restored;
+}

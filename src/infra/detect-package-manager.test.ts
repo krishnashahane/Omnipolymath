@@ -1,0 +1,185 @@
+// Verifies package-manager detection from lockfiles and project metadata.
+import fs from "node:fs/promises";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+import { withTestDir } from "../test-helpers/temp-dir.js";
+import { withEnvAsync } from "../test-utils/env.js";
+import { detectPackageManager } from "./detect-package-manager.js";
+
+const PNPM_PACKAGE_MANAGER = "pnpm@12.0.0";
+
+async function writePublishedOmnipolymathRoot(
+  root: string,
+  options: { shrinkwrap: boolean },
+): Promise<void> {
+  await fs.mkdir(root, { recursive: true });
+  await fs.writeFile(
+    path.join(root, "package.json"),
+    JSON.stringify({ name: "omnipolymath", packageManager: PNPM_PACKAGE_MANAGER }),
+    "utf8",
+  );
+  if (options.shrinkwrap) {
+    await fs.writeFile(path.join(root, "npm-shrinkwrap.json"), "{}", "utf8");
+  }
+}
+
+describe("detectPackageManager", () => {
+  it.each([
+    [
+      "prefers packageManager from package.json when supported",
+      {
+        "package.json": JSON.stringify({ packageManager: PNPM_PACKAGE_MANAGER }),
+        "package-lock.json": "",
+      },
+      "pnpm",
+    ],
+    ["falls back to bun.lock", { "bun.lock": "" }, "bun"],
+    ["falls back to bun.lockb", { "bun.lockb": "" }, "bun"],
+    [
+      "falls back to npm lockfiles for unsupported packageManager values",
+      {
+        "package.json": JSON.stringify({ packageManager: "yarn@4.0.0" }),
+        "package-lock.json": "",
+      },
+      "npm",
+    ],
+    [
+      "uses npm-shrinkwrap as npm evidence for published npm package roots",
+      {
+        "package.json": JSON.stringify({ packageManager: PNPM_PACKAGE_MANAGER }),
+        "npm-shrinkwrap.json": "{}",
+      },
+      "npm",
+    ],
+    [
+      "keeps pnpm source roots when npm-shrinkwrap is present next to pnpm-lock",
+      {
+        "package.json": JSON.stringify({ packageManager: PNPM_PACKAGE_MANAGER }),
+        "npm-shrinkwrap.json": "{}",
+        "pnpm-lock.yaml": "lockfileVersion: '9.0'",
+      },
+      "pnpm",
+    ],
+    ["returns null when no package manager markers exist", { "package.json": "{not-json}" }, null],
+  ] as const)("%s", async (_name, files, expected) => {
+    await withTestDir({ prefix: "omnipolymath-detect-pm-" }, async (root) => {
+      for (const [file, content] of Object.entries(files)) {
+        const target = path.join(root, file);
+        await fs.mkdir(path.dirname(target), { recursive: true });
+        await fs.writeFile(target, content, "utf8");
+      }
+      await expect(detectPackageManager(root)).resolves.toBe(expected);
+    });
+  });
+
+  it.each(
+    [
+      { manager: "pnpm", layout: "direct" },
+      { manager: "pnpm", layout: "virtual" },
+      { manager: "bun", layout: "global" },
+    ].flatMap((scenario) => [
+      { ...scenario, packageFormat: "lockless", shrinkwrap: false },
+      { ...scenario, packageFormat: "legacy shrinkwrapped", shrinkwrap: true },
+    ]),
+  )(
+    "detects $manager ownership for $packageFormat packages in $layout layouts",
+    async ({ manager, layout, shrinkwrap }) => {
+      await withTestDir({ prefix: `omnipolymath-detect-pm-${manager}-` }, async (base) => {
+        const bunInstall = path.join(base, "custom-bun-home");
+        const nodeModulesRoot =
+          manager === "bun"
+            ? path.join(bunInstall, "install", "global", "node_modules")
+            : path.join(base, `${manager}-global`, "node_modules");
+        const packageRoot =
+          layout === "virtual"
+            ? path.join(nodeModulesRoot, ".pnpm", "omnipolymath@2026.5.27", "node_modules", "omnipolymath")
+            : path.join(nodeModulesRoot, "omnipolymath");
+        await writePublishedOmnipolymathRoot(packageRoot, { shrinkwrap });
+        if (manager === "pnpm") {
+          await fs.writeFile(
+            path.join(nodeModulesRoot, ".modules.yaml"),
+            "layoutVersion: 5",
+            "utf8",
+          );
+        }
+
+        await withEnvAsync({ BUN_INSTALL: bunInstall }, async () => {
+          await expect(detectPackageManager(packageRoot)).resolves.toBe(manager);
+        });
+      });
+    },
+  );
+
+  it.each([
+    { name: "missing Bun install environment", installEnv: "missing", customGlobalDir: false },
+    {
+      name: "conflicting Bun install environment",
+      installEnv: "conflicting",
+      customGlobalDir: false,
+    },
+    {
+      name: "explicit custom Bun global directory",
+      installEnv: "conflicting",
+      customGlobalDir: true,
+    },
+  ] as const)(
+    "detects lockless Bun ownership with $name",
+    async ({ installEnv, customGlobalDir }) => {
+      await withTestDir({ prefix: "omnipolymath-detect-pm-bun-owner-" }, async (base) => {
+        const bunInstall = path.join(base, "owning-bun");
+        const globalProject = customGlobalDir
+          ? path.join(base, "custom-global-project")
+          : path.join(bunInstall, "install", "global");
+        const packageRoot = path.join(globalProject, "node_modules", "omnipolymath");
+        await writePublishedOmnipolymathRoot(packageRoot, { shrinkwrap: false });
+
+        await withEnvAsync(
+          {
+            BUN_INSTALL: installEnv === "missing" ? undefined : path.join(base, "unrelated-bun"),
+            BUN_INSTALL_GLOBAL_DIR: customGlobalDir ? globalProject : undefined,
+          },
+          async () => {
+            await expect(detectPackageManager(packageRoot)).resolves.toBe("bun");
+          },
+        );
+      });
+    },
+  );
+
+  it("keeps pnpm ownership through markerless global v11 virtual-store symlinks", async () => {
+    await withTestDir({ prefix: "omnipolymath-detect-pm-pnpm-global-store-" }, async (base) => {
+      const globalRoot = path.join(base, "pnpm-home", "global", "v11");
+      const installRoot = path.join(globalRoot, "install-omnipolymath");
+      const linkedPackageRoot = path.join(installRoot, "node_modules", "omnipolymath");
+      const storePackageRoot = path.join(
+        base,
+        "pnpm-home",
+        "store",
+        "v11",
+        "links",
+        "@",
+        "omnipolymath",
+        "2026.7.2",
+        "graph-hash",
+        "node_modules",
+        "omnipolymath",
+      );
+      await writePublishedOmnipolymathRoot(storePackageRoot, { shrinkwrap: false });
+      await fs.mkdir(path.dirname(linkedPackageRoot), { recursive: true });
+      await fs.writeFile(
+        path.join(installRoot, "package.json"),
+        JSON.stringify({ private: true, dependencies: { omnipolymath: "2026.7.2" } }),
+        "utf8",
+      );
+      await fs.writeFile(path.join(installRoot, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
+      const symlinkType = process.platform === "win32" ? "junction" : "dir";
+      await fs.symlink(storePackageRoot, linkedPackageRoot, symlinkType);
+      await fs.symlink(installRoot, path.join(globalRoot, "hash-omnipolymath"), symlinkType);
+
+      await expect(detectPackageManager(linkedPackageRoot)).resolves.toBe("pnpm");
+      await expect(detectPackageManager(await fs.realpath(linkedPackageRoot))).resolves.toBe(
+        "pnpm",
+      );
+    });
+  });
+});

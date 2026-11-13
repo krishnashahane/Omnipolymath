@@ -1,0 +1,216 @@
+import { spawn } from "node:child_process";
+import fs from "node:fs";
+import { createRequire } from "node:module";
+import path from "node:path";
+import { createInterface } from "node:readline";
+import { pathToFileURL } from "node:url";
+import { expect, it } from "vitest";
+import {
+  awaitGateBeforeSettlement,
+  createDeferred,
+  withinTest,
+} from "../../../test/helpers/promise.js";
+import { resolveRuntimeWorkerUrl } from "../../infra/runtime-worker-url.js";
+import {
+  closeOmnipolymathStateDatabaseByPathAsync,
+  openOmnipolymathStateDatabase,
+} from "../../state/omnipolymath-state-db.js";
+import { resolveTestNodeExecPath } from "../../test-utils/node-process.js";
+import { gatewayDirectStopEntrypoints } from "../cli-entrypoint.test-support.js";
+import { formatCliProcessFailure } from "../cli-process-child.test-helpers.js";
+import { createProcessFixtures } from "./run-loop-process.test-support.js";
+
+const fixtures = createProcessFixtures("direct-stop fixture cleanup failed; retaining state");
+
+async function waitForFixture(
+  gate: Promise<unknown>,
+  tracked: ReturnType<typeof fixtures.ownChild>,
+  signal: AbortSignal,
+) {
+  await withinTest(
+    awaitGateBeforeSettlement(gate, tracked.closed, "fixture not ready"),
+    signal,
+  ).catch((cause: unknown) => {
+    throw new Error(formatCliProcessFailure({ reason: String(cause), ...tracked.output }), {
+      cause,
+    });
+  });
+}
+
+const moduleUrl = (entry: Parameters<typeof resolveRuntimeWorkerUrl>[0]) =>
+  resolveRuntimeWorkerUrl(entry).href;
+
+const childScript = `
+  import assert from "node:assert/strict";
+  import { writeSync } from "node:fs";
+  import { runGatewayLoop } from ${JSON.stringify(moduleUrl(gatewayDirectStopEntrypoints.runLoop))};
+  import { writeGatewayRestartIntentSync } from ${JSON.stringify(moduleUrl(gatewayDirectStopEntrypoints.restartIntent))};
+  import { PluginRuntimeCloseRetainedError } from ${JSON.stringify(pathToFileURL(path.resolve("src/plugins/runtime-close-error.ts")).href)};
+
+  const trace = (line) => writeSync(1, "process proof: " + line + "\\n");
+  if (process.argv[1] === "SIGUSR2") {
+    const { onWorkerRequestMetrics } = await import(${JSON.stringify(pathToFileURL(path.resolve("src/infra/worker-request-diagnostics.ts")).href)});
+    const origin = performance.now();
+    const elapsed = (at = performance.now()) => Number((at - origin).toFixed(1));
+    process.once("SIGUSR2", () => trace("SIGUSR2-received atMs=" + elapsed()));
+    onWorkerRequestMetrics((kind, requestClass, phase, queueDepth, queueWaitMs, durationMs, timing) => {
+      if (kind !== "sqlite_writer") return;
+      trace("worker-timing " + JSON.stringify({
+        op: requestClass === "open" || requestClass === "close" ? requestClass : "execute",
+        requestClass,
+        phase,
+        atMs: elapsed(),
+        queueDepth,
+        queueWaitMs,
+        durationMs,
+        timingMs: Object.fromEntries(
+          Object.entries(timing ?? {}).map(([name, at]) => [name, elapsed(at)]),
+        ),
+      }));
+    });
+  }
+  let starts = 0;
+  const code = await runGatewayLoop({
+    ownsProcessLifecycle: true,
+    onProcessResourcesSettled: (outcome) => {
+      trace("custody:" + outcome);
+    },
+    start: async () => {
+      trace("start:" + ++starts);
+      const child = setInterval(() => {}, 1000);
+      if (process.argv[1] === "SIGUSR2") {
+        assert(writeGatewayRestartIntentSync({
+          targetPid: process.pid,
+          intent: { force: true },
+        }));
+      }
+      setImmediate(() => trace("gateway-ready"));
+      return {
+        getTailscaleIngressEndpoint: () => undefined,
+        startupSettled: Promise.resolve(),
+        close: async () => {
+          // The child releases its owned handle but cannot confirm final cleanup.
+          clearInterval(child);
+          trace("service-child-cleanup-deadline");
+          throw new PluginRuntimeCloseRetainedError(new Error("service child cleanup deadline"));
+        },
+      };
+    },
+  });
+  trace("loop-returned:" + code);
+`;
+
+const posixIt = process.platform === "win32" ? it.skip : it;
+
+posixIt.for(["SIGTERM", "SIGUSR2", "historical-SIGTERM"] as const)(
+  "settles child cleanup custody after %s without reusing the runtime",
+  { timeout: 60_000 },
+  async (stopSignal, { signal }) => {
+    // Temporary phase trace for the recurring SIGUSR2 timeout; remove when its cause is fixed.
+    const trace = (phase: string) => {
+      if (stopSignal === "SIGUSR2") {
+        fs.writeSync(2, `[sigusr2-phase] ${phase}\n`);
+      }
+    };
+    const historical = stopSignal === "historical-SIGTERM";
+    const fixtureDir = fixtures.make("omnipolymath-retained-shutdown-");
+    const stateDir = path.join(fixtureDir, "state");
+    const homeDir = path.join(fixtureDir, "home");
+    fs.mkdirSync(stateDir, { recursive: true });
+    fs.mkdirSync(homeDir, { recursive: true });
+    const env = {
+      ...process.env,
+      HOME: homeDir,
+      NODE_ENV: undefined,
+      NODE_DISABLE_COMPILE_CACHE: "1",
+      NODE_OPTIONS: undefined,
+      OMNIPOLYMATH_CONFIG_PATH: path.join(stateDir, "omnipolymath.json"),
+      OMNIPOLYMATH_STATE_DIR: stateDir,
+      OMNIPOLYMATH_NO_RESPAWN: "1",
+      ...(stopSignal === "SIGUSR2" ? { OMNIPOLYMATH_DIAGNOSTICS: "sqlite.worker-timing" } : {}),
+      VITEST: undefined,
+      ...(historical
+        ? {
+            ESBUILD_BINARY_PATH: createRequire(import.meta.resolve("esbuild")).resolve(
+              `@esbuild/${process.platform}-${process.arch}/bin/esbuild`,
+            ),
+          }
+        : {}),
+    };
+    if (stopSignal === "SIGUSR2") {
+      trace("preseed-open: begin");
+      const database = openOmnipolymathStateDatabase({ env });
+      trace("preseed-open: complete");
+      trace("preseed-close: begin");
+      await closeOmnipolymathStateDatabaseByPathAsync(database.path);
+      trace("preseed-close: complete");
+    }
+    trace("spawn: begin");
+    const child = spawn(
+      historical ? resolveTestNodeExecPath() : process.execPath,
+      historical
+        ? [
+            "--import",
+            "tsx",
+            new URL(moduleUrl(gatewayDirectStopEntrypoints.brokerCleanupFixture)).pathname,
+          ]
+        : ["--import", "tsx", "--input-type=module", "--eval", childScript, stopSignal],
+      {
+        env,
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+    const tracked = fixtures.ownChild(child);
+    if (stopSignal === "SIGUSR2") {
+      child.once("spawn", () => trace(`spawn: pid=${child.pid}`));
+      child.once("close", (code, exitSig) => trace(`child-close: code=${code} signal=${exitSig}`));
+      for (const name of ["stdout", "stderr"] as const) {
+        createInterface({ input: child[name] }).on("line", (line) => trace(`${name}: ${line}`));
+      }
+    }
+    const ready = createDeferred();
+    child.stdout?.on("data", () => {
+      if (tracked.output.stdout.includes("process proof: gateway-ready\n")) {
+        ready.resolve();
+      }
+    });
+    await waitForFixture(ready.promise, tracked, signal);
+    trace("ready");
+    const stoppedAt = Date.now();
+    const sent = child.kill(historical ? "SIGTERM" : stopSignal);
+    trace(`signal-send: ${sent}`);
+    expect(sent).toBe(true);
+    const exit = await withinTest(tracked.closed, signal).catch((cause: unknown) => {
+      throw new Error(formatCliProcessFailure({ reason: String(cause), ...tracked.output }), {
+        cause,
+      });
+    });
+    const diagnostics = `${tracked.output.stdout}\n${tracked.output.stderr}`;
+    expect(exit[0] !== null || exit[1] !== null, diagnostics).toBe(true);
+    if (stopSignal !== "SIGUSR2") {
+      expect(exit, diagnostics).toEqual([0, null]);
+    }
+    expect(Date.now() - stoppedAt, diagnostics).toBeLessThan(10_000);
+    expect(tracked.output.stdout).toContain("process proof: service-child-cleanup-deadline");
+    expect(tracked.output.stdout.match(/process proof: custody:\w+/g), diagnostics).toEqual([
+      `process proof: custody:${historical ? "drained" : "retained"}`,
+    ]);
+    expect(tracked.output.stdout).not.toContain("process proof: start:2");
+    if (historical) {
+      expect(diagnostics).not.toMatch(
+        /hard-exit watchdog deadline|gateway\.(?:restart|stop)_close_failed|; resources remain/,
+      );
+      const broker = /spawn broker ready pid=(\d+)/.exec(diagnostics);
+      expect(broker, diagnostics).not.toBeNull();
+      expect(() => process.kill(Number(broker![1]), 0)).toThrow();
+      const warnings = diagnostics
+        .split("\n")
+        .filter((line) => line.includes("Earlier cleanup failed:"));
+      expect(warnings, diagnostics).toHaveLength(1);
+      expect(warnings[0]).toMatch(/service child cleanup.*hard deadline; pending:/);
+    }
+    if (stopSignal === "SIGUSR2") {
+      expect(diagnostics).toContain("refusing in-process restart");
+    }
+  },
+);

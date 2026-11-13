@@ -1,0 +1,52 @@
+import type { OmnipolymathConfig } from "../config/types.omnipolymath.js";
+import { trimToUndefined } from "./credentials.js";
+import {
+  resolveCanonicalConfiguredSecretInputWithFallback,
+  type SecretInputUnresolvedReasonStyle,
+} from "./resolve-configured-secret-input-string.js";
+
+type GatewayAuthTokenResolutionSource = "explicit" | "config" | "secretRef" | "env";
+type GatewayAuthTokenEnvFallback = "never" | "no-secret-ref";
+
+export async function resolveGatewayAuthToken(params: {
+  cfg: OmnipolymathConfig;
+  env: NodeJS.ProcessEnv;
+  explicitToken?: string;
+  envFallback?: GatewayAuthTokenEnvFallback;
+  unresolvedReasonStyle?: SecretInputUnresolvedReasonStyle;
+}): Promise<{
+  token?: string;
+  source?: GatewayAuthTokenResolutionSource;
+  secretRefConfigured: boolean;
+  unresolvedRefReason?: string;
+  unresolvedRefCode?: "SECRET_REF_REDACTED_VALUE";
+}> {
+  const explicitToken = trimToUndefined(params.explicitToken);
+  if (explicitToken) {
+    return {
+      token: explicitToken,
+      source: "explicit",
+      secretRefConfigured: false,
+    };
+  }
+
+  const resolved = await resolveCanonicalConfiguredSecretInputWithFallback({
+    config: params.cfg,
+    env: params.env,
+    value: params.cfg.gateway?.auth?.token,
+    path: "gateway.auth.token",
+    unresolvedReasonStyle: params.unresolvedReasonStyle,
+    ...(params.envFallback !== "never"
+      ? { readFallback: () => params.env.OMNIPOLYMATH_GATEWAY_TOKEN }
+      : {}),
+  });
+  return {
+    ...(resolved.value ? { token: resolved.value } : {}),
+    ...(resolved.source
+      ? { source: resolved.source === "fallback" ? ("env" as const) : resolved.source }
+      : {}),
+    secretRefConfigured: resolved.secretRefConfigured,
+    ...(resolved.unresolvedRefReason ? { unresolvedRefReason: resolved.unresolvedRefReason } : {}),
+    ...(resolved.unresolvedRefCode ? { unresolvedRefCode: resolved.unresolvedRefCode } : {}),
+  };
+}
