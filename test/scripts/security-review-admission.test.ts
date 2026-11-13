@@ -78,7 +78,7 @@ function fixture(needsApproval = false, projectionState = "failure", projection 
   );
   const combined = status(3, "omnipolymath/ci-gate", projection, projectionState);
   const statuses = [dependency, sensitive, combined];
-  const prefix = "/repos/omnipolymath/omnipolymath";
+  const prefix = "/repos/krishnashahane/Omnipolymath";
   const pullPath = `${prefix}/pulls/7`;
   const issuePath = `${prefix}/issues/7`;
   const routes: Record<string, () => unknown> = {
@@ -103,8 +103,8 @@ function fixture(needsApproval = false, projectionState = "failure", projection 
     },
   };
   const review = {
-    owner: "omnipolymath",
-    repo: "omnipolymath",
+    owner: "krishnashahane",
+    repo: "Omnipolymath",
     pullRequest,
     pullPath,
     issuePath,
