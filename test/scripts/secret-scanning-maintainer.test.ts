@@ -108,7 +108,7 @@ it.each([false, true])("notifies only for changed redaction: %s", (changed) => {
   });
   if (changed) {
     expect(fs.readFileSync(ghLog, "utf8")).toContain(
-      `api repos/omnipolymath/omnipolymath/issues/123 -X PATCH -F body=@${redactedBody}`,
+      `api repos/krishnashahane/Omnipolymath/issues/123 -X PATCH -F body=@${redactedBody}`,
     );
   } else {
     expect(JSON.parse(run([...notificationArgs, resultFile], ghEnv(root)))).toStrictEqual({
