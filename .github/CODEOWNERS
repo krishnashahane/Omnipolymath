@@ -1,0 +1,35 @@
+# Hard security tier: an independent SecOps review is required for every author.
+# Enable required code-owner reviews and dismiss stale approvals in branch protection.
+# Last matching rule wins. Keep SecOps the sole owner of these paths: listing
+# another team on the same line would allow that team to satisfy the requirement.
+
+# Security policy and ownership determine who can approve protected changes.
+/.github/CODEOWNERS @omnipolymath/omnipolymath-secops
+/SECURITY.md @omnipolymath/omnipolymath-secops
+
+# CodeQL policy, queries, and execution; vulnerability update and workflow-audit policy.
+/.github/codeql/ @omnipolymath/omnipolymath-secops
+/.github/workflows/codeql*.yml @omnipolymath/omnipolymath-secops
+/.github/dependabot.yml @omnipolymath/omnipolymath-secops
+/.github/zizmor.yml @omnipolymath/omnipolymath-secops
+
+# Security-review classification, authorization, publication, and trusted API reads.
+/.github/workflows/security-review.yml @omnipolymath/omnipolymath-secops
+/scripts/github/dependency-guard.mjs @omnipolymath/omnipolymath-secops
+/scripts/github/security-sensitive-guard.mjs @omnipolymath/omnipolymath-secops
+/scripts/github/security-review.mjs @omnipolymath/omnipolymath-secops
+/scripts/github/security-review-event.mjs @omnipolymath/omnipolymath-secops
+/scripts/github/security-review-rollout.mjs @omnipolymath/omnipolymath-secops
+/.github/security-review-policy.yml @omnipolymath/omnipolymath-secops
+/.github/actions/setup-security-review/ @omnipolymath/omnipolymath-secops
+/scripts/github/security-review-policy.mjs @omnipolymath/omnipolymath-secops
+/scripts/github/guard-review.mjs @omnipolymath/omnipolymath-secops
+/scripts/github/guard-shared.mjs @omnipolymath/omnipolymath-secops
+/scripts/lib/bounded-response.mjs @omnipolymath/omnipolymath-secops
+
+# Release workflow and its supporting release-path checks.
+/.github/workflows/omnipolymath-npm-release.yml @omnipolymath/omnipolymath-release-managers
+/docs/reference/RELEASING.md @omnipolymath/omnipolymath-release-managers
+/scripts/omnipolymath-npm-publish.sh @omnipolymath/omnipolymath-release-managers
+/scripts/omnipolymath-npm-release-check.ts @omnipolymath/omnipolymath-release-managers
+/scripts/release-check.ts @omnipolymath/omnipolymath-release-managers

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Onboarding
+    url: https://github.com/krishnashahane/Omnipolymath/issues
+    about: "For official Omnipolymath support with onboarding and setup, visit community.omnipolymath.vercel.app."
+  - name: Support
+    url: https://github.com/krishnashahane/Omnipolymath/issues
+    about: "For official Omnipolymath support, visit community.omnipolymath.vercel.app."
