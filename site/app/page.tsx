@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { InstallChip } from "@/components/CopyButton";
 import { Arrow } from "@/components/Icons";
+import { QuickStart } from "@/components/QuickStart";
 import { Reveal } from "@/components/Reveal";
 import { Spotlight } from "@/components/Spotlight";
 import "./home.css";
 
-const INSTALL = "curl -fsSL https://omnipolymath.vercel.app/install.sh | bash";
 const HEADLINE = "The agent you can actually trust with your keys.";
 
 /** One run, exactly as the Trust Firewall reports it. */
@@ -272,7 +271,7 @@ export default function Home() {
             </p>
           </Reveal>
           <Reveal delay={80}>
-            <InstallChip command={INSTALL} />
+            <QuickStart />
             <p className="h-fine">
               Prefer to read it first?{" "}
               <a href="/install.sh" target="_blank" rel="noopener">
