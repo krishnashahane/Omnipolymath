@@ -1,0 +1,1025 @@
+{
+  "schemaVersion": 1,
+  "id": "omnipolymath-official-external-plugins",
+  "generatedAt": "2026-06-22T00:00:00.000Z",
+  "sequence": 1,
+  "description": "Bundled fallback feed for official external Omnipolymath plugins.",
+  "entries": [
+    {
+      "name": "@omnipolymath/acpx",
+      "description": "Omnipolymath ACP runtime backend",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "acpx",
+          "label": "ACPX Runtime"
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/acpx",
+          "npmSpec": "@omnipolymath/acpx",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.4.25"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/brave-plugin",
+      "description": "Omnipolymath Brave plugin",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "brave",
+          "label": "Brave"
+        },
+        "webSearchProviders": [
+          {
+            "id": "brave",
+            "label": "Brave Search",
+            "hint": "Brave Search web results.",
+            "onboardingScopes": [
+              "text-inference"
+            ],
+            "credentialLabel": "Brave Search API key",
+            "envVars": [
+              "BRAVE_API_KEY"
+            ],
+            "placeholder": "BSA...",
+            "signupUrl": "https://api-dashboard.search.brave.com/app/keys",
+            "docsUrl": "https://omnipolymath.vercel.app/docs/tools/brave-search",
+            "credentialPath": "plugins.entries.brave.config.webSearch.apiKey",
+            "autoDetectOrder": 10
+          }
+        ],
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/brave-plugin",
+          "npmSpec": "@omnipolymath/brave-plugin",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.4.10",
+          "allowInvalidConfigRecovery": true
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/cloudflare",
+      "description": "Cloudflare R2 storage for named Omnipolymath storage locations.",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "build": {
+          "bundledDist": true
+        },
+        "plugin": {
+          "id": "cloudflare",
+          "label": "Cloudflare"
+        },
+        "contracts": {
+          "storageProviders": [
+            "r2"
+          ]
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/cloudflare",
+          "npmSpec": "@omnipolymath/cloudflare",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.9.7"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/codex",
+      "description": "Omnipolymath Codex app-server harness and native session catalog",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "codex",
+          "label": "Codex"
+        },
+        "contracts": {
+          "migrationProviders": [
+            "codex"
+          ]
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/codex",
+          "npmSpec": "@omnipolymath/codex",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.5.1-beta.1"
+        },
+        "setup": {
+          "nativeSessionCatalog": {
+            "label": "Codex",
+            "legacyDefaultEnabled": true,
+            "description": "Existing native Codex conversations on this Gateway and eligible paired nodes.",
+            "nodeCommands": [
+              "codex.appServer.threads.list.v1",
+              "codex.appServer.thread.turns.list.v1",
+              "codex.sessionCatalog.transcript.read.v1",
+              "codex.terminal.resume.v1",
+              "codex.cli.sessions.list"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/copilot",
+      "description": "Omnipolymath GitHub Copilot agent runtime plugin",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "copilot",
+          "label": "GitHub Copilot agent runtime"
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/copilot",
+          "npmSpec": "@omnipolymath/copilot",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.5.28"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/muse",
+      "description": "Omnipolymath Muse Code agent runtime plugin",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "muse",
+          "label": "Muse Code"
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/muse",
+          "npmSpec": "@omnipolymath/muse",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.10.3"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/cua-computer",
+      "description": "Experimental CUA Driver computer control for macOS, Windows, and Linux node hosts",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "cua-computer",
+          "label": "CUA Computer"
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/cua-computer",
+          "npmSpec": "@omnipolymath/cua-computer",
+          "defaultChoice": "clawhub",
+          "minHostVersion": ">=2026.9.6"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/diagnostics-otel",
+      "description": "Omnipolymath diagnostics OpenTelemetry exporter",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "diagnostics-otel",
+          "label": "Diagnostics OpenTelemetry"
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/diagnostics-otel",
+          "npmSpec": "@omnipolymath/diagnostics-otel",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.4.25"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/diagnostics-prometheus",
+      "description": "Omnipolymath diagnostics Prometheus exporter",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "diagnostics-prometheus",
+          "label": "Diagnostics Prometheus"
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/diagnostics-prometheus",
+          "npmSpec": "@omnipolymath/diagnostics-prometheus",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.4.25"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/diffs",
+      "description": "Omnipolymath diff viewer plugin",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "diffs",
+          "label": "Diffs"
+        },
+        "catalog": {
+          "featured": true,
+          "order": 40
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/diffs",
+          "npmSpec": "@omnipolymath/diffs",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.4.30"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/diffs-language-pack",
+      "description": "Omnipolymath diffs viewer syntax highlighting language pack",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "diffs-language-pack",
+          "label": "Diff Viewer Language Pack"
+        },
+        "install": {
+          "npmSpec": "@omnipolymath/diffs-language-pack",
+          "clawhubSpec": "clawhub:@omnipolymath/diffs-language-pack",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.5.27"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/duckduckgo-plugin",
+      "description": "Omnipolymath DuckDuckGo plugin.",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "duckduckgo",
+          "label": "DuckDuckGo"
+        },
+        "contracts": {
+          "webSearchProviders": [
+            "duckduckgo"
+          ]
+        },
+        "webSearchProviders": [
+          {
+            "id": "duckduckgo",
+            "label": "DuckDuckGo Search (experimental)",
+            "hint": "Free web search fallback with no API key required",
+            "onboardingScopes": [
+              "text-inference"
+            ],
+            "requiresCredential": false,
+            "envVars": [],
+            "placeholder": "(no key needed)",
+            "signupUrl": "https://duckduckgo.com/",
+            "docsUrl": "https://omnipolymath.vercel.app/docs/tools/duckduckgo-search",
+            "credentialPath": "",
+            "autoDetectOrder": 100
+          }
+        ],
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/duckduckgo-plugin",
+          "npmSpec": "@omnipolymath/duckduckgo-plugin",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.7.2"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/exa-plugin",
+      "description": "Omnipolymath Exa plugin.",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "exa",
+          "label": "Exa"
+        },
+        "contracts": {
+          "webSearchProviders": [
+            "exa"
+          ]
+        },
+        "webSearchProviders": [
+          {
+            "id": "exa",
+            "label": "Exa Search",
+            "hint": "Neural + keyword search with date filters and content extraction",
+            "onboardingScopes": [
+              "text-inference"
+            ],
+            "credentialLabel": "Exa API key",
+            "envVars": [
+              "EXA_API_KEY"
+            ],
+            "placeholder": "exa-...",
+            "signupUrl": "https://exa.ai/",
+            "docsUrl": "https://omnipolymath.vercel.app/docs/tools/web",
+            "credentialPath": "plugins.entries.exa.config.webSearch.apiKey",
+            "autoDetectOrder": 65
+          }
+        ],
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/exa-plugin",
+          "npmSpec": "@omnipolymath/exa-plugin",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.6.8"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/facetime",
+      "description": "Experimental Omnipolymath FaceTime realtime voice carrier",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "facetime",
+          "label": "FaceTime"
+        },
+        "contracts": {
+          "tools": [
+            "facetime_call"
+          ]
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/facetime",
+          "npmSpec": "@omnipolymath/facetime",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.9.4",
+          "allowInvalidConfigRecovery": true
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/firecrawl-plugin",
+      "description": "Omnipolymath Firecrawl plugin.",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "firecrawl",
+          "label": "Firecrawl"
+        },
+        "contracts": {
+          "webFetchProviders": [
+            "firecrawl"
+          ],
+          "webSearchProviders": [
+            "firecrawl",
+            "firecrawl-free"
+          ],
+          "tools": [
+            "firecrawl_search",
+            "firecrawl_scrape"
+          ]
+        },
+        "webSearchProviders": [
+          {
+            "id": "firecrawl",
+            "label": "Firecrawl Search",
+            "hint": "Structured results with optional result scraping",
+            "onboardingScopes": [
+              "text-inference"
+            ],
+            "credentialLabel": "Firecrawl API key",
+            "envVars": [
+              "FIRECRAWL_API_KEY"
+            ],
+            "placeholder": "fc-...",
+            "signupUrl": "https://www.firecrawl.dev/",
+            "docsUrl": "https://omnipolymath.vercel.app/docs/tools/firecrawl",
+            "credentialPath": "plugins.entries.firecrawl.config.webSearch.apiKey",
+            "autoDetectOrder": 60
+          },
+          {
+            "id": "firecrawl-free",
+            "label": "Firecrawl Search (Free)",
+            "hint": "Free web search via Firecrawl's hosted starter tier — no API key required",
+            "onboardingScopes": [
+              "text-inference"
+            ],
+            "requiresCredential": false,
+            "envVars": [],
+            "placeholder": "(no key needed)",
+            "signupUrl": "https://www.firecrawl.dev/",
+            "docsUrl": "https://omnipolymath.vercel.app/docs/tools/firecrawl",
+            "credentialPath": ""
+          }
+        ],
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/firecrawl-plugin",
+          "npmSpec": "@omnipolymath/firecrawl-plugin",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.6.8"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/fish-audio-speech",
+      "description": "Omnipolymath Fish Audio speech plugin.",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "legacyPluginIds": [
+          "fish-audio"
+        ],
+        "plugin": {
+          "id": "fish-audio-speech",
+          "label": "Fish Audio Speech"
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/fish-audio-speech",
+          "npmSpec": "@omnipolymath/fish-audio-speech",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.7.2"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/google-meet",
+      "description": "Omnipolymath Google Meet participant plugin",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "google-meet",
+          "label": "Google Meet"
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/google-meet",
+          "npmSpec": "@omnipolymath/google-meet",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.4.20"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/gradium-speech",
+      "description": "Omnipolymath Gradium speech plugin.",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "gradium",
+          "label": "Gradium"
+        },
+        "contracts": {
+          "speechProviders": [
+            "gradium"
+          ]
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/gradium-speech",
+          "npmSpec": "@omnipolymath/gradium-speech",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.6.8"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/inworld-speech",
+      "description": "Omnipolymath Inworld speech plugin.",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "inworld",
+          "label": "Inworld"
+        },
+        "contracts": {
+          "speechProviders": [
+            "inworld"
+          ]
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/inworld-speech",
+          "npmSpec": "@omnipolymath/inworld-speech",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.6.8"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/levanto",
+      "description": "Omnipolymath Levanto Sage native decision provider",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "levanto",
+          "label": "Levanto Sage"
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/levanto",
+          "npmSpec": "@omnipolymath/levanto",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.9.6"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/lobster",
+      "description": "Lobster workflow tool plugin (typed pipelines + resumable approvals)",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "lobster",
+          "label": "Lobster"
+        },
+        "catalog": {
+          "featured": true,
+          "order": 50
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/lobster",
+          "npmSpec": "@omnipolymath/lobster",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.4.25"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/memory-lancedb",
+      "description": "Omnipolymath LanceDB-backed long-term memory plugin with auto-recall/capture",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "memory-lancedb",
+          "label": "Memory LanceDB"
+        },
+        "catalog": {
+          "featured": true,
+          "order": 70
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/memory-lancedb",
+          "npmSpec": "@omnipolymath/memory-lancedb",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.5.31"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/llama-cpp-provider",
+      "description": "Omnipolymath managed llama.cpp server provider plugin",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "llama-cpp",
+          "label": "llama.cpp Provider"
+        },
+        "contracts": {
+          "embeddingProviders": [
+            "local"
+          ]
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/llama-cpp-provider",
+          "npmSpec": "@omnipolymath/llama-cpp-provider",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.6.2"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/mxc-sandbox",
+      "description": "Omnipolymath MXC sandbox execution plugin for MXC-capable hosts",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "mxc",
+          "label": "MXC Sandbox Execution"
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/mxc-sandbox",
+          "npmSpec": "@omnipolymath/mxc-sandbox",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.6.11"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/onnx",
+      "description": "Local ONNX decision models for Omnipolymath",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "onnx",
+          "label": "ONNX"
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/onnx",
+          "npmSpec": "@omnipolymath/onnx",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.9.6"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/openshell-sandbox",
+      "description": "Omnipolymath OpenShell sandbox backend",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "openshell",
+          "label": "OpenShell Sandbox"
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/openshell-sandbox",
+          "npmSpec": "@omnipolymath/openshell-sandbox",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.5.12-beta.1"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/parallel-plugin",
+      "description": "Omnipolymath Parallel web search plugin.",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "parallel",
+          "label": "Parallel"
+        },
+        "contracts": {
+          "webSearchProviders": [
+            "parallel",
+            "parallel-free"
+          ]
+        },
+        "webSearchProviders": [
+          {
+            "id": "parallel",
+            "label": "Parallel Search",
+            "hint": "LLM-optimized dense excerpts from web sources",
+            "onboardingScopes": [
+              "text-inference"
+            ],
+            "credentialLabel": "Parallel API key",
+            "envVars": [
+              "PARALLEL_API_KEY"
+            ],
+            "placeholder": "par-...",
+            "signupUrl": "https://platform.parallel.ai",
+            "docsUrl": "https://omnipolymath.vercel.app/docs/tools/parallel-search",
+            "credentialPath": "plugins.entries.parallel.config.webSearch.apiKey",
+            "autoDetectOrder": 75
+          },
+          {
+            "id": "parallel-free",
+            "label": "Parallel Search (Free)",
+            "hint": "Free web search via Parallel's hosted Search MCP — no API key required",
+            "onboardingScopes": [
+              "text-inference"
+            ],
+            "requiresCredential": false,
+            "envVars": [],
+            "placeholder": "(no key needed)",
+            "signupUrl": "https://parallel.ai",
+            "docsUrl": "https://omnipolymath.vercel.app/docs/tools/parallel-search",
+            "credentialPath": ""
+          }
+        ],
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/parallel-plugin",
+          "npmSpec": "@omnipolymath/parallel-plugin",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.6.8"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/perplexity-plugin",
+      "description": "Omnipolymath Perplexity plugin.",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "perplexity",
+          "label": "Perplexity"
+        },
+        "providers": [
+          {
+            "id": "perplexity-decisions",
+            "name": "Perplexity Decisions",
+            "docs": "/providers/perplexity-provider",
+            "categories": ["cloud", "llm"],
+            "envVars": ["PERPLEXITY_API_KEY"]
+          }
+        ],
+        "contracts": {
+          "webSearchProviders": [
+            "perplexity"
+          ],
+          "decisionProviders": ["perplexity-decisions"]
+        },
+        "webSearchProviders": [
+          {
+            "id": "perplexity",
+            "label": "Perplexity Search",
+            "hint": "Requires Perplexity API key or OpenRouter API key · structured results",
+            "onboardingScopes": [
+              "text-inference"
+            ],
+            "credentialLabel": "Perplexity API key",
+            "envVars": [
+              "PERPLEXITY_API_KEY",
+              "OPENROUTER_API_KEY"
+            ],
+            "placeholder": "pplx-...",
+            "signupUrl": "https://www.perplexity.ai/settings/api",
+            "docsUrl": "https://omnipolymath.vercel.app/docs/perplexity",
+            "credentialPath": "plugins.entries.perplexity.config.webSearch.apiKey",
+            "autoDetectOrder": 50
+          }
+        ],
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/perplexity-plugin",
+          "npmSpec": "@omnipolymath/perplexity-plugin",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.6.8"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/searxng-plugin",
+      "description": "Omnipolymath SearXNG plugin",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "searxng",
+          "label": "SearXNG"
+        },
+        "contracts": {
+          "webSearchProviders": [
+            "searxng"
+          ]
+        },
+        "webSearchProviders": [
+          {
+            "id": "searxng",
+            "label": "SearXNG Search",
+            "hint": "Self-hosted meta-search with no API key required",
+            "onboardingScopes": [
+              "text-inference"
+            ],
+            "requiresCredential": true,
+            "credentialLabel": "SearXNG Base URL",
+            "envVars": [
+              "SEARXNG_BASE_URL"
+            ],
+            "placeholder": "http://localhost:8080",
+            "signupUrl": "https://docs.searxng.org/",
+            "docsUrl": "https://omnipolymath.vercel.app/docs/tools/searxng-search",
+            "credentialPath": "plugins.entries.searxng.config.webSearch.baseUrl",
+            "autoDetectOrder": 200
+          }
+        ],
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/searxng-plugin",
+          "npmSpec": "@omnipolymath/searxng-plugin",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.6.9",
+          "allowInvalidConfigRecovery": true
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/slack-huddles",
+      "description": "Omnipolymath Slack huddle browser meeting participant plugin.",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "slack-huddles",
+          "label": "Slack huddles"
+        },
+        "contracts": {
+          "tools": [
+            "slack_huddles"
+          ],
+          "transcriptSourceProviders": [
+            "slack-huddle"
+          ]
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/slack-huddles",
+          "npmSpec": "@omnipolymath/slack-huddles",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.9.8"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/subq",
+      "description": "Omnipolymath SubQ Snap decision provider",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "subq",
+          "label": "SubQ"
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/subq",
+          "npmSpec": "@omnipolymath/subq",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.10.3"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/tavily-plugin",
+      "description": "Omnipolymath Tavily plugin",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "tavily",
+          "label": "Tavily"
+        },
+        "contracts": {
+          "webSearchProviders": [
+            "tavily"
+          ],
+          "tools": [
+            "tavily_search",
+            "tavily_extract"
+          ]
+        },
+        "webSearchProviders": [
+          {
+            "id": "tavily",
+            "label": "Tavily Search",
+            "hint": "Structured results with domain filters and AI answer summaries",
+            "onboardingScopes": [
+              "text-inference"
+            ],
+            "credentialLabel": "Tavily API key",
+            "envVars": [
+              "TAVILY_API_KEY"
+            ],
+            "placeholder": "tvly-...",
+            "signupUrl": "https://tavily.com/",
+            "docsUrl": "https://omnipolymath.vercel.app/docs/tools/tavily",
+            "credentialPath": "plugins.entries.tavily.config.webSearch.apiKey",
+            "autoDetectOrder": 70
+          }
+        ],
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/tavily-plugin",
+          "npmSpec": "@omnipolymath/tavily-plugin",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.6.9",
+          "allowInvalidConfigRecovery": true
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/team-reports",
+      "description": "Omnipolymath team activity reports plugin (GitHub org + Discord activity with model summaries)",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "team-reports",
+          "label": "Team Reports"
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/team-reports",
+          "npmSpec": "@omnipolymath/team-reports",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.9.2"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/teams-meetings",
+      "description": "Omnipolymath Microsoft Teams browser meeting participant plugin.",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "teams-meetings",
+          "label": "Microsoft Teams meetings"
+        },
+        "contracts": {
+          "tools": [
+            "teams_meetings"
+          ],
+          "transcriptSourceProviders": [
+            "teams"
+          ]
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/teams-meetings",
+          "npmSpec": "@omnipolymath/teams-meetings",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.9.8"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/tokenjuice",
+      "description": "Omnipolymath tokenjuice exec output compaction plugin",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "tokenjuice",
+          "label": "Tokenjuice"
+        },
+        "catalog": {
+          "featured": true,
+          "order": 60
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/tokenjuice",
+          "npmSpec": "@omnipolymath/tokenjuice",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.5.28"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/typesafe",
+      "description": "Omnipolymath TypeSafe typed decisions and optional evaluation tool",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "typesafe",
+          "label": "TypeSafe AI"
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/typesafe",
+          "npmSpec": "@omnipolymath/typesafe",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.9.6"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/voice-call",
+      "description": "Omnipolymath voice-call plugin",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "voice-call",
+          "label": "Voice Call"
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/voice-call",
+          "npmSpec": "@omnipolymath/voice-call",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.4.10"
+        }
+      }
+    },
+    {
+      "name": "@omnipolymath/zoom-meetings",
+      "description": "Omnipolymath Zoom browser meeting participant plugin.",
+      "source": "official",
+      "kind": "plugin",
+      "omnipolymath": {
+        "plugin": {
+          "id": "zoom-meetings",
+          "label": "Zoom meetings"
+        },
+        "contracts": {
+          "tools": [
+            "zoom_meetings"
+          ],
+          "transcriptSourceProviders": [
+            "zoom"
+          ]
+        },
+        "install": {
+          "clawhubSpec": "clawhub:@omnipolymath/zoom-meetings",
+          "npmSpec": "@omnipolymath/zoom-meetings",
+          "defaultChoice": "npm",
+          "minHostVersion": ">=2026.9.8"
+        }
+      }
+    }
+  ]
+}
