@@ -1,0 +1,13 @@
+omnipolymath-theme-brand-icon {
+  display: inline-flex;
+  width: 100%;
+  height: 100%;
+}
+
+omnipolymath-theme-brand-icon > img,
+omnipolymath-theme-brand-icon > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

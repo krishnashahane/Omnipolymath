@@ -1,0 +1,9 @@
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- SMIL, not CSS: Chromium/Safari only run declarative SMIL inside <img>-loaded
+       SVGs, and every app surface loads this file via <img src>. The check mark breathes slowly. -->
+  <rect width="120" height="120" rx="26" fill="#1a1915"/>
+  <path fill="#f4f1ea" fill-rule="evenodd" d="M60 16 92 28.5V53c0 21-13.6 37.5-32 44.5C41.6 90.5 28 74 28 53V28.5Zm0 8.4L36 33.7V53c0 16.4 9.9 29.3 24 35.6 14.1-6.3 24-19.2 24-35.6V33.7Z"/>
+  <path fill="#e08a52" d="m54.7 70.6-11.3-11.3 5.6-5.6 5.7 5.7 17.2-17.2 5.6 5.6Z">
+    <animate attributeName="opacity" values="1;0.6;1" keyTimes="0;0.5;1" dur="3s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1"/>
+  </path>
+</svg>
