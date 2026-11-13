@@ -48,7 +48,7 @@ import { createWorkerSessionPlacementStore } from "./worker-environments/placeme
 import { seedAttachedPlacementEnvironment } from "./worker-environments/placement-test-fixtures.js";
 
 const mocks = githubPublicationTestMocks();
-const PULL_URL = "https://github.com/krishnashahane/Omnipolymath/pull/125200";
+const PULL_URL = "https://github.com/omnipolymath/omnipolymath/pull/125200";
 const POST_PULL =
   "gh api --hostname github.com --method POST repos/omnipolymath/omnipolymath/pulls --input -";
 const SHOW_HEAD = "git show -s --no-show-signature --format=%H%n%T%n%P%n%B HEAD";
@@ -191,9 +191,9 @@ describe("Gateway GitHub publication", () => {
 
     const first = await coordinator.requestForSessionV2({ ...request, requester });
     expect(first).toEqual(publishedResult(expect.any(String)));
-    expect(commands.some((argv) => argv.includes("https://github.com/krishnashahane/Omnipolymath.git"))).toBe(
-      true,
-    );
+    expect(
+      commands.some((argv) => argv.includes("https://github.com/krishnashahane/Omnipolymath.git")),
+    ).toBe(true);
     expect(commands.some((argv) => argv.some((arg) => arg.includes("roboclaw-token")))).toBe(false);
     for (const argv of commandMatchesAny("read-tree", "add", "reset")) {
       expect(argv).toContain("core.fsmonitor=false");
@@ -321,7 +321,9 @@ describe("Gateway GitHub publication", () => {
         const lookup = mocks.runCommand.mock.calls.find(
           ([argv]) =>
             argv.includes("state=all") &&
-            argv.includes(`head=${fork ? "roboclaw-bot" : "omnipolymath"}:omnipolymath/publication`),
+            argv.includes(
+              `head=${fork ? "roboclaw-bot" : "omnipolymath"}:omnipolymath/publication`,
+            ),
         );
         expect(lookup).toBeDefined();
         if (!fork) {
