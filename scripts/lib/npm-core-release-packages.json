@@ -1,0 +1,5 @@
+[
+  { "path": "packages/ai", "name": "@omnipolymath/ai", "dependency": "@omnipolymath/ai" },
+  { "path": "packages/gateway-protocol", "name": "@omnipolymath/gateway-protocol" },
+  { "path": "packages/gateway-client", "name": "@omnipolymath/gateway-client" }
+]
