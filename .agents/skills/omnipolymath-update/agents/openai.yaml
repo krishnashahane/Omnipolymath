@@ -1,0 +1,3 @@
+interface:
+  display_name: "Update Omnipolymath"
+  short_description: "Update a Gateway through its installation owner"

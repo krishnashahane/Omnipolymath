@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omnipolymath CI Limits"
+  short_description: "Tune Omnipolymath CI fanout and runner budgets"
+  default_prompt: "Use $omnipolymath-ci-limits to inspect Omnipolymath CI pressure, tune runner-registration fanout safely, and document the exact validation before landing."
