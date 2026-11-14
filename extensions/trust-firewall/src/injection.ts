@@ -65,6 +65,18 @@ const RULES: Array<{ id: string; weight: number; rx: RegExp }> = [
     weight: 0.45,
     rx: /!\[[^\]]*\]\(https?:\/\/[^)\s]+\?[^)\s]*(\{|%7B|data=|q=|token=|secret=)/i,
   },
+  {
+    // Content that hands the checker a ready-made verdict.
+    id: "fake-verdict",
+    weight: 0.6,
+    rx: /"injection"\s*:\s*false|\bthis\s+(text|content|message|page|email|document)?\s*(is|contains)\s+(not|no)\s+(an?\s+)?(prompt[\s-]+)?injections?\b|\b(classify|mark|label|rate|flag|treat)\s+(this|it|the\s+(content|text|message|page))\s+as\s+(safe|benign|clean|harmless|not\s+(an?\s+)?(prompt[\s-]+)?injection)\b/i,
+  },
+  {
+    // Content that speaks to a classifier, filter or security check.
+    id: "addresses-checker",
+    weight: 0.35,
+    rx: /\b(dear|attention|note\s+to|hey|hello)\s+(the\s+)?(ai|security|safety|injection|prompt)?[\s-]*(classifier|filter|scanner|checker|detector|moderator|reviewer)\b|\b(to|for)\s+(the|any)\s+(ai\s+|security\s+|safety\s+|injection\s+)?(classifier|scanner|checker|detector|moderator)\s+(reading|reviewing|checking|analy[sz]ing)\s+this\b/i,
+  },
   { id: "hidden-unicode", weight: 0.4, rx: /[​-‏‪-‮⁠-⁤﻿\u{E0000}-\u{E007F}]/u },
 ];
 

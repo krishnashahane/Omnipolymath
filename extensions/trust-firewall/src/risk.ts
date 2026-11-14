@@ -65,7 +65,11 @@ const DELETE_PATTERN = /(delete|remove|destroy|purge|drop|wipe|revoke|unsubscrib
 const WRITE_PATTERN = /(write|edit|patch|create|update|move|rename|mkdir|apply|install|set|save)/i;
 const SHELL_TOOLS = new Set(["exec", "bash", "shell", "process", "terminal", "run_command"]);
 
-function shellCommand(params: Record<string, unknown>): string | undefined {
+export function isShellTool(toolName: string): boolean {
+  return SHELL_TOOLS.has(toolName.toLowerCase());
+}
+
+export function shellCommand(params: Record<string, unknown>): string | undefined {
   for (const key of ["command", "cmd", "script", "input"]) {
     const value = params[key];
     if (typeof value === "string") {
