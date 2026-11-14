@@ -32,14 +32,14 @@ Omnipolymath is MIT licensed; see [LICENSE](LICENSE) for the copyright notices.
 
 Start from this routing map before creating GitHub items:
 
-| Situation                                                | Use                                                                                                              | Required evidence                                                                                                   |
-| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Product bug, regression, crash, or behavior defect       | [Bug report](https://github.com/krishnashahane/Omnipolymath/issues/new?template=bug_report.yml)                            | Repro steps, expected vs actual behavior, version, OS, model/provider route when relevant, logs/screenshots, impact |
-| Documentation bug or missing/contradictory docs          | [Docs bug report](https://github.com/krishnashahane/Omnipolymath/issues/new?template=docs_bug_report.yml)                  | Affected docs path or URL, verification steps, expected docs content, actual docs content, impact, evidence         |
+| Situation                                                | Use                                                                                                       | Required evidence                                                                                                   |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Product bug, regression, crash, or behavior defect       | [Bug report](https://github.com/krishnashahane/Omnipolymath/issues/new?template=bug_report.yml)           | Repro steps, expected vs actual behavior, version, OS, model/provider route when relevant, logs/screenshots, impact |
+| Documentation bug or missing/contradictory docs          | [Docs bug report](https://github.com/krishnashahane/Omnipolymath/issues/new?template=docs_bug_report.yml) | Affected docs path or URL, verification steps, expected docs content, actual docs content, impact, evidence         |
 | New feature, architecture change, or product improvement | [Feature request](https://github.com/krishnashahane/Omnipolymath/issues/new?template=feature_request.yml) | Problem, proposed solution, alternatives, impact, examples or prior art                                             |
-| Onboarding, setup help, or general support question      | [Official Omnipolymath support](https://github.com/krishnashahane/Omnipolymath/issues)                                                      | Do not open a GitHub issue unless there is a concrete product defect or docs gap                                    |
-| Security vulnerability                                   | See [Report a Vulnerability](#report-a-vulnerability) below                                                      | Do not file public issues for private security reports                                                              |
-| PR for an existing or newly filed issue                  | Use the [PR template](.github/pull_request_template.md)                                                          | Visible `Closes #<issue>` or `Related: #<issue>`, problem, shipped solution, user impact, validation evidence       |
+| Onboarding, setup help, or general support question      | [Official Omnipolymath support](https://github.com/krishnashahane/Omnipolymath/issues)                    | Do not open a GitHub issue unless there is a concrete product defect or docs gap                                    |
+| Security vulnerability                                   | See [Report a Vulnerability](#report-a-vulnerability) below                                               | Do not file public issues for private security reports                                                              |
+| PR for an existing or newly filed issue                  | Use the [PR template](.github/pull_request_template.md)                                                   | Visible `Closes #<issue>` or `Related: #<issue>`, problem, shipped solution, user impact, validation evidence       |
 
 For agent-authored or otherwise non-trivial work, create or reuse the issue first, then open the PR against it. Bugs and very small fixes may go straight to PR, but still link existing context when it exists and fill out the PR template.
 
@@ -243,14 +243,14 @@ Check the [GitHub Issues](https://github.com/krishnashahane/Omnipolymath/issues)
 labels. If none are open, pick a small docs or bug issue and leave a quick comment saying
 you'd like to work on it.
 
-## Maintainers
+## Becoming a maintainer
 
 We're selectively expanding the maintainer team.
 If you're an experienced contributor who wants to help shape Omnipolymath's direction — whether through code, docs, or community — we'd like to hear from you.
 
 Being a maintainer is a responsibility, not an honorary title. We expect active, consistent involvement — triaging issues, reviewing PRs, and helping move the project forward.
 
-Still interested? Email contributing@omnipolymath.vercel.app with:
+Still interested? Open a [GitHub discussion or issue](https://github.com/krishnashahane/Omnipolymath/issues/new) titled "Maintainer interest" with:
 
 - Links to your PRs on Omnipolymath (if you don't have any, start there first)
 - Links to open source projects you maintain or actively contribute to
@@ -265,15 +265,7 @@ Please allow a few weeks for a response.
 
 ## Report a Vulnerability
 
-We take security reports seriously. Report vulnerabilities directly to the repository where the issue lives:
-
-- **Core CLI and gateway** — [krishnashahane/Omnipolymath](https://github.com/krishnashahane/Omnipolymath)
-- **macOS desktop app** — [krishnashahane/Omnipolymath](https://github.com/krishnashahane/Omnipolymath) (apps/macos)
-- **iOS app** — [krishnashahane/Omnipolymath](https://github.com/krishnashahane/Omnipolymath) (apps/ios)
-- **Android app** — [krishnashahane/Omnipolymath](https://github.com/krishnashahane/Omnipolymath) (apps/android)
-- **ClawHub** — omnipolymath/clawhub
-
-For issues that don't fit a specific repo, or if you're unsure, email **security@omnipolymath.vercel.app** and we'll route it.
+We take security reports seriously. Report every vulnerability privately through a [GitHub Security Advisory](https://github.com/krishnashahane/Omnipolymath/security/advisories/new) on this repository; see [SECURITY.md](SECURITY.md) for scope.
 
 ### Required in Reports
 

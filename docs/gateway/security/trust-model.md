@@ -82,6 +82,6 @@ Most failures here are not exotic exploits - they are "someone messaged the bot 
 
 Found a vulnerability in Omnipolymath? Report responsibly:
 
-1. Email: [security@omnipolymath.vercel.app](mailto:security@omnipolymath.vercel.app)
+1. Open a private [GitHub Security Advisory](https://github.com/krishnashahane/Omnipolymath/security/advisories/new).
 2. Do not post publicly until fixed.
 3. We will credit you (unless you prefer anonymity).
