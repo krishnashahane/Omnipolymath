@@ -76,6 +76,11 @@ export type TrustFirewallConfig = {
     /** Always block cloud metadata and link-local destinations. */
     blockMetadata: boolean;
   };
+  /** Supply-chain checks on plugin installs (see plugin-install.ts). */
+  plugins: {
+    /** Allow @omnipolymath/* plugins from npm or ClawHub (only once you publish there). */
+    allowRegistryOfficialScope: boolean;
+  };
   /** Environment hardening for shell commands the agent runs. */
   execEnv: {
     /** Set AWS_EC2_METADATA_DISABLED=true so SDKs never fetch instance credentials. */
@@ -130,6 +135,7 @@ export const DEFAULT_CONFIG: TrustFirewallConfig = {
   posture: "balanced",
   egress: { mode: "off", allowedHosts: [], blockMetadata: true },
   execEnv: { disableCloudMetadata: true },
+  plugins: { allowRegistryOfficialScope: false },
   dailySpendCapUsd: 25,
   prices: {},
   defaultPrice: { inputPerMTok: 5, outputPerMTok: 25 },
@@ -472,6 +478,14 @@ export function parseConfig(raw: unknown): TrustFirewallConfig {
       );
     }
     c.egress.blockMetadata = bool(eg.blockMetadata, "egress.blockMetadata", c.egress.blockMetadata);
+  }
+  const pl = obj(raw.plugins, "plugins");
+  if (pl) {
+    c.plugins.allowRegistryOfficialScope = bool(
+      pl.allowRegistryOfficialScope,
+      "plugins.allowRegistryOfficialScope",
+      c.plugins.allowRegistryOfficialScope,
+    );
   }
   const ee = obj(raw.execEnv, "execEnv");
   if (ee) {

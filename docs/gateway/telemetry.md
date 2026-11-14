@@ -372,6 +372,23 @@ receivers do not follow redirects, so a receiver cannot redirect them to
 production. [Update outcomes](#update-outcomes) stay suppressed in CI even with a
 custom endpoint.
 
+## Other outbound connections
+
+Besides the update check above, a default install talks only to the model
+providers and chat apps you configure, plus these services. Some are hosted by
+the upstream project this fork is based on, not by Omnipolymath:
+
+| Service                                      | Contacted when                                                          | Turn it off                                                                                     |
+| -------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Model catalog, `catalog.openclaw.ai`         | Gateway start and every six hours, to refresh model metadata and prices | `models.catalogRefresh.enabled: false`, or point `models.catalogRefresh.url` at your own mirror |
+| ClawHub, `clawhub.ai`                        | Only when you search for or install a skill or plugin from ClawHub      | Don't use `clawhub:` installs; set `OMNIPOLYMATH_CLAWHUB_URL` to a mirror                       |
+| ClawRouter, `clawrouter.openclaw.ai`         | Only when you pick ClawRouter as a model provider                       | `omnipolymath plugins disable clawrouter`                                                       |
+| MCP relay, `mcp.openclaw.ai`                 | Only after you enable the `mcp-relay` plugin (off by default)           | Leave it disabled                                                                               |
+| iOS push relay, `ios-push-relay.openclaw.ai` | Only for App Store iOS builds, which don't exist for this project yet   | Not used by source builds                                                                       |
+
+None of these requests carry prompts, messages or keys. The catalog request is
+a plain HTTPS `GET` with only `Accept` and cache-validation headers.
+
 ## Disable every automatic update request
 
 To go fully dark, disable the existing startup update check:

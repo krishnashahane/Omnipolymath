@@ -11,6 +11,7 @@ import { firewallPaths, type FirewallPaths } from "./src/cli.js";
 import { parseConfig } from "./src/config.js";
 import { TrustFirewall } from "./src/firewall.js";
 import { FactStore, createFactTools } from "./src/memory-tools.js";
+import { checkPluginInstall } from "./src/plugin-install.js";
 import { formatReceipt } from "./src/receipt.js";
 import { isShellTool } from "./src/risk.js";
 import { checkSkillInstall } from "./src/skill-install.js";
@@ -195,18 +196,27 @@ export default definePluginEntry({
       );
     });
 
-    if (config.skills.scanOnInstall) {
-      api.on("before_install", (event) => {
-        if (event.targetType !== "skill") {
-          return undefined;
-        }
-        const result = checkSkillInstall(event.sourcePath, config.skills);
-        return {
-          findings: result.findings,
-          ...(result.block ? { block: true, blockReason: `Trust Firewall: ${result.block}` } : {}),
-        };
-      });
-    }
+    api.on("before_install", (event) => {
+      if (event.targetType === "plugin") {
+        const reason = checkPluginInstall(
+          {
+            kind: event.request.kind,
+            packageName: event.plugin?.packageName,
+            requestedSpecifier: event.request.requestedSpecifier,
+          },
+          config.plugins,
+        );
+        return reason ? { block: true, blockReason: `Trust Firewall: ${reason}` } : undefined;
+      }
+      if (event.targetType !== "skill" || !config.skills.scanOnInstall) {
+        return undefined;
+      }
+      const result = checkSkillInstall(event.sourcePath, config.skills);
+      return {
+        findings: result.findings,
+        ...(result.block ? { block: true, blockReason: `Trust Firewall: ${result.block}` } : {}),
+      };
+    });
 
     if (config.memory.enabled) {
       const store = new FactStore({
