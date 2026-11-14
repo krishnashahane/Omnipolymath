@@ -82,11 +82,11 @@ const MCP_FILE_HASHES = new Map<string, ReadonlyMap<string, string>>([
     mcpFileHashes({
       cli: "e8b0290a8fe9a1edc31d595ccc870df926bfaaafe19fb14cd4d8d47bf6194979",
       main: "fc7e2ca9f850a71a015d42f771a4c96f7ee81e21fbcdbd5e1559ccdbac800a96",
-      snapshot: "21be06826da0dafaadf712b1dc689f6f07c63042a0b6ee30c4afca9a0d616963",
+      snapshot: "97359db3c474ca4be4140e8737c986936f9d4d0cf5382fd1b71c4661ecdd13ab",
       notices: "79e0eeaebdc9a605a3a2a51ecfe8da1e0f68df37416e405ba96dd4376a488e64",
-      page: "313ce4bfaaea85ab3c57a0bb8f4ad23c093ad33f25407170b2bef6f1654b30b8",
+      page: "4324da5f324837c52f2a037b27490955cf97416d91364f8a846c18fbd66d4555",
       thirdParty: "e1752f75684b672362dc3ae77a399407c509b76471fca08f967fc44fe2cb267b",
-      patchNotice: "c490fb032360cf26141c4a8d72c6ab4587613051619aa88c346662eaaa6daee5",
+      patchNotice: "00a7de9ced2f771949c5058af42914db805d846f19dc66d3bd59cb737668572b",
     }),
   ],
 ]);
