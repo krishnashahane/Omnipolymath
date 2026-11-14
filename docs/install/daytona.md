@@ -313,7 +313,7 @@ If you changed the Gateway port, pass the same port to `daytona preview-url`.
 ## Notes
 
 - For programmatic sandbox provisioning, see the
-  [Daytona Omnipolymath SDK guide](https://www.daytona.io/docs/en/guides/omnipolymath/omnipolymath-sdk-sandbox/)
+  [Daytona SDK documentation](https://www.daytona.io/docs)
 
 ## Related
 
