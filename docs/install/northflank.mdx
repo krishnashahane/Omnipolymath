@@ -1,26 +1,25 @@
 ---
-summary: "Deploy Omnipolymath on Northflank with one-click template"
+summary: "There is no Northflank one-click template for Omnipolymath; run it as your own Docker service"
 read_when:
   - Deploying Omnipolymath to Northflank
-  - You want a one-click cloud deploy with browser-based Control UI
 title: "Northflank"
 ---
 
-Deploy Omnipolymath on Northflank with a one-click template and access it through the web Control UI. This is the easiest "no terminal on the server" path: Northflank runs the Gateway for you.
+There is no one-click Northflank template for Omnipolymath. Templates you find there are for other software.
 
-## How to get started
+To run Omnipolymath on Northflank, build the image from the repository's `Dockerfile` as your own service:
 
-1. Click [Deploy Omnipolymath](https://northflank.com/stacks/deploy-omnipolymath) to open the template.
-2. Create an [account on Northflank](https://app.northflank.com/signup) if you don't already have one.
-3. Click **Deploy Omnipolymath now**.
-4. Set these required environment variables:
-   - `OMNIPOLYMATH_GATEWAY_TOKEN` (use a strong random value)
+1. Create a Northflank project and a **combined service** that builds from your fork of [the repository](https://github.com/krishnashahane/Omnipolymath) with its `Dockerfile`.
+2. Override the start command with `node omnipolymath.mjs gateway --allow-unconfigured`, so a fresh volume without a config file still starts.
+3. Add a persistent volume mounted at `/data`.
+4. Set these environment variables:
+   - `OMNIPOLYMATH_GATEWAY_PORT=8080`
+   - `OMNIPOLYMATH_GATEWAY_TOKEN` (a strong random value)
    - `OMNIPOLYMATH_STATE_DIR=/data/.omnipolymath`
    - `OMNIPOLYMATH_WORKSPACE_DIR=/data/workspace`
-5. Click **Deploy stack** to build and run the Omnipolymath template.
-6. Wait for the deployment to complete, then click **View resources**.
-7. Open the Omnipolymath service.
-8. Open the public Omnipolymath URL at `/omnipolymath` and connect using the configured shared secret. This template uses `OMNIPOLYMATH_GATEWAY_TOKEN` by default; if you replace it with password auth, use that password instead.
+5. Expose port `8080` over HTTP, open the service URL and connect with the token.
+
+These are the same settings as the tested [Render Blueprint](/install/render).
 
 From the Northflank shell, run the read-only deployment preflight:
 
@@ -28,21 +27,10 @@ From the Northflank shell, run the read-only deployment preflight:
 omnipolymath doctor --json
 ```
 
-## What you get
+See [Docker](/install/docker) for the container layout and environment variables.
 
-- Hosted Omnipolymath Gateway + Control UI
-- Persistent storage via a Northflank Volume (`/data`) so `omnipolymath.json`, shared and per-agent SQLite auth stores, channel/provider state, sessions, and workspace survive redeploys
+## Related
 
-## Connect a channel
-
-Use the Control UI at `/omnipolymath`, or run `omnipolymath onboard` via SSH for channel setup instructions:
-
-- [Telegram](/channels/telegram) (fastest, just a bot token)
-- [Discord](/channels/discord)
-- [All channels](/channels)
-
-## Next steps
-
-- Set up messaging channels: [Channels](/channels)
-- Configure the Gateway: [Gateway configuration](/gateway/configuration)
-- Keep Omnipolymath up to date: [Updating](/install/updating)
+- [Install overview](/install)
+- [Docker](/install/docker)
+- [VPS hosting](/vps)
