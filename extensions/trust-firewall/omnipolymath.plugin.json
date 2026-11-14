@@ -405,6 +405,16 @@
             "default": true
           }
         }
+      },
+      "plugins": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "allowRegistryOfficialScope": {
+            "type": "boolean",
+            "default": false
+          }
+        }
       }
     }
   },
