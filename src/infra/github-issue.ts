@@ -130,7 +130,7 @@ function createdIssueUrl(value: unknown): string | undefined {
       url.origin === "https://github.com" &&
       !url.search &&
       !url.hash &&
-      /^\/omnipolymath\/omnipolymath\/issues\/\d+$/u.test(url.pathname)
+      /^\/krishnashahane\/Omnipolymath\/issues\/\d+$/u.test(url.pathname)
     ) {
       return url.toString();
     }
