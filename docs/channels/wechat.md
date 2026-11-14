@@ -7,6 +7,10 @@ read_when:
 title: "WeChat"
 ---
 
+<Warning>
+The WeChat plugin is maintained outside this repository for the upstream project Omnipolymath is based on. It expects that project's plugin SDK, so it doesn't install or load in Omnipolymath yet. The rest of this page describes how the integration is designed to work.
+</Warning>
+
 Omnipolymath connects to WeChat through Tencent's external
 `@tencent-weixin/omnipolymath-weixin` channel plugin.
 
@@ -188,4 +192,4 @@ omnipolymath plugins disable omnipolymath-weixin
 - Channel routing: [Channel routing](/channels/channel-routing)
 - Plugin architecture: [Plugin Architecture](/plugins/architecture)
 - Channel plugin SDK: [Channel Plugin SDK](/plugins/sdk-channel-plugins)
-- External package: [@tencent-weixin/omnipolymath-weixin](https://www.npmjs.com/package/@tencent-weixin/omnipolymath-weixin)
+- External package: @tencent-weixin/omnipolymath-weixin
