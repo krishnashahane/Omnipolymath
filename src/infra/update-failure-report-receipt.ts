@@ -50,14 +50,18 @@ export function isValidTerminalReceipt(receipt: UpdateFailureReportReceipt): boo
     return (
       receipt.cleanup === "pending" &&
       receipt.fallbackUrl === undefined &&
-      isCanonicalGithubUrl(receipt.url, /^\/omnipolymath\/omnipolymath\/issues\/\d+$/u, false)
+      isCanonicalGithubUrl(receipt.url, /^\/krishnashahane\/Omnipolymath\/issues\/\d+$/u, false)
     );
   }
   if (receipt.status === "fallback") {
     return (
       receipt.cleanup === undefined &&
       receipt.url === undefined &&
-      isCanonicalGithubUrl(receipt.fallbackUrl, /^\/omnipolymath\/omnipolymath\/issues\/new$/u, true)
+      isCanonicalGithubUrl(
+        receipt.fallbackUrl,
+        /^\/krishnashahane\/Omnipolymath\/issues\/new$/u,
+        true,
+      )
     );
   }
   return (
@@ -96,9 +100,13 @@ export function parseUpdateFailureReportReceipt(value: unknown): UpdateFailureRe
       (typeof value.sweepSinceMs !== "number" || !Number.isFinite(value.sweepSinceMs))) ||
     (value.sweepOwnerId !== undefined && value.artifactSweep !== "pending") ||
     (value.status === "created" &&
-      !isCanonicalGithubUrl(value.url, /^\/omnipolymath\/omnipolymath\/issues\/\d+$/u, false)) ||
+      !isCanonicalGithubUrl(value.url, /^\/krishnashahane\/Omnipolymath\/issues\/\d+$/u, false)) ||
     (value.status === "fallback" &&
-      !isCanonicalGithubUrl(value.fallbackUrl, /^\/omnipolymath\/omnipolymath\/issues\/new$/u, true)) ||
+      !isCanonicalGithubUrl(
+        value.fallbackUrl,
+        /^\/krishnashahane\/Omnipolymath\/issues\/new$/u,
+        true,
+      )) ||
     (value.cleanup !== undefined && value.status !== "created" && value.status !== "retryable") ||
     (value.status !== "created" && value.url !== undefined) ||
     (value.status !== "fallback" && value.fallbackUrl !== undefined)
