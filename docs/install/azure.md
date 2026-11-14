@@ -308,7 +308,6 @@ This removes the resource group and everything inside it (VM, VNet, NSG, Bastion
 - Set up messaging channels: [Channels](/channels)
 - Pair local devices as nodes: [Nodes](/nodes)
 - Configure the gateway: [Gateway configuration](/gateway/configuration)
-- More detail on Azure deployment with the GitHub Copilot model provider: [Omnipolymath on Azure with GitHub Copilot](https://github.com/johnsonshi/omnipolymath-azure-github-copilot)
 
 ## Related
 

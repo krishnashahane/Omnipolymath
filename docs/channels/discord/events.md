@@ -88,7 +88,7 @@ Operational Discord surfaces: reaction and presence wakes, bot presence, gateway
     discord: {
       activity: "Live coding",
       activityType: 1,
-      activityUrl: "https://twitch.tv/omnipolymath",
+      activityUrl: "https://twitch.tv/your-channel",
     },
   },
 }

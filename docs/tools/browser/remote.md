@@ -232,7 +232,6 @@ Notes:
 - Optional query parameters include `profileId` for a persistent browser
   profile, `proxyCountryCode` for country-specific routing, and `timeout` for
   the session duration in minutes (maximum 240).
-- See the [Browser Use Omnipolymath guide](https://docs.browser-use.com/cloud/tutorials/integrations/omnipolymath)
   for additional examples and provider options.
 
 ### Notte

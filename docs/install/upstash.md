@@ -23,9 +23,6 @@ to the public internet.
 Create a keep-alive Box in the Upstash Console. Note the Box ID (for example
 `right-flamingo-14486`) and your Box API key.
 
-Upstash maintains its current Omnipolymath Box walkthrough at
-[Omnipolymath Setup](https://upstash.com/docs/box/guides/omnipolymath-setup).
-
 ## Connect with an SSH tunnel
 
 Forward the Omnipolymath dashboard port to your local machine. Use your Box API key
