@@ -8,16 +8,15 @@ import "./home.css";
 const HEADLINE = "The agent you can actually trust with your keys.";
 
 /** One run, exactly as the Trust Firewall reports it. */
-const SESSION: Array<{ t: string; kind?: "ok" | "ask" | "stop" | "note" | "dim"; tag?: string }> =
-  [
-    { t: "› Triage my inbox and pay anything due this week.", kind: "dim" },
-    { t: "read      gmail.search  14 messages", kind: "ok", tag: "allowed" },
-    { t: "shield    message #9 tries to give the agent orders", kind: "note", tag: "tainted" },
-    { t: "write     drafts.create  3 replies", kind: "ok", tag: "allowed" },
-    { t: "external  gmail.send  3 replies · run is tainted", kind: "ask", tag: "needs you" },
-    { t: "spend     pay_invoice  $1,240 to acme", kind: "stop", tag: "blocked" },
-    { t: "          wallet: over the $100 per-transaction limit", kind: "dim" },
-  ];
+const SESSION: Array<{ t: string; kind?: "ok" | "ask" | "stop" | "note" | "dim"; tag?: string }> = [
+  { t: "› Triage my inbox and pay anything due this week.", kind: "dim" },
+  { t: "read      gmail.search  14 messages", kind: "ok", tag: "allowed" },
+  { t: "shield    message #9 tries to give the agent orders", kind: "note", tag: "tainted" },
+  { t: "write     drafts.create  3 replies", kind: "ok", tag: "allowed" },
+  { t: "external  gmail.send  3 replies · run is tainted", kind: "ask", tag: "needs you" },
+  { t: "spend     pay_invoice  $1,240 to acme", kind: "stop", tag: "blocked" },
+  { t: "          wallet: over the $100 per-transaction limit", kind: "dim" },
+];
 
 const PRINCIPLES = [
   {
@@ -30,7 +29,7 @@ const PRINCIPLES = [
   },
   {
     title: "It can be undone.",
-    body: "Files are snapshotted before the agent writes, edits or patches them. One command puts them back, and it never overwrites a change you made afterwards.",
+    body: "Files are snapshotted before the agent writes, edits or patches them. One command puts them back, and it never overwrites a change you made afterwards. Commands, messages and payments can't be undone, so the risky ones wait for you.",
   },
 ];
 
@@ -42,12 +41,12 @@ const CAPABILITIES: Array<[string, string, string]> = [
   ],
   [
     "Injection shield",
-    "Every tool result is pattern-scanned; web, email and chat content also gets a second opinion from your own model. A suspicious run loses the right to act alone.",
+    "Every tool result is pattern-scanned; web, email and chat content that talks to an AI also gets a second opinion from your own model, capped per run. A suspicious run loses the right to act alone.",
     "injection.classifier",
   ],
   [
     "Undo",
-    "write, edit and apply_patch are snapshotted. Restore a whole run, or preview it first.",
+    "Files only: write, edit and apply_patch are snapshotted. Restore a whole run, or preview it first.",
     "omnipolymath firewall undo",
   ],
   [
@@ -243,6 +242,7 @@ export default function Home() {
                 <li>The chat-app channels, models and tools in the docs</li>
                 <li>Everything in the Trust Firewall above</li>
                 <li>Docker sandboxing for shell commands, one setting away</li>
+                <li>Without Docker, commands that change your machine wait for your approval</li>
               </ul>
             </Spotlight>
             <Spotlight className="h-status-card">
@@ -265,9 +265,9 @@ export default function Home() {
             <p className="h-label">Install</p>
             <h2>Give it the keys. Keep the control.</h2>
             <p>
-              The installer clones the source, builds it and links the{" "}
-              <code>omnipolymath</code> command. It needs git, Node.js 24.16+ (or 26.1+) and pnpm,
-              runs on macOS and Linux (Windows through WSL2), and never asks for root.
+              The installer clones the source, builds it and links the <code>omnipolymath</code>{" "}
+              command. It needs git, Node.js 24.16+ (or 26.1+) and pnpm, runs on macOS and Linux
+              (Windows through WSL2), and never asks for root.
             </p>
           </Reveal>
           <Reveal delay={80}>
