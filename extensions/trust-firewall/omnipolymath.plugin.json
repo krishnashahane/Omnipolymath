@@ -361,6 +361,50 @@
           "approve-all"
         ],
         "default": "approve-risky"
+      },
+      "posture": {
+        "type": "string",
+        "enum": [
+          "restricted",
+          "balanced",
+          "personal"
+        ],
+        "default": "balanced"
+      },
+      "egress": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "off",
+              "approve-new"
+            ],
+            "default": "off"
+          },
+          "allowedHosts": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "blockMetadata": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "execEnv": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "disableCloudMetadata": {
+            "type": "boolean",
+            "default": true
+          }
+        }
       }
     }
   },

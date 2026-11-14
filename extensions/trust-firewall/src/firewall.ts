@@ -11,6 +11,7 @@ import {
   type CompleteFn,
 } from "./classifier.js";
 import type { TrustFirewallConfig } from "./config.js";
+import { egressHosts, hostAllowed, isHardBlockedHost } from "./egress.js";
 import { unsandboxedShellApproval } from "./host-guard.js";
 import { scanForInjection, textOf, type InjectionScan } from "./injection.js";
 import { ratesFromAssistant } from "./prices.js";
@@ -62,7 +63,12 @@ type PendingCall = {
   releaseWallet?: () => void;
   /** When the call was decided; stale entries are released (see sweepPending). */
   at?: number;
+  /** New hosts this call contacts; remembered once a human approves the call. */
+  egressHosts?: string[];
 };
+
+/** Local addresses never count as new egress destinations. */
+const LOCAL_HOSTS = ["localhost", "127.0.0.1", "::1"];
 
 const MAX_RUNS = 512;
 
@@ -76,6 +82,8 @@ export class TrustFirewall {
   readonly wallets: WalletGuard;
   private classifier?: InjectionClassifier;
   private readonly now: () => number;
+  /** Hosts a human approved this Gateway session (egress.mode "approve-new"). */
+  private readonly approvedHosts = new Set<string>();
 
   constructor(
     readonly config: TrustFirewallConfig,
@@ -177,7 +185,7 @@ export class TrustFirewall {
       if (toolCallId) {
         state?.pendingIds.set(toolCallId, entry.id);
       }
-      if (extra.snapshots || extra.releaseWallet) {
+      if (extra.snapshots || extra.releaseWallet || extra.egressHosts) {
         extra.at = this.now();
         this.pending.set(entry.id, extra);
       }
@@ -230,6 +238,13 @@ export class TrustFirewall {
     if (allow && !allow.includes(toolName)) {
       return block(`least privilege: ${agentId} may not use ${toolName}`);
     }
+    const hosts = egressHosts(params, isShellTool(toolName) ? shellCommand(params) : undefined);
+    if (this.config.egress.blockMetadata) {
+      const blocked = hosts.find((h) => isHardBlockedHost(h));
+      if (blocked) {
+        return block(`${blocked} is a cloud metadata or link-local address`);
+      }
+    }
     if (risk.tier !== "read" && this.ledger.capReached()) {
       return block(`daily spend cap of $${this.ledger.cap.toFixed(2)} reached`);
     }
@@ -252,15 +267,31 @@ export class TrustFirewall {
     if (hostRisk) {
       risk.reasons.push(...hostRisk);
     }
+    const newHosts =
+      this.config.egress.mode === "approve-new"
+        ? hosts.filter(
+            (h) =>
+              !hostAllowed(h, LOCAL_HOSTS) &&
+              !hostAllowed(h, this.config.egress.allowedHosts) &&
+              !this.approvedHosts.has(h),
+          )
+        : [];
+    if (newHosts.length) {
+      risk.reasons.push(...newHosts.map((h) => `new host: ${h}`));
+      prepared.egressHosts = newHosts;
+    }
     const tierApproval = this.config.approveTiers.includes(risk.tier);
     const taintApproval = tainted && this.config.taintedApproveTiers.includes(risk.tier);
-    const needsApproval = tierApproval || taintApproval || hostRisk !== undefined;
+    const needsApproval =
+      tierApproval || taintApproval || hostRisk !== undefined || newHosts.length > 0;
     if (needsApproval && !monitor) {
       const why = tierApproval
         ? `${risk.tier} action`
         : taintApproval
           ? "this run read content that looks like a prompt injection"
-          : "this shell command runs outside the sandbox and changes this machine";
+          : hostRisk !== undefined
+            ? "this shell command runs outside the sandbox and changes this machine"
+            : "it contacts a host you have not approved yet";
       return {
         kind: "approve",
         entry: record("approval", risk.reasons, prepared),
@@ -293,6 +324,9 @@ export class TrustFirewall {
   /** Record how a human answered an approval request. Denials and timeouts are logged as blocks. */
   resolveApproval(entry: ActionEntry, decision: string): ActionEntry | undefined {
     if (decision === "allow-once" || decision === "allow-always") {
+      for (const host of this.pending.get(entry.id)?.egressHosts ?? []) {
+        this.approvedHosts.add(host);
+      }
       return undefined;
     }
     const extra = this.pending.get(entry.id);
