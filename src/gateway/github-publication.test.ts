@@ -55,7 +55,7 @@ const SHOW_HEAD = "git show -s --no-show-signature --format=%H%n%T%n%P%n%B HEAD"
 const repository = {
   checkoutRoot: "/repo/worktree",
   repoRoot: "/repo",
-  originUrl: "git@github.com:krishnashahane/Omnipolymath.git",
+  originUrl: "git@github.com:omnipolymath/omnipolymath.git",
   fingerprint: "fingerprint-1",
 };
 const openDatabase = () => openOmnipolymathStateDatabase({ env: { OMNIPOLYMATH_STATE_DIR: root } });
@@ -123,7 +123,7 @@ const publishedResult = (requestId: string) => ({
   requestId,
   status: "published",
   url: PULL_URL,
-  repository: "krishnashahane/Omnipolymath",
+  repository: "omnipolymath/omnipolymath",
   branch: BRANCH,
   headCommit: NEW_HEAD,
 });
@@ -192,7 +192,7 @@ describe("Gateway GitHub publication", () => {
     const first = await coordinator.requestForSessionV2({ ...request, requester });
     expect(first).toEqual(publishedResult(expect.any(String)));
     expect(
-      commands.some((argv) => argv.includes("https://github.com/krishnashahane/Omnipolymath.git")),
+      commands.some((argv) => argv.includes("https://github.com/omnipolymath/omnipolymath.git")),
     ).toBe(true);
     expect(commands.some((argv) => argv.some((arg) => arg.includes("roboclaw-token")))).toBe(false);
     for (const argv of commandMatchesAny("read-tree", "add", "reset")) {
@@ -253,7 +253,7 @@ describe("Gateway GitHub publication", () => {
       const fork = scenario === "fork head";
       const lostResponse = scenario.startsWith("lost ");
       const closed = scenario === "lost closed response";
-      const resultUrl = `https://github.com/krishnashahane/Omnipolymath/pull/${fork ? "125201" : lostResponse ? "125203" : "right-base"}`;
+      const resultUrl = `https://github.com/omnipolymath/omnipolymath/pull/${fork ? "125201" : lostResponse ? "125203" : "right-base"}`;
       let pullLookups = 0;
       let createdBody = "";
       if (fork) {
@@ -286,7 +286,7 @@ describe("Gateway GitHub publication", () => {
           return pullResponse({
             url:
               scenario === "wrong base"
-                ? "https://github.com/krishnashahane/Omnipolymath/pull/old-base"
+                ? "https://github.com/omnipolymath/omnipolymath/pull/old-base"
                 : resultUrl,
             state: closed ? "closed" : "open",
             baseRef: scenario === "wrong base" ? "release" : "main",
@@ -310,7 +310,7 @@ describe("Gateway GitHub publication", () => {
               nextAction:
                 "GitHub pull request was closed before publication completed. Reopen the closed pull request or retry to create a new publication request.",
             }
-          : { status: "published", repository: "krishnashahane/Omnipolymath", url: resultUrl },
+          : { status: "published", repository: "omnipolymath/omnipolymath", url: resultUrl },
       );
       expect(mocks.runCommand.mock.calls.filter(([argv]) => argv.includes("POST"))).toHaveLength(
         fork ? 0 : 1,
