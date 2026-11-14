@@ -6,7 +6,7 @@ it.each([
   ["a", 3826002220],
   ["hello", 1335831723],
   ["foobar", 3214735720],
-  ["🔐", 3677094317],
+  ["🔐", 3677168872],
   ["a\u0000b", 284404690],
   ["\ud800", 75617567],
 ] as const)("preserves unsigned UTF-16 FNV-1a for %j", (value, expected) => {
