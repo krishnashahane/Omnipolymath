@@ -13,7 +13,7 @@ read_when:
 title: "iOS app"
 ---
 
-Availability: The official iPhone app is available on the [App Store](https://apps.apple.com/app/omnipolymath-ai-that-does-things/id6780396132). Local development builds can also run from source.
+Availability: The iPhone app isn't on the App Store yet. Build and run it from source in [apps/ios](https://github.com/krishnashahane/Omnipolymath/tree/main/apps/ios).
 
 The app requires iOS 26.2 or iPadOS 26.2 or later.
 
