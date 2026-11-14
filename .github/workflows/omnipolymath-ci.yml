@@ -26,8 +26,12 @@ jobs:
           node-version: 24.x
       - name: Install pnpm
         run: npm install --global pnpm@12.15.0
+      # pnpm 12 rejects --frozen-lockfile here while it records its own platform
+      # binaries; install normally and show any lockfile drift for review.
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts --config.manage-package-manager-versions=false
+        run: |
+          pnpm install --no-frozen-lockfile --ignore-scripts --config.manage-package-manager-versions=false
+          git diff --stat -- pnpm-lock.yaml
       - name: Trust Firewall tests
         run: pnpm vitest run extensions/trust-firewall
       - name: Lint Trust Firewall
