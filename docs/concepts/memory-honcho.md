@@ -6,6 +6,10 @@ read_when:
   - You want AI-powered recall and user modeling
 ---
 
+<Warning>
+The Honcho plugin is maintained outside this repository for the upstream project Omnipolymath is based on. It expects that project's plugin SDK, so it doesn't install or load in Omnipolymath yet. The rest of this page describes how the integration is designed to work.
+</Warning>
+
 [Honcho](https://honcho.dev) adds AI-native memory to Omnipolymath through an
 external plugin. It persists conversations to a dedicated service and builds
 user and agent models over time, giving your agent cross-session context that
@@ -133,9 +137,7 @@ omnipolymath honcho search <query> [-k N] [-d D] # Semantic search over memory
 
 ## Further reading
 
-- [Plugin source code](https://github.com/plastic-labs/omnipolymath-honcho)
 - [Honcho documentation](https://docs.honcho.dev)
-- [Honcho Omnipolymath integration guide](https://docs.honcho.dev/v3/guides/integrations/omnipolymath)
 
 ## Related
 

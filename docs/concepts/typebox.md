@@ -278,9 +278,7 @@ The published JSON Schema's `oneOf` frame order is a separate contract: `req`, `
 
 ## Live schema JSON
 
-Generated JSON Schema is a build artifact, not committed to the repo. During the package rollout, the current beta schema is available at:
-
-- [`protocol.schema.json`](https://unpkg.com/@omnipolymath/gateway-protocol@beta/protocol.schema.json)
+Generated JSON Schema is a build artifact, not committed to the repo. `pnpm build` writes it to `dist/protocol.schema.json`.
 
 ## When you change schemas
 

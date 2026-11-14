@@ -6,6 +6,10 @@ read_when:
 title: Yuanbao
 ---
 
+<Warning>
+The Yuanbao plugin is maintained outside this repository for the upstream project Omnipolymath is based on. It expects that project's plugin SDK, so it doesn't install or load in Omnipolymath yet. The rest of this page describes how the integration is designed to work.
+</Warning>
+
 Tencent Yuanbao is Tencent's AI assistant platform. The community-maintained `omnipolymath-plugin-yuanbao` plugin connects Yuanbao bots to Omnipolymath over WebSocket for direct messages and group chats.
 
 **Status:** production-ready for bot DMs and group chats. WebSocket is the only supported connection mode. This plugin is maintained by the Tencent Yuanbao team as an external catalog entry, not by core Omnipolymath; the config/behavior details below (beyond install and the generic CLI surface) come from the plugin's own docs and are not verified against Omnipolymath core source.

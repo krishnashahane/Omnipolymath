@@ -1,22 +1,22 @@
 ---
-summary: "Deploy Omnipolymath on Railway with one-click template"
+summary: "Deploy Omnipolymath on Railway from the repository Dockerfile"
 read_when:
   - Deploying Omnipolymath to Railway
   - You want a one-click cloud deploy with browser-based Control UI
 title: "Railway"
 ---
 
-Deploy Omnipolymath on Railway with a one-click template and access it through the web Control UI. This is the easiest "no terminal on the server" path: Railway runs the Gateway for you.
+Deploy Omnipolymath on Railway from this repository's `Dockerfile` and use it through the web Control UI. There is no one-click Railway template for Omnipolymath; templates you find there are for other software.
 
-## One-click deploy
-
-<a href="https://railway.com/deploy/clawdbot-railway-template" target="_blank" rel="noreferrer">
-  Deploy on Railway
-</a>
+## Deploy from GitHub
 
 <Steps>
-  <Step title="Deploy the template">
-    Click **Deploy on Railway** above.
+  <Step title="Create the service">
+    In Railway, create a new project with **Deploy from GitHub repo** and pick your fork of [the repository](https://github.com/krishnashahane/Omnipolymath). Railway builds it from the `Dockerfile`.
+  </Step>
+
+  <Step title="Set the start command">
+    Under **Settings -> Deploy -> Custom Start Command**, set `node omnipolymath.mjs gateway --allow-unconfigured` so a fresh volume without a config file still starts.
   </Step>
 
 <Step title="Add a volume">
@@ -40,7 +40,7 @@ Deploy Omnipolymath on Railway with a one-click template and access it through t
   <Step title="Connect">
     Find your public URL in **Railway -> your service -> Settings -> Domains** -- either a generated domain (often `https://<something>.up.railway.app`) or your attached custom domain.
 
-    Open `https://<your-railway-domain>/omnipolymath` and connect using the configured shared secret. The template uses `OMNIPOLYMATH_GATEWAY_TOKEN` by default; if you replace it with password auth, use that password instead.
+    Open the URL and connect using `OMNIPOLYMATH_GATEWAY_TOKEN`; if you switch to password auth, use that password instead.
 
   </Step>
 </Steps>
@@ -58,7 +58,7 @@ omnipolymath doctor --json
 
 ## Connect a channel
 
-Use the Control UI at `/omnipolymath` or run `omnipolymath onboard` via Railway's shell for channel setup instructions:
+Use the Control UI on the service URL or run `omnipolymath onboard` via Railway's shell for channel setup instructions:
 
 - [Discord](/channels/discord)
 - [Telegram](/channels/telegram) (fastest -- just a bot token)

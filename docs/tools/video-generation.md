@@ -371,8 +371,8 @@ Omnipolymath does not append auto-detected providers.
 
   </Accordion>
   <Accordion title="BytePlus Seedance 1.5 plugin">
-    Requires the [`@omnipolymath/byteplus-modelark`](https://www.npmjs.com/package/@omnipolymath/byteplus-modelark)
-    plugin (external, not bundled). Provider id: `byteplus-seedance15`. Model:
+    Requires the external BytePlus ModelArk plugin, which isn't
+    available for Omnipolymath yet. Provider id: `byteplus-seedance15`. Model:
     `seedance-1-5-pro-251215`.
 
     Uses the unified `content[]` API. Supports at most 2 input images
@@ -386,8 +386,8 @@ Omnipolymath does not append auto-detected providers.
 
   </Accordion>
   <Accordion title="BytePlus Seedance 2.0">
-    Requires the [`@omnipolymath/byteplus-modelark`](https://www.npmjs.com/package/@omnipolymath/byteplus-modelark)
-    plugin (external, not bundled). Provider id: `byteplus-seedance2`. Models:
+    Requires the external BytePlus ModelArk plugin, which isn't
+    available for Omnipolymath yet. Provider id: `byteplus-seedance2`. Models:
     `dreamina-seedance-2-0-260128`,
     `dreamina-seedance-2-0-fast-260128`.
 

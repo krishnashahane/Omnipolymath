@@ -296,8 +296,8 @@ sends a payload-free `HEAD` to the configured endpoint. Only `204` with
 `Omnipolymath-Update-Results: 2` permits a schema-2 `update_result` POST. Legacy
 receivers reject the probe without receiving outcome data; unconfigured receivers
 do not advertise support. The probe and POST share one three-second deadline.
-It uses the same complete `OMNIPOLYMATH_TELEMETRY_ENDPOINT` URL (the Foundation endpoint
-by default), without falling back to another server. The daily GET and schema-1
+It uses the same complete `OMNIPOLYMATH_TELEMETRY_ENDPOINT` URL (nothing is sent unless
+it is set), without falling back to another server. The daily GET and schema-1
 feature POST remain unchanged. The outcome request has a fixed
 `User-Agent: omnipolymath-update-result/1` and does not follow redirects.
 

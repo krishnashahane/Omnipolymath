@@ -6,6 +6,10 @@ read_when:
 title: "Poolside (Laguna)"
 ---
 
+<Warning>
+The Poolside plugin is maintained outside this repository for the upstream project Omnipolymath is based on. It expects that project's plugin SDK, so it doesn't install or load in Omnipolymath yet. The rest of this page describes how the integration is designed to work.
+</Warning>
+
 [Poolside](https://poolside.ai) provides Laguna models and the Poolside Agent CLI.
 Choose the integration for the work you want Omnipolymath to do:
 
@@ -17,13 +21,13 @@ Choose the integration for the work you want Omnipolymath to do:
 ## Laguna model provider
 
 Install the external
-[`@poolside/omnipolymath-provider` plugin](https://hub.openclaw.ai/poolside/plugins/omnipolymath-provider):
+`@poolside/omnipolymath-provider` plugin:
 
 ```bash
 omnipolymath plugins install @poolside/omnipolymath-provider
 ```
 
-Follow [Poolside's Omnipolymath guide](https://docs.poolside.ai/tools/omnipolymath) for
+Follow Poolside's Omnipolymath guide for
 authentication, model selection, and hosted or self-managed endpoints. The plugin
 owns Poolside's model catalog and request compatibility.
 
@@ -48,4 +52,4 @@ Enable the ACP runtime plugin as described in
 ```
 
 See [ACP setup](/tools/acp-agents-setup) for permissions and
-[Poolside's Omnipolymath guide](https://docs.poolside.ai/tools/omnipolymath) for CLI setup.
+Poolside's Omnipolymath guide for CLI setup.

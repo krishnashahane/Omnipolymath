@@ -916,7 +916,7 @@ To recover these scopes:
 
 ## Published-stable upgrade qualification
 
-The qualification below used [Omnipolymath 2026.10.5](https://www.npmjs.com/package/omnipolymath/v/2026.10.5).
+The qualification below used Omnipolymath 2026.10.5.
 Its packaged configuration schema does not support `database.engine=postgres`,
 so a native 2026.10.5-PostgreSQL → current upgrade is **not applicable**. Users on
 that version adopt PostgreSQL by updating their SQLite installation first, then using

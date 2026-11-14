@@ -173,7 +173,7 @@ Mattermost installs as a separate plugin, the same way Discord, Slack, and Whats
 omnipolymath plugins install @omnipolymath/mattermost
 ```
 
-Check [npmjs.com/package/@omnipolymath/mattermost](https://www.npmjs.com/package/@omnipolymath/mattermost) for the current dist-tags before pinning a version.
+Pin the plugin to the same version as your Omnipolymath install.
 
 ```json5
 {

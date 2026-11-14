@@ -14,8 +14,6 @@ That inversion is why agents feel like the beginning of something rather than an
 
 The project is maintained by [Krishna Shahane](https://github.com/krishnashahane) as an independent, MIT-licensed project. Its mission is the agent you can actually trust with your keys: your agent, your machine, your rules, with a Trust Firewall between the agent and your accounts.
 
-The Foundation works with [donors and partners](https://openclaw.ai/blog/introducing-openclaw-foundation), including Amazon, Atlassian, GitHub, Microsoft, NVIDIA, OpenAI, Red Hat, and Tencent, across more than thirty organizations. It has a full-time team, releases signed under its own identity, and Foundation-convened councils on agent identity, agent profiles, evals, and enterprise deployment. The aim is to be the Switzerland of AI: neutral ground for every model and every lab, and the most mature, battle-tested agent for anyone, individual or enterprise, to build on.
-
 For an evaluation, governance is not decoration. It answers who controls the roadmap, who signs what you deploy, and what happens when any one vendor's incentives change.
 
 Agent platforms commonly offer [channels](/channels), [tools](/tools), [memory](/concepts/memory), [skills](/tools/skills), [scheduling](/automation). A feature table does not establish the security model. The main distinctions are **where the trust boundary lies** and **whether policy is enforced in code or requested in the system prompt**.
@@ -54,7 +52,7 @@ The short answers, with details and limits on the linked pages:
 - <a id="secrets" />**Protected credentials can stay out of model context.** Protected secret values use handles and supported egress substitution; agent-readable entries, host access, and permitted-service responses have separate exposure risks. ([Secrets](/start/why-omnipolymath/secrets))
 - <a id="versioned-state%2C-guarded-upgrades" /><a id="versioned-state-guarded-upgrades" />**Version checks guard upgrades.** Schemas are versioned, updaters check compatibility, and releases are immutable and signed. Version checks do not guarantee that every upgrade succeeds. ([Versioned state](/start/why-omnipolymath/versioned-state-guarded-upgrades))
 - <a id="provenance" />**Forgetting has explicit boundaries.** Attributable memories can be purged, and forgotten-session records prevent reingestion through participating paths; original transcripts, untracked writes, and external copies remain separate. ([Provenance](/start/why-omnipolymath/provenance))
-- **Independent and MIT-licensed.** No company owns the project, and every change is public. Advisory counts are not a comparative safety score. ([Governance](#governance))
+- **Independent and MIT-licensed.** No company owns the project, and every change is public. ([Governance](#governance))
 
 <a id="omnipolymath-and-hermes-agent" />
 
@@ -92,11 +90,9 @@ Omnipolymath sells nothing: no paid tier, no hosted service, no token. The only 
 
 Hermes is built by Nous Research, a venture-funded company listed in [Paradigm's portfolio](https://www.paradigm.xyz/portfolio); TechCrunch reported [a $75M round at a $1.5B valuation](https://techcrunch.com/2026/07/13/hermes-agent-maker-nous-research-in-talks-for-new-funding-at-1-5b-valuation/) in July 2026. The same report describes paid Hermes tiers of $20 to $200 per month as the business model. The [Hermes README](https://github.com/NousResearch/hermes-agent) presents Nous Portal, that subscription, on its first screen, and `hermes setup --portal` configures it. The [Nous Portal privacy policy](https://portal.nousresearch.com/privacy) states that it collects prompts, uploads, and outputs and may produce derivative datasets and models unless Privacy Mode is enabled. The self-hosted Hermes agent itself sends no telemetry.
 
-We are not saying Hermes is worse engineering. We are saying the two projects answer to different people. Venture investors expect a return, and the reported plan for that return is paid Hermes tiers. Omnipolymath's only obligation is to stay useful enough that people keep donating. Pick the incentive you want pointed at you.
+We are not saying Hermes is worse engineering. We are saying the two projects answer to different people. Venture investors expect a return, and the reported plan for that return is paid Hermes tiers. Omnipolymath answers only to the people who run it. Pick the incentive you want pointed at you.
 
-Third parties invest in the architecture: NVIDIA's [NemoClaw](https://nvidianews.nvidia.com/news/nvidia-announces-nemoclaw) distribution hardens Omnipolymath with OpenShell kernel-level sandboxing, infrastructure vendors publish [production-hardening guides](https://nebius.com/blog/posts/omnipolymath-security) for it, and [academic security case studies](https://arxiv.org/html/2603.12644v1) analyze the architecture and catalog threats. Those publications describe their own dated snapshots, not certification of today's configuration.
-
-Omnipolymath [publishes repository security advisories](https://github.com/krishnashahane/Omnipolymath/security/advisories), with a written [trust model](/gateway/security), an [incident response plan](/security/incident-response), and security contributors from NVIDIA and Tencent. On August 27, 2026, the public repository advisory lists contained 647 Omnipolymath advisories and [no Hermes advisories](https://github.com/NousResearch/hermes-agent/security/advisories). Hermes has CVEs published through third-party CNAs. These counts describe disclosure records, not the number of currently exploitable defects or a comparative safety score.
+Omnipolymath has a written [trust model](/gateway/security) and an [incident response plan](/security/incident-response), and takes vulnerability reports privately through [repository security advisories](https://github.com/krishnashahane/Omnipolymath/security/advisories). It is a young, single-maintainer fork, so it has no long public advisory record yet; judge it by its code and configuration, not by disclosure counts.
 
 ## What we do not claim
 

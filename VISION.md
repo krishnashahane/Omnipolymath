@@ -16,7 +16,6 @@ The goal: a personal assistant that is easy to use, supports a wide range of pla
 
 Omnipolymath is a great personal assistant and a great team assistant.
 A personal install is yours alone; a shared Gateway is a place people work together, so the same session can carry several humans, their credit, and their history.
-We build Omnipolymath with Omnipolymath on [team.openclaw.ai](https://team.openclaw.ai), and we sometimes invite visitors there.
 
 Run Omnipolymath locally or on your own infrastructure.
 Hosted services and shared sign-in should simplify setup and account linking, but stay optional.

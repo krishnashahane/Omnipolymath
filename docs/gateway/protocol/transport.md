@@ -9,22 +9,21 @@ sidebarTitle: "Transport and framing"
 doc-schema-version: 1
 ---
 
-What the wire looks like before any method call: the published packages, the frame shapes, the payload limits, and the Gateway-controlled WebRTC Talk contract.
+What the wire looks like before any method call: the client packages, the frame shapes, the payload limits, and the Gateway-controlled WebRTC Talk contract.
 
-## npm packages
+## Client packages
 
-Follow [Install the packages](/gateway/clients#install-the-packages) for the
-verified stable release, exact-version commands, and compatibility guidance.
+Follow [Install the packages](/gateway/clients#install-the-packages) to build
+them from source, and for compatibility guidance.
 Package release versions are separate from the wire protocol version and the
 root `omnipolymath` CLI release.
 
-- [`@omnipolymath/gateway-protocol`](https://www.npmjs.com/package/@omnipolymath/gateway-protocol)
-  publishes the schemas, validators, TypeScript types, lightweight frame and error
-  helpers, and version constants. Its tarball includes the generated
-  [`protocol.schema.json`](https://unpkg.com/@omnipolymath/gateway-protocol@2026.8.1/protocol.schema.json)
-  machine-readable contract as a downloadable file, not an exported import subpath.
-- [`@omnipolymath/gateway-client`](https://www.npmjs.com/package/@omnipolymath/gateway-client)
-  publishes the reference Node client and a browser-safe entry at
+- [`@omnipolymath/gateway-protocol`](https://github.com/krishnashahane/Omnipolymath/tree/main/packages/gateway-protocol)
+  provides the schemas, validators, TypeScript types, lightweight frame and error
+  helpers, and version constants. The build also writes the generated
+  `protocol.schema.json` machine-readable contract as a file, not an exported import subpath.
+- [`@omnipolymath/gateway-client`](https://github.com/krishnashahane/Omnipolymath/tree/main/packages/gateway-client)
+  provides the reference Node client and a browser-safe entry at
   `@omnipolymath/gateway-client/browser`.
 
 For application lifecycle guidance, see
