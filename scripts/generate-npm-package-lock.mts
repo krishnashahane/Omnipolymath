@@ -1140,6 +1140,7 @@ const NPM_BUNDLED_DEPENDENCY_POLICIES = new Map<
   ["12.2.0", { allowMissingBundleMarker: false, exceptions: NPM_BUNDLE_EXCEPTIONS_THROUGH_12_2_0 }],
   // npm 12.2.1 bundles brace-expansion 5.0.12, satisfying the workspace override, and
   // ip-address 10.7.2, which is newer than 12.2.0's bundle but still below the override.
+  // Its bundled glob 13.0.6 predates the glob override; only npm's own code loads it.
   [
     "12.2.1",
     {
@@ -1147,6 +1148,7 @@ const NPM_BUNDLED_DEPENDENCY_POLICIES = new Map<
       exceptions: new Map([
         ["node_modules/npm/node_modules/minimatch", "10.2.5"],
         ["node_modules/npm/node_modules/ip-address", "10.7.2"],
+        ["node_modules/npm/node_modules/glob", "13.0.6"],
       ]),
     },
   ],
@@ -2136,7 +2138,9 @@ export function resolveNpmLockJobs(
     OMNIPOLYMATH_NPM_LOCK_JOBS: rawText,
   });
   if (jobs > NPM_LOCK_MAX_JOBS) {
-    throw new Error(`invalid OMNIPOLYMATH_NPM_LOCK_JOBS: ${rawText}; maximum is ${NPM_LOCK_MAX_JOBS}`);
+    throw new Error(
+      `invalid OMNIPOLYMATH_NPM_LOCK_JOBS: ${rawText}; maximum is ${NPM_LOCK_MAX_JOBS}`,
+    );
   }
   return jobs;
 }
