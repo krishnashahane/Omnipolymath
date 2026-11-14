@@ -26,8 +26,8 @@ export function publicationPullRequestResponse(pr: PublicationPullRequestFixture
     user: { id: pr.userId },
     state: pr.state,
     body: pr.body,
-    head: { ref: pr.headRef, sha: pr.headSha, repo: { full_name: "krishnashahane/Omnipolymath" } },
-    base: { ref: pr.baseRef, repo: { full_name: "krishnashahane/Omnipolymath" } },
+    head: { ref: pr.headRef, sha: pr.headSha, repo: { full_name: "omnipolymath/omnipolymath" } },
+    base: { ref: pr.baseRef, repo: { full_name: "omnipolymath/omnipolymath" } },
   };
 }
 
@@ -98,8 +98,8 @@ export function createSyntheticPublicationTransport(params: {
     user: { id: 42 },
     state: "open",
     body: "",
-    head: { ref: branch, sha: newHead, repo: { full_name: "krishnashahane/Omnipolymath" } },
-    base: { ref: "main", repo: { full_name: "krishnashahane/Omnipolymath" } },
+    head: { ref: branch, sha: newHead, repo: { full_name: "omnipolymath/omnipolymath" } },
+    base: { ref: "main", repo: { full_name: "omnipolymath/omnipolymath" } },
   };
   return async (argv: string[], options?: { input?: string }) => {
     commands.push(argv);
@@ -280,7 +280,7 @@ export async function createRealPublicationWorkspace(params: {
     checkoutRoot: cwd,
     repoRoot: cwd,
     fingerprint: worktree.repoFingerprint,
-    originUrl: "git@github.com:krishnashahane/Omnipolymath.git",
+    originUrl: "git@github.com:omnipolymath/omnipolymath.git",
   });
   mocks.updateIndex.mockImplementation(updateGitHubPublicationBranchAndIndex);
   const remote = mocks.runCommand.getMockImplementation()!;
