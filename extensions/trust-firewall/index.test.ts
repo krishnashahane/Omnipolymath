@@ -43,6 +43,7 @@ it("is enabled by default and registers every trust hook", () => {
       "before_tool_call",
       "gateway_start",
       "llm_output",
+      "resolve_exec_env",
     ].toSorted(),
   );
 });
