@@ -260,7 +260,7 @@ describe("shared publication to a prepared original PR", () => {
         status: "published",
         url: f.pr.html_url,
         branch: "topic/original",
-        repository: "krishnashahane/Omnipolymath",
+        repository: "omnipolymath/omnipolymath",
         headCommit: f.pr.head.sha,
       });
       expect(await f.local.git("merge-base", f.originalHead, f.pr.head.sha)).toBe(f.originalHead);
