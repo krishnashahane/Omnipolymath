@@ -133,7 +133,7 @@ it("recovers independent worktrees while preserving each worktree's publication 
       checkoutRoot: cwd,
       repoRoot: cwd,
       fingerprint: worktree.repoFingerprint,
-      originUrl: "git@github.com:krishnashahane/Omnipolymath.git",
+      originUrl: "git@github.com:omnipolymath/omnipolymath.git",
     };
   });
   const firstDispatched = Promise.withResolvers<void>();
@@ -176,7 +176,7 @@ it("recovers independent worktrees while preserving each worktree's publication 
         const input = JSON.parse(options!.input!);
         const headRef = input.head.split(":")[1];
         const number = headRef === secondWorktree.branch ? 125201 : 125200;
-        const url = `https://github.com/krishnashahane/Omnipolymath/pull/${number}`;
+        const url = `https://github.com/omnipolymath/omnipolymath/pull/${number}`;
         const headSha = remoteHeads.get(headRef);
         if (!headSha) {
           throw new Error("Fixture PR has no accepted push");
@@ -574,7 +574,9 @@ it.each([false, true])(
           JSON.stringify(nextPullRequest ? [pullRequest, nextPullRequest] : [pullRequest]),
         );
       }
-      const comparison = argv.find((arg) => arg.startsWith("repos/omnipolymath/omnipolymath/compare/"));
+      const comparison = argv.find((arg) =>
+        arg.startsWith("repos/omnipolymath/omnipolymath/compare/"),
+      );
       if (comparison) {
         const [left, right] = comparison.split("/compare/")[1]!.split("...");
         return commandResult(
@@ -608,7 +610,9 @@ it.each([false, true])(
       sessionId: f.session.sessionId,
       idempotencyKey,
     })!;
-    expect(nextPullRequest?.body).toContain(`<!-- omnipolymath-publication:${request.request_id} -->`);
+    expect(nextPullRequest?.body).toContain(
+      `<!-- omnipolymath-publication:${request.request_id} -->`,
+    );
     const acceptedWrites = [...f.externalWrites];
     await f.revoke();
     readbackAvailable = true;

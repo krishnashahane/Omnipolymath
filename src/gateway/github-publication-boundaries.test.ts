@@ -270,7 +270,7 @@ describe("Gateway GitHub publication boundaries", () => {
       return {
         checkoutRoot: "/repo/worktree",
         repoRoot: "/repo",
-        originUrl: "git@github.com:krishnashahane/Omnipolymath.git",
+        originUrl: "git@github.com:omnipolymath/omnipolymath.git",
         fingerprint: "fingerprint-1",
       };
     });
@@ -366,7 +366,7 @@ describe("Gateway GitHub publication boundaries", () => {
       label: "foreign owner",
       response: JSON.stringify([
         {
-          url: "https://github.com/krishnashahane/Omnipolymath/pull/foreign",
+          url: "https://github.com/omnipolymath/omnipolymath/pull/foreign",
           userId: 99,
           state: "open",
           body: "",
