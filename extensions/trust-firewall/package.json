@@ -2,7 +2,7 @@
   "name": "@omnipolymath/trust-firewall",
   "version": "2026.11.3",
   "private": true,
-  "description": "Trust Firewall for Omnipolymath: approvals, injection shield, action log, spend cap and receipts",
+  "description": "Trust Firewall for Omnipolymath: approvals, injection shield, egress guard, action log, spend cap and receipts",
   "type": "module",
   "devDependencies": {
     "@omnipolymath/plugin-sdk": "workspace:*"
