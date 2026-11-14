@@ -59,7 +59,7 @@ export const forPublicationBackends = <T extends string>(changes: readonly T[]) 
 export function createPublicationRepositories(fork = false) {
   const baseRepo = {
     id: 10,
-    full_name: "krishnashahane/Omnipolymath",
+    full_name: "omnipolymath/omnipolymath",
     private: false,
     archived: false,
     owner: { type: "Organization" },
@@ -290,7 +290,9 @@ export async function createRequesterPublicationFixture(
     request,
     restart() {
       return createTestGitHubPublicationCoordinator({
-        placements: createWorkerSessionPlacementStore({ database: openOmnipolymathStateDatabase() }),
+        placements: createWorkerSessionPlacementStore({
+          database: openOmnipolymathStateDatabase(),
+        }),
       });
     },
     readReceipt(requestId: string) {
@@ -351,7 +353,9 @@ type StoredVisitorGrant = {
   expiresAt: number | null;
 };
 
-export function requireVisitorPublicationPolicy(f: { config: OmnipolymathConfig }): OmnipolymathConfig {
+export function requireVisitorPublicationPolicy(f: {
+  config: OmnipolymathConfig;
+}): OmnipolymathConfig {
   const config = withPublicationGuestRole(f.config, {
     sandbox: "required" as const,
     accessPolicyPlugin: "visitor-access",
