@@ -107,6 +107,11 @@ export default definePluginEntry({
       }
     };
 
+    if (config.execEnv.disableCloudMetadata) {
+      // Cloud SDKs inside agent shells must never pick up instance credentials.
+      api.on("resolve_exec_env", () => ({ AWS_EC2_METADATA_DISABLED: "true" }));
+    }
+
     api.on("before_tool_call", async (event, ctx) => {
       const runId = event.runId ?? ctx.runId;
       const sandboxed = await sandboxedFor(event.toolName, ctx);
