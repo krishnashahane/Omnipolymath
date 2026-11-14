@@ -66,7 +66,7 @@ it.each([`DROP TABLE ${lifecycleTable}`, `DELETE FROM ${lifecycleTable}`])(
     createGitHubPublicationExecutionStoreFixture("legacy-instance").complete(claimed, {
       requestId: legacy.request_id,
       status: "published",
-      repository: "krishnashahane/Omnipolymath",
+      repository: "omnipolymath/omnipolymath",
       branch: legacy.branch,
       url: "https://github.com/omnipolymath/omnipolymath/pull/12",
       headCommit: NEW_HEAD,

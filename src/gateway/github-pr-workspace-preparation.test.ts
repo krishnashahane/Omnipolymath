@@ -241,13 +241,13 @@ describe("existing PR preparation through the registered agent action", () => {
             host: "github.com",
             number: 7,
             base: {
-              repository: "krishnashahane/Omnipolymath",
+              repository: "omnipolymath/omnipolymath",
               repositoryId: 10,
               branch: baseBranch,
               commit: f.pr.base.sha,
             },
             head: {
-              repository: fork ? "contributor/omnipolymath" : "krishnashahane/Omnipolymath",
+              repository: fork ? "contributor/omnipolymath" : "omnipolymath/omnipolymath",
               repositoryId: fork ? 20 : 10,
               branch: "topic/existing",
               commit: f.headCommit,

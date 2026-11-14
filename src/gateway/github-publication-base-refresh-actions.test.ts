@@ -178,7 +178,7 @@ it("recovers a retargeted guest PR, retains saved data and publishes the resolve
       argv.includes("fetch") &&
       (argv.some((arg) => arg.split(":")[0] === partialBase) || argv.includes("--stdin"))
     ) {
-      expect(argv).toContain("https://github.com/krishnashahane/Omnipolymath.git");
+      expect(argv).toContain("https://github.com/omnipolymath/omnipolymath.git");
       expect(argv).toContain("credential.helper=!gh auth git-credential");
       if (argv.includes("--stdin")) {
         contentFetches++;
@@ -189,7 +189,9 @@ it("recovers a retargeted guest PR, retains saved data and publishes the resolve
         commitFetches++;
       }
       return await runCommandBuffered(
-        argv.map((arg) => (arg === "https://github.com/krishnashahane/Omnipolymath.git" ? upstreamUrl : arg)),
+        argv.map((arg) =>
+          arg === "https://github.com/omnipolymath/omnipolymath.git" ? upstreamUrl : arg,
+        ),
         { ...options, cwd, timeoutMs: 10_000 },
       );
     }
