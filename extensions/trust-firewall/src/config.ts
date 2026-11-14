@@ -1,6 +1,10 @@
 import type { ModelPrice } from "./budget.js";
+import { EGRESS_MODES, type EgressMode } from "./egress.js";
 import { UNSANDBOXED_SHELL_POLICIES, type UnsandboxedShellPolicy } from "./host-guard.js";
 import type { RiskTier } from "./risk.js";
+
+export type Posture = "restricted" | "balanced" | "personal";
+export const POSTURES: Posture[] = ["restricted", "balanced", "personal"];
 
 export type FirewallMode = "enforce" | "monitor" | "dry-run";
 
@@ -61,6 +65,22 @@ export type TrustFirewallConfig = {
    * services, ssh keys), "approve-all" asks before every one, "allow" never asks.
    */
   unsandboxedShell: UnsandboxedShellPolicy;
+  /** Preset that sets the defaults below; explicit fields still win. */
+  posture: Posture;
+  /** Network destinations agents may reach (see egress.ts). */
+  egress: {
+    /** "approve-new" asks before contacting a host outside allowedHosts. */
+    mode: EgressMode;
+    /** Hosts reachable without approval; "*.example.com" covers subdomains. */
+    allowedHosts: string[];
+    /** Always block cloud metadata and link-local destinations. */
+    blockMetadata: boolean;
+  };
+  /** Environment hardening for shell commands the agent runs. */
+  execEnv: {
+    /** Set AWS_EC2_METADATA_DISABLED=true so SDKs never fetch instance credentials. */
+    disableCloudMetadata: boolean;
+  };
   /** Hard daily spend cap in USD. 0 disables the cap. */
   dailySpendCapUsd: number;
   /** Operator-supplied prices in USD per million tokens, keyed by model id. */
@@ -107,6 +127,9 @@ export const DEFAULT_CONFIG: TrustFirewallConfig = {
   snapshots: { enabled: true },
   sandboxNudge: true,
   unsandboxedShell: "approve-risky",
+  posture: "balanced",
+  egress: { mode: "off", allowedHosts: [], blockMetadata: true },
+  execEnv: { disableCloudMetadata: true },
   dailySpendCapUsd: 25,
   prices: {},
   defaultPrice: { inputPerMTok: 5, outputPerMTok: 25 },
@@ -215,6 +238,25 @@ function obj(v: unknown, field: string): Record<string, unknown> | undefined {
   return v;
 }
 
+/**
+ * Posture presets, after NemoClaw's onboarding tiers. "balanced" is the default
+ * configuration; "restricted" asks before anything leaves the machine and before
+ * contacting new hosts; "personal" trusts outbound messages from clean runs.
+ */
+function applyPosture(c: TrustFirewallConfig) {
+  if (c.posture === "restricted") {
+    c.approveTiers = ["external", "spend", "irreversible"];
+    c.taintedApproveTiers = ["write", "external"];
+    c.unsandboxedShell = "approve-all";
+    c.egress.mode = "approve-new";
+    c.skills.blockHighRisk = true;
+  } else if (c.posture === "personal") {
+    c.approveTiers = ["spend", "irreversible"];
+    c.taintedApproveTiers = ["external"];
+    c.unsandboxedShell = "approve-risky";
+  }
+}
+
 export function parseConfig(raw: unknown): TrustFirewallConfig {
   if (raw === undefined || raw === null) {
     return structuredClone(DEFAULT_CONFIG);
@@ -223,6 +265,13 @@ export function parseConfig(raw: unknown): TrustFirewallConfig {
     fail("configuration must be an object");
   }
   const c = structuredClone(DEFAULT_CONFIG);
+  if (raw.posture !== undefined) {
+    if (!POSTURES.includes(raw.posture as Posture)) {
+      fail(`posture must be one of ${POSTURES.join("|")}`);
+    }
+    c.posture = raw.posture as Posture;
+    applyPosture(c);
+  }
   if (raw.mode !== undefined) {
     if (raw.mode !== "enforce" && raw.mode !== "monitor" && raw.mode !== "dry-run") {
       fail("mode must be enforce|monitor|dry-run");
@@ -408,6 +457,29 @@ export function parseConfig(raw: unknown): TrustFirewallConfig {
       fail("receipts must be an object");
     }
     c.receipts = { enabled: raw.receipts.enabled !== false };
+  }
+  const eg = obj(raw.egress, "egress");
+  if (eg) {
+    if (eg.mode !== undefined) {
+      if (!EGRESS_MODES.includes(eg.mode as EgressMode)) {
+        fail(`egress.mode must be one of ${EGRESS_MODES.join("|")}`);
+      }
+      c.egress.mode = eg.mode as EgressMode;
+    }
+    if (eg.allowedHosts !== undefined) {
+      c.egress.allowedHosts = strList(eg.allowedHosts, "egress.allowedHosts").map((h) =>
+        h.trim().toLowerCase(),
+      );
+    }
+    c.egress.blockMetadata = bool(eg.blockMetadata, "egress.blockMetadata", c.egress.blockMetadata);
+  }
+  const ee = obj(raw.execEnv, "execEnv");
+  if (ee) {
+    c.execEnv.disableCloudMetadata = bool(
+      ee.disableCloudMetadata,
+      "execEnv.disableCloudMetadata",
+      c.execEnv.disableCloudMetadata,
+    );
   }
   if (raw.approvalTimeoutMs !== undefined) {
     const t = raw.approvalTimeoutMs;
