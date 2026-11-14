@@ -129,7 +129,7 @@ function installPublicationRecoveryTests(engine: "sqlite" | "postgres") {
         }),
       ).toMatchObject({
         head_commit: NEW_HEAD,
-        repository: "krishnashahane/Omnipolymath",
+        repository: "omnipolymath/omnipolymath",
         branch: BRANCH,
       });
       await runtime.close();
