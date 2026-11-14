@@ -12,17 +12,20 @@ them before running them: [install.sh](https://omnipolymath.vercel.app/install.s
 [install-cli.sh](https://omnipolymath.vercel.app/install-cli.sh),
 [install.ps1](https://omnipolymath.vercel.app/install.ps1).
 
-Omnipolymath isn't published to npm yet, so the shell installers build from source.
+By default the shell installers download the prebuilt package from the latest
+[GitHub release](https://github.com/krishnashahane/Omnipolymath/releases/latest),
+check its SHA-256 and install it with npm. With `--from-source`, a branch in
+`OMNIPOLYMATH_REF`, or when a release has no package, they build from source.
 
 ## Requirements
 
 The installers check for these and stop with a clear message if one is missing.
 They don't install them for you.
 
-- **git**
-- **Node.js 24.16+ on 24.x, or 26.1+** (see [Node.js compatibility](/install/node-compatibility))
-- **pnpm**, or Node's `corepack`, which the installer uses to run pnpm
+- **Node.js 24.16+ on 24.x, or 26.1+** with npm (see [Node.js compatibility](/install/node-compatibility))
+- **curl**
 - **macOS or Linux** (on Windows, use WSL2)
+- For source builds only: **git**, and **pnpm** or Node's `corepack`
 
 They refuse to run as root.
 
@@ -35,6 +38,12 @@ curl -fsSL https://omnipolymath.vercel.app/install.sh | bash
 # Install without onboarding
 curl -fsSL https://omnipolymath.vercel.app/install.sh | bash -s -- --no-onboard
 
+# Install a specific release
+curl -fsSL https://omnipolymath.vercel.app/install.sh | OMNIPOLYMATH_REF=v2026.11.3 bash
+
+# Build the latest main from source
+curl -fsSL https://omnipolymath.vercel.app/install.sh | bash -s -- --from-source
+
 # Build a specific branch or tag from a fork
 curl -fsSL https://omnipolymath.vercel.app/install.sh | \
   OMNIPOLYMATH_REPO=https://github.com/you/Omnipolymath.git OMNIPOLYMATH_REF=my-branch bash
@@ -44,31 +53,38 @@ curl -fsSL https://omnipolymath.vercel.app/install.sh | \
 
 ### Flow (install.sh)
 
-1. Check the operating system, git, Node.js and pnpm (or corepack).
-2. Clone the repository with `git clone --depth 1` into `OMNIPOLYMATH_DIR`, or, if a
+1. Check the operating system and Node.js.
+2. Unless you asked for a source build or a branch: download `omnipolymath.tgz` and
+   `omnipolymath.tgz.sha256` from the release, stop if the checksum doesn't match,
+   install the package with `npm install --global --prefix OMNIPOLYMATH_PREFIX`,
+   and skip to step 5. If the release has no package, fall back to step 3.
+3. Check git and pnpm (or corepack), then clone the repository with `git clone --depth 1` into `OMNIPOLYMATH_DIR`, or, if a
    checkout is already there, fetch `OMNIPOLYMATH_REF` and check it out.
-3. Run `pnpm install --frozen-lockfile` (falling back to `pnpm install`), then
+4. Run `pnpm install --frozen-lockfile` (falling back to `pnpm install`), then
    `pnpm build` and `pnpm ui:build`.
-4. Write a small `omnipolymath` wrapper into `OMNIPOLYMATH_BIN` that runs
-   `node <checkout>/omnipolymath.mjs`, and warn if that directory isn't on your `PATH`.
-5. Start `omnipolymath onboard --install-daemon` when a terminal is attached, unless
+5. Write a small `omnipolymath` wrapper into `OMNIPOLYMATH_BIN` that runs the
+   installed `omnipolymath.mjs`, and warn if that directory isn't on your `PATH`.
+6. Start `omnipolymath onboard --install-daemon` when a terminal is attached, unless
    you passed `--no-onboard`.
 
-Running the installer again updates the checkout and rebuilds.
+Running the installer again installs the newest release, or updates the checkout
+and rebuilds for source builds.
 
 ### Options
 
-| Option         | Description     |
-| -------------- | --------------- |
-| `--no-onboard` | Skip onboarding |
-| `-h`, `--help` | Show usage      |
+| Option          | Description                                                          |
+| --------------- | -------------------------------------------------------------------- |
+| `--no-onboard`  | Skip onboarding                                                      |
+| `--from-source` | Build from the repository instead of installing the prebuilt package |
+| `-h`, `--help`  | Show usage                                                           |
 
-| Environment variable | Default                                              | Description                                 |
-| -------------------- | ---------------------------------------------------- | ------------------------------------------- |
-| `OMNIPOLYMATH_DIR`   | `~/.omnipolymath-src`                                | Source checkout location                    |
-| `OMNIPOLYMATH_REPO`  | `https://github.com/krishnashahane/Omnipolymath.git` | Repository to clone                         |
-| `OMNIPOLYMATH_REF`   | `main`                                               | Branch or tag to build                      |
-| `OMNIPOLYMATH_BIN`   | `~/.local/bin`                                       | Where the `omnipolymath` command is written |
+| Environment variable  | Default                                              | Description                                 |
+| --------------------- | ---------------------------------------------------- | ------------------------------------------- |
+| `OMNIPOLYMATH_PREFIX` | `~/.omnipolymath-cli`                                | Where the prebuilt package is installed     |
+| `OMNIPOLYMATH_DIR`    | `~/.omnipolymath-src`                                | Source checkout location                    |
+| `OMNIPOLYMATH_REPO`   | `https://github.com/krishnashahane/Omnipolymath.git` | Repository to clone                         |
+| `OMNIPOLYMATH_REF`    | `latest`                                             | Release tag, `latest`, or a branch to build |
+| `OMNIPOLYMATH_BIN`    | `~/.local/bin`                                       | Where the `omnipolymath` command is written |
 
 ## install-cli.sh
 

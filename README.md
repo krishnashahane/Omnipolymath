@@ -39,19 +39,20 @@ Agents hold your credentials, read your mail and run commands on real machines. 
 | **Signed handoffs**      | `omnipolymath firewall handoff` issues and verifies Ed25519-signed, scoped, expiring delegations between agents.                                                                                                                                                                                                                                                                             |
 | **No telemetry**         | Nothing is sent anywhere unless you set `OMNIPOLYMATH_TELEMETRY_ENDPOINT`.                                                                                                                                                                                                                                                                                                                   |
 | **Sandbox**              | Shell commands can run in Docker with one setting (`agents.defaults.sandbox.mode: "non-main"`). Without Docker they run on your machine, so commands that change it (sudo, system and shell-profile files, global installs, services, SSH keys) need your approval first. Set `unsandboxedShell: "approve-all"` to approve every command.                                                    |
+| **Egress guard**         | Agent shells and tools can't reach cloud-metadata endpoints that hand out credentials. Optionally, every new host needs your approval once, and `posture: "restricted"` turns on the strictest defaults in one line.                                                                                                                                                                         |
 
 > **What undo can't reverse:** only file edits made with `write`, `edit` and `apply_patch` can be rolled back. A shell command that already ran, a message that was sent or a payment that went through stays done, so keep approvals on for those tiers.
 
 ## Install
 
-Omnipolymath runs on macOS, Linux and Windows (WSL2) with git, Node.js 24.16+ or 26.1+ and pnpm. It isn't published to npm yet, so install it from source:
+Omnipolymath runs on macOS, Linux and Windows (WSL2) with Node.js 24.16+ or 26.1+. One command installs it:
 
 ```bash
 # macOS / Linux / WSL2
 curl -fsSL https://omnipolymath.vercel.app/install.sh | bash
 ```
 
-The installer checks your Node.js and pnpm versions, clones this repository, builds it and starts onboarding. To do the same by hand:
+The installer downloads the prebuilt package from the [latest release](https://github.com/krishnashahane/Omnipolymath/releases/latest), checks its SHA-256, installs it with npm into `~/.omnipolymath-cli` and starts onboarding. It includes all 162 bundled channels, model providers and tools, and never runs as root. Add `--from-source` (or set `OMNIPOLYMATH_REF=main`) to build from the repository instead, which needs git and pnpm. To build by hand:
 
 ```bash
 git clone https://github.com/krishnashahane/Omnipolymath.git
