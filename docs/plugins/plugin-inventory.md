@@ -198,7 +198,7 @@ Each entry lists the package, distribution route, and description.
 
 - **[together](/plugins/reference/together)** (`@omnipolymath/together-provider`) - included in Omnipolymath. Adds Together model provider support to Omnipolymath.
 
-- **[trust-firewall](/plugins/reference/trust-firewall)** (`@omnipolymath/trust-firewall`) - included in Omnipolymath. Least-privilege approvals, prompt-injection shield with a model second opinion, tamper-evident action log with undo, dry-run mode, daily spend cap, agent wallets, self-cleaning memory, skill install checks and a receipt for every run.
+- **[trust-firewall](/plugins/reference/trust-firewall)** (`@omnipolymath/trust-firewall`) - included in Omnipolymath. Least-privilege approvals, prompt-injection shield with a model second opinion, egress guard against cloud-metadata credential theft, host guard for unsandboxed shells, tamper-evident action log with undo, dry-run mode, posture presets, daily spend cap, agent wallets, self-cleaning memory, skill install checks and a receipt for every run.
 
 - **[tts-local-cli](/plugins/reference/tts-local-cli)** (`@omnipolymath/tts-local-cli`) - included in Omnipolymath. Adds text-to-speech provider support.
 
