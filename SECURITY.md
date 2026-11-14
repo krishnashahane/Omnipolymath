@@ -6,7 +6,7 @@ This policy does two things: it gives researchers a clear disclosure path, and i
 
 The fastest useful reports show a current, reproducible boundary bypass with demonstrated impact. Scanner output, prompt-injection-only chains, or reports that rely on hostile users sharing one trusted gateway are usually not security vulnerabilities under this model.
 
-Security work is shared across a number of Omnipolymath maintainers, including engineers and security researchers from organizations such as NVIDIA and Tencent. See the [maintainer list](CONTRIBUTING.md#maintainers).
+Omnipolymath is maintained by Krishna Shahane, who triages every security report. See the [maintainer list](CONTRIBUTING.md#maintainers).
 
 ## Shared Agents
 
@@ -14,17 +14,11 @@ Anyone who can operate an agent can make it do anything that agent can do. Sessi
 
 ## Report a Security Issue
 
-Report vulnerabilities directly to the repository where the issue lives:
+Report every vulnerability privately through a [GitHub Security Advisory](https://github.com/krishnashahane/Omnipolymath/security/advisories/new) on this repository. That covers the CLI and Gateway, the bundled plugins (including the Trust Firewall), the website and installers, and the macOS, iOS and Android app sources under `apps/`.
 
-- **Core CLI and gateway** — [krishnashahane/Omnipolymath](https://github.com/krishnashahane/Omnipolymath)
-- **macOS desktop app** — [krishnashahane/Omnipolymath](https://github.com/krishnashahane/Omnipolymath) (apps/macos)
-- **iOS app** — [krishnashahane/Omnipolymath](https://github.com/krishnashahane/Omnipolymath) (apps/ios)
-- **Android app** — [krishnashahane/Omnipolymath](https://github.com/krishnashahane/Omnipolymath) (apps/android)
-- **ClawHub** — omnipolymath/clawhub
+Issues in ClawHub, the skills registry, belong to the upstream project that runs it; report those to ClawHub's maintainers. Issues in third-party plugins go to their publishers.
 
-For issues that don't fit a specific repo, or if you're unsure, email **[security@omnipolymath.vercel.app](mailto:security@omnipolymath.vercel.app)** and we'll route it.
-
-For Omnipolymath core issues, submit through a private [GitHub Security Advisory](https://github.com/krishnashahane/Omnipolymath/security/advisories/new). Do not open a public issue or PR that discloses an unpatched vulnerability, exploit path, secret, or security-sensitive proof of concept.
+Do not open a public issue or PR that discloses an unpatched vulnerability, exploit path, secret, or security-sensitive proof of concept.
 
 Maintainers may close, hide, delete, or otherwise take down public issues and PRs that disclose vulnerabilities or active security issues. We will redirect those reports through the private disclosure process so the issue can be triaged and fixed without giving attackers a public playbook.
 
