@@ -9,14 +9,14 @@ title: "Android app"
 ---
 
 <Note>
-The official Android app is available on [Google Play](https://play.google.com/store/apps/details?id=ai.omnipolymath.app&hl=en_IN) and, for sideloading, as a signed standalone APK on selected [GitHub Releases](https://github.com/krishnashahane/Omnipolymath/releases). Not every release includes the APK and checksum. See [Install outside Google Play](/platforms/android#install-outside-google-play) to find and verify both files. It is a companion node and requires a running Omnipolymath Gateway. Source: [apps/android](https://github.com/krishnashahane/Omnipolymath/tree/main/apps/android) ([build instructions](https://github.com/krishnashahane/Omnipolymath/blob/main/apps/android/README.md)).
+The Android app isn't on Google Play and no release ships an APK yet, so build it from source. It is a companion node and requires a running Omnipolymath Gateway. Source: [apps/android](https://github.com/krishnashahane/Omnipolymath/tree/main/apps/android) ([build instructions](https://github.com/krishnashahane/Omnipolymath/blob/main/apps/android/README.md)).
 </Note>
 
 ## Support snapshot
 
 - Role: companion node app (Android does not host the Gateway).
 - Gateway required: yes (run it on macOS, Linux, or Windows via WSL2).
-- Install: [Google Play](https://play.google.com/store/apps/details?id=ai.omnipolymath.app&hl=en_IN) or `Omnipolymath-Android.apk` from a [GitHub Release](https://github.com/krishnashahane/Omnipolymath/releases) that lists both required assets (see [Install outside Google Play](/platforms/android#install-outside-google-play)), [Getting Started](/start/getting-started) for the Gateway, then [Pairing](/channels/pairing).
+- Install: build from [apps/android](https://github.com/krishnashahane/Omnipolymath/tree/main/apps/android) (no store or APK release yet), [Getting Started](/start/getting-started) for the Gateway, then [Pairing](/channels/pairing).
 - Gateway: [Runbook](/gateway) + [Configuration](/gateway/configuration).
   - Protocols: [Gateway protocol](/gateway/protocol) (nodes + control plane).
 - Select an agent in the sidebar to view its credential status in **Settings → Providers & Models**. The page updates when the Gateway publishes model, credential, or config changes. Use **Refresh** to recheck model availability. Available model choices remain visible during background refreshes. A successful recovery clears the refresh warning automatically.
