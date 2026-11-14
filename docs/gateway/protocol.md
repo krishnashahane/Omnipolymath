@@ -40,7 +40,7 @@ the TypeBox schemas re-exported from `packages/gateway-protocol/src/schema.ts`.
 
 Every section heading from the previous single-page version keeps its anchor here, so an existing link to this page with a fragment still resolves. Each entry points at the page that now holds the content.
 
-- <a id="npm-packages" />[npm packages](/gateway/protocol/transport#npm-packages)
+- <a id="npm-packages" />[Client packages](/gateway/protocol/transport#client-packages)
 - <a id="transport-and-framing" />[Transport and framing](/gateway/protocol/transport#transport-and-framing)
 - <a id="gateway-controlled-webrtc-talk" />[Gateway-controlled WebRTC Talk](/gateway/protocol/transport#gateway-controlled-webrtc-talk)
 - <a id="handshake" />[Handshake](/gateway/protocol/handshake#handshake)
