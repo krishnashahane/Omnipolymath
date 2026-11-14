@@ -8,7 +8,7 @@ title: "Building a Gateway client"
 doc-schema-version: 1
 ---
 
-Use the published Gateway packages to build operator dashboards, WebChat clients,
+Use the Gateway packages to build operator dashboards, WebChat clients,
 and other third-party applications. This guide covers the client lifecycle around
 the wire contract: authentication, capabilities, reconnect recovery, history,
 subscriptions, and version upgrades.
@@ -18,15 +18,15 @@ For frame shapes, the handshake, errors, and the complete method surface, read t
 
 ## Install the packages
 
-Install the verified stable release, `2026.8.1`, with exact version pins:
+The packages aren't published to npm yet. Build them from a checkout of the
+repository and depend on them by path:
 
 ```bash
-npm install --save-exact @omnipolymath/gateway-client@2026.8.1 @omnipolymath/gateway-protocol@2026.8.1
+git clone https://github.com/krishnashahane/Omnipolymath.git
+cd Omnipolymath && pnpm install && pnpm build
+# in your app:
+npm install --save ../Omnipolymath/packages/gateway-client ../Omnipolymath/packages/gateway-protocol
 ```
-
-If an existing lockfile still pins either package to the reserved `0.0.0`
-artifact, rerun the command above to replace it. Those reserved artifacts have no
-runnable entrypoint or TypeScript declarations.
 
 Package versions follow the Omnipolymath release train and are separate from the wire
 protocol version. The `2026.8.1` packages export wire version `4`; that does not
@@ -35,14 +35,12 @@ its own package versions and dist-tags. Pin and test the client and Gateway
 versions together, and check the [wire-version rules](/gateway/clients#track-protocol-versions)
 before upgrading. The `2026.8.1` client pins protocol package `2026.8.1` exactly.
 
-- [`@omnipolymath/gateway-protocol`](https://www.npmjs.com/package/@omnipolymath/gateway-protocol)
+- [`@omnipolymath/gateway-protocol`](https://github.com/krishnashahane/Omnipolymath/tree/main/packages/gateway-protocol)
   provides schemas, runtime validators, TypeScript types, client identity and
   capability registries, structured error readers, and protocol version constants.
-  Its npm tarball also includes the generated
-  [`protocol.schema.json`](https://unpkg.com/@omnipolymath/gateway-protocol@2026.8.1/protocol.schema.json)
-  machine-readable contract. Download it as a file; it is not an exported package
-  import subpath.
-- [`@omnipolymath/gateway-client`](https://www.npmjs.com/package/@omnipolymath/gateway-client)
+  The build also writes the generated `protocol.schema.json` machine-readable
+  contract; it is a file, not an exported package import subpath.
+- [`@omnipolymath/gateway-client`](https://github.com/krishnashahane/Omnipolymath/tree/main/packages/gateway-client)
   is the reference connection implementation. Import the package root for the Node
   client and `@omnipolymath/gateway-client/browser` for the browser-safe protocol,
   device-auth, and reconnect helpers.

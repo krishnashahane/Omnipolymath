@@ -117,7 +117,7 @@ resolves. Each entry points at the page that now holds the answer.
 - <a id="what-are-the-top-five-everyday-use-cases-for-omnipolymath" />[What are the top five everyday use cases for Omnipolymath?](/help/faq/what-is-omnipolymath#what-are-the-top-five-everyday-use-cases-for-omnipolymath)
 - <a id="can-omnipolymath-help-with-lead-gen-outreach-ads-and-blogs-for-a-saas" />[Can Omnipolymath help with lead gen, outreach, ads, and blogs for a SaaS?](/help/faq/what-is-omnipolymath#can-omnipolymath-help-with-lead-gen-outreach-ads-and-blogs-for-a-saas)
 - <a id="is-omnipolymath-owned-by-openai" />[Is Omnipolymath owned by OpenAI?](/help/faq/what-is-omnipolymath#is-omnipolymath-owned-by-openai)
-- <a id="what-does-omnipolymath-send-to-the-foundation" />[What does Omnipolymath send to the Foundation?](/help/faq/what-is-omnipolymath#what-does-omnipolymath-send-to-the-foundation)
+- <a id="what-does-omnipolymath-send-to-the-foundation" />[What does Omnipolymath send by default?](/help/faq/what-is-omnipolymath#what-does-omnipolymath-send-by-default)
 - <a id="how-is-omnipolymath-funded-and-how-does-that-compare" />[How is Omnipolymath funded, and how does that compare?](/help/faq/what-is-omnipolymath#how-is-omnipolymath-funded-and-how-does-that-compare)
 - <a id="what-are-the-advantages-vs-claude-code-for-web-development" />[What are the advantages vs Claude Code for web development?](/help/faq/what-is-omnipolymath#what-are-the-advantages-vs-claude-code-for-web-development)
 - <a id="skills-and-automation" />[Skills and automation](/help/faq/skills-and-automation#skills-and-automation)

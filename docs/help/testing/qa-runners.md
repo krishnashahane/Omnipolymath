@@ -219,7 +219,7 @@ gh workflow run package-acceptance.yml --ref main \
 ```bash
 gh workflow run package-acceptance.yml --ref main \
   -f source=url \
-  -f package_url=https://registry.npmjs.org/omnipolymath/-/omnipolymath-VERSION.tgz \
+  -f package_url=<package-tarball-url> \
   -f package_sha256=<sha256> \
   -f suite_profile=package
 ```

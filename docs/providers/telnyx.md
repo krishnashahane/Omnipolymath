@@ -6,7 +6,11 @@ read_when:
   - You want one OpenAI-compatible API for Telnyx AI inference
 ---
 
-[Telnyx AI inference](https://developers.telnyx.com/docs/inference/getting-started) provides hosted, OpenAI-compatible access to open-weight models plus proxied frontier routes. The vendor-maintained external [`@telnyx/omnipolymath-provider`](https://github.com/team-telnyx/omnipolymath-telnyx-provider) plugin supplies the runtime; Omnipolymath carries its catalog and onboarding metadata. Authenticated discovery follows the complete model set enabled for your Telnyx account, while the offline fallback contains the models available when that plugin release was built.
+<Warning>
+The Telnyx plugin is maintained outside this repository for the upstream project Omnipolymath is based on. It expects that project's plugin SDK, so it doesn't install or load in Omnipolymath yet. The rest of this page describes how the integration is designed to work.
+</Warning>
+
+[Telnyx AI inference](https://developers.telnyx.com/docs/inference/getting-started) provides hosted, OpenAI-compatible access to open-weight models plus proxied frontier routes. The vendor-maintained external `@telnyx/omnipolymath-provider` plugin supplies the runtime; Omnipolymath carries its catalog and onboarding metadata. Authenticated discovery follows the complete model set enabled for your Telnyx account, while the offline fallback contains the models available when that plugin release was built.
 
 | Property        | Value                                                                |
 | --------------- | -------------------------------------------------------------------- |

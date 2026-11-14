@@ -135,9 +135,6 @@ For teams that prefer Terraform, community-maintained projects provide remote
 state, cloud-init provisioning, deployment and backup scripts, firewall
 hardening, and SSH tunnel setup:
 
-- [omnipolymath-terraform-hetzner](https://github.com/andreesg/omnipolymath-terraform-hetzner)
-- [omnipolymath-docker-config](https://github.com/andreesg/omnipolymath-docker-config)
-
 <Note>
 These repositories are community-maintained. Report issues and contribute in
 their respective repositories.

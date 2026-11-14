@@ -1,95 +1,22 @@
 ---
-summary: "Host Omnipolymath on Hostinger"
+summary: "Hostinger has no managed Omnipolymath plan; use a Hostinger VPS with the standard VPS guide"
 read_when:
   - Setting up Omnipolymath on Hostinger
   - Looking for a managed VPS for Omnipolymath
-  - Using Hostinger 1-Click Omnipolymath
 title: "Hostinger"
 ---
 
-Run a persistent Omnipolymath Gateway on [Hostinger](https://www.hostinger.com/omnipolymath). Choose a **1-Click** managed deployment, or a **VPS** install you administer yourself.
+Hostinger doesn't offer a 1-Click or managed Omnipolymath plan, and there is no Omnipolymath image in its Docker Manager. Plans you may see there are for other software and won't install Omnipolymath.
 
-## Prerequisites
+You can still run Omnipolymath on any Hostinger **VPS** that you administer yourself:
 
-- Hostinger account ([signup](https://www.hostinger.com/omnipolymath))
-- About 5-10 minutes
-
-## Option A: 1-Click Omnipolymath
-
-Hostinger handles infrastructure, Docker, and automatic updates. Fastest path to a running instance.
-
-<Steps>
-  <Step title="Purchase and launch">
-    1. From the [Hostinger Omnipolymath page](https://www.hostinger.com/omnipolymath), choose a Managed Omnipolymath plan and complete checkout.
-
-    <Note>
-    During checkout you can select **Ready-to-Use AI** credits. These credits are pre-purchased and integrated instantly inside Omnipolymath. You need no external accounts or API keys from other providers. You can start chatting right away. Alternatively, provide your own key from Anthropic, OpenAI, Google Gemini, or xAI during setup.
-    </Note>
-
-  </Step>
-
-  <Step title="Select a messaging channel">
-    Choose one or more channels to connect:
-
-    - **WhatsApp** -- scan the QR code shown in the setup wizard.
-    - **Telegram** -- paste the bot token from [BotFather](https://t.me/BotFather).
-
-  </Step>
-
-  <Step title="Complete installation">
-    Click **Finish** to deploy the instance. Once ready, access the Omnipolymath dashboard from **Omnipolymath Overview** in hPanel.
-  </Step>
-
-</Steps>
-
-## Option B: Omnipolymath on VPS
-
-More control over the server. Hostinger deploys Omnipolymath via Docker on your VPS. You manage it through the **Docker Manager** in hPanel.
-
-<Steps>
-  <Step title="Purchase a VPS">
-    1. From the [Hostinger Omnipolymath page](https://www.hostinger.com/omnipolymath), choose an Omnipolymath on VPS plan and complete checkout.
-
-    <Note>
-    You can select **Ready-to-Use AI** credits during checkout. These credits are pre-purchased and integrated instantly inside Omnipolymath. You can start chatting without any external accounts or API keys from other providers.
-    </Note>
-
-  </Step>
-
-  <Step title="Configure Omnipolymath">
-    Once the VPS is provisioned, fill in the configuration fields:
-
-    - **Gateway token** -- auto-generated. Save it for later use.
-    - **WhatsApp number** -- your number with country code (optional).
-    - **Telegram bot token** -- from [BotFather](https://t.me/BotFather) (optional).
-    - **API keys** -- only needed if you did not select Ready-to-Use AI credits during checkout.
-
-  </Step>
-
-  <Step title="Start Omnipolymath">
-    Click **Deploy**. Once running, open the Omnipolymath dashboard from the hPanel by clicking on **Open**.
-  </Step>
-
-</Steps>
-
-Logs, restarts, and updates run from the Docker Manager interface in hPanel. To update, press **Update** in Docker Manager to pull the latest image.
+1. Create an Ubuntu VPS in hPanel and connect to it over SSH.
+2. Follow the [VPS hosting](/vps) guide, which installs Omnipolymath from source and keeps the Gateway running as a service.
+3. Keep the Gateway bound to loopback and reach the Control UI through an SSH tunnel or [Tailscale](/gateway/tailscale) instead of opening its port to the internet.
 
 ## Verify your setup
 
-Send "Hi" to your assistant on the channel you connected. Omnipolymath replies and walks you through initial preferences.
-
-## Troubleshooting
-
-**Dashboard not loading** -- Wait a few minutes for the container to finish provisioning. Then read the Docker Manager logs in hPanel.
-
-**Docker container keeps restarting** -- Open Docker Manager logs and look for configuration errors (missing tokens, invalid API keys).
-
-**Telegram bot not responding** -- With DM pairing required, an unknown sender gets a short pairing code, not a reply. Approve it from the Omnipolymath dashboard chat. You can also run `omnipolymath pairing approve telegram <CODE>` if you have shell access to the container. See [Pairing](/channels/pairing).
-
-## Next steps
-
-- [Channels](/channels) -- connect Telegram, WhatsApp, Discord, and more
-- [Gateway configuration](/gateway/configuration) -- all config options
+Run `omnipolymath doctor` on the VPS, then send "Hi" to your assistant on a channel you connected.
 
 ## Related
 
