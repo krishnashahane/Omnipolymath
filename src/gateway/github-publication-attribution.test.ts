@@ -322,7 +322,7 @@ describe("Gateway GitHub publication attribution", () => {
     mocks.resolveRepository.mockResolvedValue({
       checkoutRoot: worktree.path,
       repoRoot: worktree.repoRoot,
-      originUrl: "git@github.com:krishnashahane/Omnipolymath.git",
+      originUrl: "git@github.com:omnipolymath/omnipolymath.git",
       fingerprint: worktree.repoFingerprint,
     });
     await upsertSessionEntryCore(
