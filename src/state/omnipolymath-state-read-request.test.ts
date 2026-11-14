@@ -12,8 +12,8 @@ it("preserves admission charges for every UTF-16 code unit and surrogate boundar
   };
   const check = (key: string) => {
     request.command = { type: "machineState.read", input: { key } };
-    // Field names, slots, type, environment and paths contribute 85 bytes.
-    expect(requestBytes(request)).toBe(85 + Buffer.byteLength(JSON.stringify(key)));
+    // Field names, slots, type, environment and paths contribute 89 bytes.
+    expect(requestBytes(request)).toBe(89 + Buffer.byteLength(JSON.stringify(key)));
   };
   for (let code = 0; code <= 0xffff; code++) {
     check(String.fromCharCode(code));
