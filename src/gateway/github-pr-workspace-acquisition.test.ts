@@ -55,7 +55,9 @@ describe("PR source acquisition", () => {
             ).toBe(false);
           }
           return await transport(
-            argv.map((arg) => (arg === "https://github.com/krishnashahane/Omnipolymath.git" ? baseUrl : arg)),
+            argv.map((arg) =>
+              arg === "https://github.com/omnipolymath/omnipolymath.git" ? baseUrl : arg,
+            ),
             options,
           );
         },
