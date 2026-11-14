@@ -6,6 +6,10 @@ read_when:
 title: "WeCom"
 ---
 
+<Warning>
+The WeCom plugin is maintained outside this repository for the upstream project Omnipolymath is based on. It expects that project's plugin SDK, so it doesn't install or load in Omnipolymath yet. The rest of this page describes how the integration is designed to work.
+</Warning>
+
 Omnipolymath exposes WeCom through the external
 `@wecom/wecom-omnipolymath-plugin` package maintained by the Tencent WeCom team.
 The plugin is listed in Omnipolymath's official channel catalog but is not bundled
@@ -27,7 +31,7 @@ The Omnipolymath catalog installs an exact version of
 WeCom credentials, connection modes, callback routes, and access-control
 behavior belong to the external plugin and can change independently of
 Omnipolymath. Follow the
-[package documentation](https://www.npmjs.com/package/@wecom/wecom-omnipolymath-plugin)
+package documentation
 for the installed release before configuring the channel.
 
 When upgrading the plugin independently, keep using the documentation for the
