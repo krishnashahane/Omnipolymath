@@ -431,8 +431,8 @@ describe("personal publication authority and recovery", () => {
       source_head_commit: OLD_HEAD,
       source_index_tree: WORKSPACE_TREE,
       workspace_tree: WORKSPACE_TREE,
-      push_repository: "krishnashahane/Omnipolymath",
-      repository: "krishnashahane/Omnipolymath",
+      push_repository: "omnipolymath/omnipolymath",
+      repository: "omnipolymath/omnipolymath",
       branch: BRANCH,
     });
     expect(JSON.stringify(receipt)).not.toMatch(/synthetic|GH_CONFIG_DIR|claim_id|run_id/);
@@ -748,7 +748,7 @@ describe("personal publication authority and recovery", () => {
       confirmation: {
         account,
         generation,
-        repository: "krishnashahane/Omnipolymath",
+        repository: "omnipolymath/omnipolymath",
         workspaceTree: WORKSPACE_TREE,
       },
     });
