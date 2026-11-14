@@ -4,12 +4,18 @@
  */
 import { ActionLog, type ActionEntry } from "./action-log.js";
 import { SpendLedger, classifyPrompt, type Usage } from "./budget.js";
-import { InjectionClassifier, isUntrustedSource, type CompleteFn } from "./classifier.js";
+import {
+  InjectionClassifier,
+  addressesAnAgent,
+  isUntrustedSource,
+  type CompleteFn,
+} from "./classifier.js";
 import type { TrustFirewallConfig } from "./config.js";
+import { unsandboxedShellApproval } from "./host-guard.js";
 import { scanForInjection, textOf, type InjectionScan } from "./injection.js";
 import { ratesFromAssistant } from "./prices.js";
 import { buildReceipt, type Receipt } from "./receipt.js";
-import { assessToolCall, type RiskTier } from "./risk.js";
+import { assessToolCall, isShellTool, shellCommand, type RiskTier } from "./risk.js";
 import { SnapshotStore, fileTargets, resolveTargetPath, type FileSnapshot } from "./snapshots.js";
 import { WalletGuard, spendIntent } from "./wallet-guard.js";
 
@@ -21,6 +27,11 @@ export type ToolCallInput = {
   derivedPaths?: readonly string[];
   /** Agent workspace used to resolve relative file paths for snapshots. */
   workspaceDir?: string;
+  /**
+   * Whether this call runs inside the agent sandbox. `false` turns on the
+   * unsandboxed-shell guard; leave it undefined when the host cannot tell.
+   */
+  sandboxed?: boolean;
 };
 
 export type ToolDecision =
@@ -42,11 +53,15 @@ type RunState = {
   pendingIds: Map<string, string>;
   /** In-flight classifier checks; risky calls wait for them. */
   checks: Set<Promise<void>>;
+  /** Classifier calls started for this run (bounded by maxChecksPerRun). */
+  classifierCalls: number;
 };
 
 type PendingCall = {
   snapshots?: FileSnapshot[];
   releaseWallet?: () => void;
+  /** When the call was decided; stale entries are released (see sweepPending). */
+  at?: number;
 };
 
 const MAX_RUNS = 512;
@@ -60,6 +75,7 @@ export class TrustFirewall {
   readonly snapshots: SnapshotStore;
   readonly wallets: WalletGuard;
   private classifier?: InjectionClassifier;
+  private readonly now: () => number;
 
   constructor(
     readonly config: TrustFirewallConfig,
@@ -71,6 +87,7 @@ export class TrustFirewall {
       complete?: CompleteFn;
     } = {},
   ) {
+    this.now = opts.now ?? Date.now;
     this.log = new ActionLog(opts.logFile);
     this.ledger = new SpendLedger(
       config.dailySpendCapUsd,
@@ -100,6 +117,7 @@ export class TrustFirewall {
         startedAt: Date.now(),
         pendingIds: new Map(),
         checks: new Set(),
+        classifierCalls: 0,
       };
       this.runs.set(runId, state);
       if (this.runs.size > MAX_RUNS) {
@@ -113,7 +131,26 @@ export class TrustFirewall {
     return runId ? this.runs.get(runId)?.tainted === true : false;
   }
 
+  /**
+   * A call that was approved but never finished (cancelled run, lost hook)
+   * would otherwise hold its wallet reservation forever. Release anything older
+   * than twice the approval timeout plus an hour of run time.
+   */
+  sweepPending(): number {
+    const cutoff = this.now() - (2 * this.config.approvalTimeoutMs + 3_600_000);
+    let released = 0;
+    for (const [id, extra] of this.pending) {
+      if ((extra.at ?? 0) < cutoff) {
+        extra.releaseWallet?.();
+        this.pending.delete(id);
+        released += 1;
+      }
+    }
+    return released;
+  }
+
   beforeToolCall(call: ToolCallInput, toolCallId?: string): ToolDecision {
+    this.sweepPending();
     const { toolName, params, runId, agentId } = call;
     const risk = assessToolCall(toolName, params);
     const state = this.run(runId);
@@ -141,6 +178,7 @@ export class TrustFirewall {
         state?.pendingIds.set(toolCallId, entry.id);
       }
       if (extra.snapshots || extra.releaseWallet) {
+        extra.at = this.now();
         this.pending.set(entry.id, extra);
       }
       return entry;
@@ -207,14 +245,22 @@ export class TrustFirewall {
       return block(prepared.blocked);
     }
     const tainted = state?.tainted === true;
-    const needsApproval =
-      this.config.approveTiers.includes(risk.tier) ||
-      (tainted && this.config.taintedApproveTiers.includes(risk.tier));
+    const hostRisk =
+      call.sandboxed === false && isShellTool(toolName)
+        ? unsandboxedShellApproval(shellCommand(params) ?? "", this.config.unsandboxedShell)
+        : undefined;
+    if (hostRisk) {
+      risk.reasons.push(...hostRisk);
+    }
+    const tierApproval = this.config.approveTiers.includes(risk.tier);
+    const taintApproval = tainted && this.config.taintedApproveTiers.includes(risk.tier);
+    const needsApproval = tierApproval || taintApproval || hostRisk !== undefined;
     if (needsApproval && !monitor) {
-      const why =
-        tainted && !this.config.approveTiers.includes(risk.tier)
+      const why = tierApproval
+        ? `${risk.tier} action`
+        : taintApproval
           ? "this run read content that looks like a prompt injection"
-          : `${risk.tier} action`;
+          : "this shell command runs outside the sandbox and changes this machine";
       return {
         kind: "approve",
         entry: record("approval", risk.reasons, prepared),
@@ -304,8 +350,26 @@ export class TrustFirewall {
       state &&
       this.classifier &&
       content.trim().length >= 40 &&
-      isUntrustedSource(input.toolName)
+      isUntrustedSource(input.toolName) &&
+      (!this.config.injection.classifier.prefilter || addressesAnAgent(content))
     ) {
+      if (state.classifierCalls >= this.config.injection.classifier.maxChecksPerRun) {
+        if (state.classifierCalls === this.config.injection.classifier.maxChecksPerRun) {
+          state.classifierCalls += 1;
+          this.log.append({
+            runId: input.runId,
+            toolName: input.toolName,
+            tier: "read",
+            decision: "allowed",
+            reasons: [
+              `injection-classifier skipped: ${this.config.injection.classifier.maxChecksPerRun} checks per run reached; pattern scan only`,
+            ],
+            params: {},
+          });
+        }
+        return scan;
+      }
+      state.classifierCalls += 1;
       const classifier = this.classifier;
       const check = classifier
         .classify(content, input.toolName, input.agentId)

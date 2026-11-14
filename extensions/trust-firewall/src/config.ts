@@ -1,4 +1,5 @@
 import type { ModelPrice } from "./budget.js";
+import { UNSANDBOXED_SHELL_POLICIES, type UnsandboxedShellPolicy } from "./host-guard.js";
 import type { RiskTier } from "./risk.js";
 
 export type FirewallMode = "enforce" | "monitor" | "dry-run";
@@ -24,6 +25,13 @@ export type TrustFirewallConfig = {
       timeoutMs: number;
       maxChars: number;
       minConfidence: number;
+      /**
+       * Skip the model call for content that never addresses an AI or gives
+       * orders. Saves most classifier calls on ordinary pages and mail.
+       */
+      prefilter: boolean;
+      /** Model checks per run; content past the limit gets the pattern scan only. */
+      maxChecksPerRun: number;
     };
   };
   /** Spend limits enforced on every spend-tier tool call that names an amount. */
@@ -47,6 +55,12 @@ export type TrustFirewallConfig = {
   snapshots: { enabled: boolean };
   /** Warn at startup when Docker is available but the sandbox is off. */
   sandboxNudge: boolean;
+  /**
+   * Shell commands that run outside the sandbox: "approve-risky" asks before
+   * commands that change the host (sudo, system files, global installs,
+   * services, ssh keys), "approve-all" asks before every one, "allow" never asks.
+   */
+  unsandboxedShell: UnsandboxedShellPolicy;
   /** Hard daily spend cap in USD. 0 disables the cap. */
   dailySpendCapUsd: number;
   /** Operator-supplied prices in USD per million tokens, keyed by model id. */
@@ -73,7 +87,14 @@ export const DEFAULT_CONFIG: TrustFirewallConfig = {
   injection: {
     enabled: true,
     threshold: 0.5,
-    classifier: { enabled: true, timeoutMs: 8_000, maxChars: 12_000, minConfidence: 0.6 },
+    classifier: {
+      enabled: true,
+      timeoutMs: 8_000,
+      maxChars: 12_000,
+      minConfidence: 0.6,
+      prefilter: true,
+      maxChecksPerRun: 12,
+    },
   },
   wallet: { enabled: true, perTransactionUsd: 100, dailyUsd: 250, allowedPayees: [] },
   memory: { enabled: true, halfLifeDays: 30, minConfidence: 0.2, maxFacts: 2_000 },
@@ -85,6 +106,7 @@ export const DEFAULT_CONFIG: TrustFirewallConfig = {
   },
   snapshots: { enabled: true },
   sandboxNudge: true,
+  unsandboxedShell: "approve-risky",
   dailySpendCapUsd: 25,
   prices: {},
   defaultPrice: { inputPerMTok: 5, outputPerMTok: 25 },
@@ -269,6 +291,15 @@ export function parseConfig(raw: unknown): TrustFirewallConfig {
         0,
         1,
       );
+      k.prefilter = bool(cl.prefilter, "injection.classifier.prefilter", k.prefilter);
+      k.maxChecksPerRun = num(
+        cl.maxChecksPerRun,
+        "injection.classifier.maxChecksPerRun",
+        k.maxChecksPerRun,
+        1,
+        500,
+        true,
+      );
     }
   }
   const w = obj(raw.wallet, "wallet");
@@ -326,6 +357,13 @@ export function parseConfig(raw: unknown): TrustFirewallConfig {
     c.snapshots.enabled = bool(snap.enabled, "snapshots.enabled", c.snapshots.enabled);
   }
   c.sandboxNudge = bool(raw.sandboxNudge, "sandboxNudge", c.sandboxNudge);
+  if (raw.unsandboxedShell !== undefined) {
+    const policy = raw.unsandboxedShell;
+    if (!UNSANDBOXED_SHELL_POLICIES.includes(policy as UnsandboxedShellPolicy)) {
+      fail(`unsandboxedShell must be one of ${UNSANDBOXED_SHELL_POLICIES.join("|")}`);
+    }
+    c.unsandboxedShell = policy as UnsandboxedShellPolicy;
+  }
   if (raw.dailySpendCapUsd !== undefined) {
     const cap = raw.dailySpendCapUsd;
     if (typeof cap !== "number" || !Number.isFinite(cap) || cap < 0) {

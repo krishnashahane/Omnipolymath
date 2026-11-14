@@ -596,7 +596,7 @@ describe("model second opinion on injection", () => {
     fw.afterToolCall({
       toolName: "web_fetch",
       runId: "c2",
-      result: "a web page with plenty of ordinary words in it",
+      result: "a web page that tells the assistant plenty of ordinary words",
     });
     await fw.awaitChecks("c2");
     expect(n).toBe(1);

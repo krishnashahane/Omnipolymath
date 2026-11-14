@@ -141,6 +141,16 @@
                 "minimum": 0,
                 "maximum": 1,
                 "default": 0.6
+              },
+              "prefilter": {
+                "type": "boolean",
+                "default": true
+              },
+              "maxChecksPerRun": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 500,
+                "default": 12
               }
             }
           }
@@ -342,6 +352,15 @@
       "sandboxNudge": {
         "type": "boolean",
         "default": true
+      },
+      "unsandboxedShell": {
+        "type": "string",
+        "enum": [
+          "allow",
+          "approve-risky",
+          "approve-all"
+        ],
+        "default": "approve-risky"
       }
     }
   },

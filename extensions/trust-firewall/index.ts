@@ -4,6 +4,7 @@ import {
   type AnyAgentTool,
 } from "omnipolymath/plugin-sdk/plugin-entry";
 import { runCommandWithTimeout } from "omnipolymath/plugin-sdk/process-runtime";
+import { resolveSandboxRuntimeStatusAsync } from "omnipolymath/plugin-sdk/sandbox";
 import manifest from "./omnipolymath.plugin.json" with { type: "json" };
 import type { CompleteFn } from "./src/classifier.js";
 import { firewallPaths, type FirewallPaths } from "./src/cli.js";
@@ -11,6 +12,7 @@ import { parseConfig } from "./src/config.js";
 import { TrustFirewall } from "./src/firewall.js";
 import { FactStore, createFactTools } from "./src/memory-tools.js";
 import { formatReceipt } from "./src/receipt.js";
+import { isShellTool } from "./src/risk.js";
 import { checkSkillInstall } from "./src/skill-install.js";
 
 /**
@@ -85,8 +87,29 @@ export default definePluginEntry({
       firewall.route(event.prompt, event.attachments?.length ?? 0),
     );
 
+    /** Whether a shell call runs in the sandbox; anything unproven counts as the host. */
+    const sandboxedFor = async (
+      toolName: string,
+      ctx: { agentId?: string; sessionKey?: string },
+    ): Promise<boolean | undefined> => {
+      if (!isShellTool(toolName) || config.unsandboxedShell === "allow") {
+        return undefined;
+      }
+      try {
+        const status = await resolveSandboxRuntimeStatusAsync({
+          cfg: api.config,
+          sessionKey: ctx.sessionKey,
+          agentId: ctx.agentId,
+        });
+        return status.sandboxed;
+      } catch {
+        return false;
+      }
+    };
+
     api.on("before_tool_call", async (event, ctx) => {
       const runId = event.runId ?? ctx.runId;
+      const sandboxed = await sandboxedFor(event.toolName, ctx);
       // A model second opinion on untrusted content may still be running; let it land first.
       await firewall.awaitChecks(runId);
       const decision = firewall.beforeToolCall(
@@ -97,6 +120,7 @@ export default definePluginEntry({
           agentId: ctx.agentId,
           derivedPaths: event.derivedPaths,
           workspaceDir: workspaceFor(ctx.agentId),
+          sandboxed,
         },
         event.toolCallId ?? ctx.toolCallId,
       );
@@ -233,7 +257,12 @@ export default definePluginEntry({
             );
           }
         } catch {
-          // Docker not installed: nothing to suggest.
+          // Docker not installed: the host guard below is the remaining protection.
+        }
+        if (config.unsandboxedShell !== "allow") {
+          api.logger.info(
+            `trust-firewall: the agent sandbox is off, so shell commands that change this machine (sudo, system files, global installs, services, ssh keys) need your approval (unsandboxedShell=${config.unsandboxedShell}).`,
+          );
         }
       });
     }
