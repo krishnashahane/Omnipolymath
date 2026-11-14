@@ -349,7 +349,7 @@ export function seedLocalPublication(
     body: "Recovered after Gateway restart.",
     status: params.status,
     gateway_instance_id: params.headCommit === null ? null : "previous-gateway-instance",
-    repository: params.headCommit === null ? null : "krishnashahane/Omnipolymath",
+    repository: params.headCommit === null ? null : "omnipolymath/omnipolymath",
     branch: BRANCH,
     base_branch: params.headCommit === null ? null : "main",
     source_head_commit: OLD_HEAD,
@@ -609,7 +609,7 @@ export function installGitHubPublicationTestHarness(
     mocks.resolveRepository.mockResolvedValue({
       checkoutRoot: "/repo/worktree",
       repoRoot: "/repo",
-      originUrl: "git@github.com:krishnashahane/Omnipolymath.git",
+      originUrl: "git@github.com:omnipolymath/omnipolymath.git",
       fingerprint: "fingerprint-1",
     });
     mocks.loadSession.mockImplementation((sessionKey: string) => ({
