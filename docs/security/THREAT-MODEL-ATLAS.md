@@ -270,7 +270,7 @@ T-EXEC-002 → T-EXFIL-001 → External exfiltration
 
 ---
 
-_This threat model is a living document. Report security issues to `security@omnipolymath.vercel.app` or see the [Trust page](https://trust.openclaw.ai)._
+_This threat model is a living document. Report security issues privately through a [GitHub Security Advisory](https://github.com/krishnashahane/Omnipolymath/security/advisories/new)._
 
 ## Where each section moved
 
