@@ -82,6 +82,7 @@ The defaults are safe without any configuration. To change them, edit `~/.omnipo
     entries: {
       "trust-firewall": {
         config: {
+          posture: "balanced", // "restricted" asks before anything leaves the machine
           mode: "enforce", // or "monitor" (log only) or "dry-run" (never write)
           dailySpendCapUsd: 25, // 0 turns the cap off
           approveTiers: ["spend", "irreversible"],
@@ -89,12 +90,16 @@ The defaults are safe without any configuration. To change them, edit `~/.omnipo
           wallet: { perTransactionUsd: 100, dailyUsd: 250, allowedPayees: [] },
           skills: { requireSignature: false, blockHighRisk: false },
           routing: { enabled: true, routineModel: "<cheap model>", hardModel: "<best model>" },
+          egress: { mode: "approve-new", allowedHosts: ["*.github.com", "api.openai.com"] },
+          unsandboxedShell: "approve-risky", // or "approve-all" / "allow"
         },
       },
     },
   },
 }
 ```
+
+Want the strictest setup in one line? Set `posture: "restricted"`: outbound actions, new hosts and every shell command outside the sandbox wait for you, and high-risk skills are blocked.
 
 Inspect what happened with `omnipolymath firewall status`, `omnipolymath firewall log` and `omnipolymath firewall verify`. Full reference: [extensions/trust-firewall/README.md](extensions/trust-firewall/README.md).
 
