@@ -196,7 +196,7 @@ describe("local checkout publication", () => {
       actual.managedWorktrees.resolveRepositoryIdentity.bind(actual.managedWorktrees),
     );
     mocks.readWorktree.mockImplementation(registry.readLiveRegistryWorktreeByOwner);
-    await source.git("remote", "add", "origin", "https://github.com/krishnashahane/Omnipolymath.git");
+    await source.git("remote", "add", "origin", "https://github.com/omnipolymath/omnipolymath.git");
     await source.git("add", "artifact.txt");
     await source.git("commit", "-m", "Implement private task");
     const location = {
@@ -311,7 +311,7 @@ describe("local checkout publication", () => {
       actual.managedWorktrees.resolveRepositoryIdentity.bind(actual.managedWorktrees),
     );
     mocks.readWorktree.mockImplementation(registry.readLiveRegistryWorktreeByOwner);
-    await source.git("remote", "add", "origin", "https://github.com/krishnashahane/Omnipolymath.git");
+    await source.git("remote", "add", "origin", "https://github.com/omnipolymath/omnipolymath.git");
     const manager = await SessionManager.openAsync(
       {
         ...scope,
@@ -426,7 +426,7 @@ describe("local checkout publication", () => {
           "remote",
           "add",
           "origin",
-          "https://github.com/krishnashahane/Omnipolymath.git",
+          "https://github.com/omnipolymath/omnipolymath.git",
         );
       }
       projectId = (await registerProjectRegistry({ path: projectRoot })).id;
@@ -628,7 +628,7 @@ describe("local checkout publication", () => {
       "remote",
       "set-url",
       "origin",
-      "https://github.com/krishnashahane/Omnipolymath.git",
+      "https://github.com/omnipolymath/omnipolymath.git",
     );
     const edit = createHostWorkspaceEditTool(resumedRoot!, { workspaceOnly: true });
     await edit.execute("next-task", {
