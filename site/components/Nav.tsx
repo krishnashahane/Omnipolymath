@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Close, Github, Mark, Menu } from "./Icons";
+import { ThemeToggle } from "./ThemeToggle";
 
 const LINKS = [
   { href: "/#trust", label: "Firewall" },
@@ -25,6 +26,15 @@ export function Nav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+  const close = () => setOpen(false);
 
   const current = (href: string) =>
     href.startsWith("/#") ? false : pathname === href || pathname.startsWith(`${href}/`);
@@ -55,6 +65,7 @@ export function Nav() {
             <a className="btn btn-sm" href="/#install">
               Install
             </a>
+            <ThemeToggle />
             <button
               className="menu-btn"
               aria-label={open ? "Close menu" : "Open menu"}
@@ -68,11 +79,11 @@ export function Nav() {
         {open ? (
           <nav className="mobile-menu" aria-label="Mobile">
             {LINKS.map((l) => (
-              <Link key={l.href} href={l.href}>
+              <Link key={l.href} href={l.href} onClick={close}>
                 {l.label}
               </Link>
             ))}
-            <a href="https://github.com/krishnashahane/Omnipolymath" rel="noopener">
+            <a href="https://github.com/krishnashahane/Omnipolymath" rel="noopener" onClick={close}>
               GitHub
             </a>
           </nav>
