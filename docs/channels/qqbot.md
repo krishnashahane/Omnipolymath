@@ -7,6 +7,10 @@ read_when:
 title: QQ bot
 ---
 
+<Warning>
+The QQ Bot plugin is maintained outside this repository for the upstream project Omnipolymath is based on. It expects that project's plugin SDK, so it doesn't install or load in Omnipolymath yet. The rest of this page describes how the integration is designed to work.
+</Warning>
+
 QQ Bot connects to Omnipolymath via the official QQ Bot API (WebSocket gateway).
 C2C private chat and group `@`-mentions are the primary chat types, with rich
 media (images, voice, video, files). Guild channel messages are supported for
