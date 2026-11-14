@@ -24,10 +24,10 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.x
-      - name: Enable pnpm
-        run: corepack enable && corepack prepare --activate
+      - name: Install pnpm
+        run: npm install --global pnpm@12.15.0
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts --config.manage-package-manager-versions=false
       - name: Trust Firewall tests
         run: pnpm vitest run extensions/trust-firewall
       - name: Lint Trust Firewall
@@ -47,8 +47,9 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.x
+      # package-lock.json is gitignored repo-wide; resolve the same way Vercel does.
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
       - name: Build
         run: npm run build
       - name: Typecheck
