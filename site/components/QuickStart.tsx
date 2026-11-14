@@ -35,7 +35,7 @@ function panel(method: Method, os: Os, channel: Channel): Panel {
             "# then, inside WSL2:",
             channel === "stable"
               ? `curl -fsSL https://omnipolymath.vercel.app/install.sh | OMNIPOLYMATH_REF=${STABLE_TAG} bash`
-              : "curl -fsSL https://omnipolymath.vercel.app/install.sh | bash",
+              : "curl -fsSL https://omnipolymath.vercel.app/install.sh | OMNIPOLYMATH_REF=main bash",
           ],
           note: "The PowerShell script checks for WSL2 and prints the exact next steps. It doesn't change your system.",
         };
@@ -45,9 +45,12 @@ function panel(method: Method, os: Os, channel: Channel): Panel {
         lines: [
           channel === "stable"
             ? `curl -fsSL https://omnipolymath.vercel.app/install.sh | OMNIPOLYMATH_REF=${STABLE_TAG} bash`
-            : "curl -fsSL https://omnipolymath.vercel.app/install.sh | bash",
+            : "curl -fsSL https://omnipolymath.vercel.app/install.sh | OMNIPOLYMATH_REF=main bash",
         ],
-        note: `Clones ${channel === "stable" ? `the ${STABLE_TAG} release` : "the latest main"}, builds it with pnpm and starts onboarding. Needs git, Node.js 24.16+ and pnpm; never runs as root.`,
+        note:
+          channel === "stable"
+            ? `Downloads the prebuilt ${STABLE_TAG} package, checks its SHA-256, installs it with npm and starts onboarding. Needs only Node.js 24.16+; never runs as root.`
+            : "Clones the latest main, builds it with pnpm and starts onboarding. Needs git, Node.js 24.16+ and pnpm; never runs as root.",
       };
     case "hackable":
       return {
@@ -64,7 +67,7 @@ function panel(method: Method, os: Os, channel: Channel): Panel {
       return {
         kind: "notice",
         title: "Not on npm yet",
-        body: "The omnipolymath package isn't published, so npm install -g omnipolymath won't work today. Use the one-liner; it builds the same CLI from source.",
+        body: "The omnipolymath package isn't on the npm registry, so npm install -g omnipolymath won't work. The one-liner installs the same package with npm from the GitHub release, checksum-verified.",
         cta: "one-liner",
       };
     case "apps":
