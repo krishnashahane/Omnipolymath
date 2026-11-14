@@ -113,9 +113,8 @@ and build names. JSON output keeps the original version values.
 <Note>
 Official plugin-id shortcuts and automatic setup installs follow the catalog's declared source order. Package names such as `@omnipolymath/discord` select ClawHub directly.
 ClawHub also provides plugin discovery. Omnipolymath-owned
-`@omnipolymath/*` plugin packages are published on npm again; see the current list
-on [npmjs.com/org/omnipolymath](https://www.npmjs.com/org/omnipolymath) or the
-[plugin inventory](/plugins/plugin-inventory). Stable official ClawHub installs
+`@omnipolymath/*` plugin packages aren't published to npm or ClawHub; they ship with
+the source build. See the [plugin inventory](/plugins/plugin-inventory). Stable official ClawHub installs
 first try the running Omnipolymath version. If that build is unpublished, installation
 falls back to the original catalog candidate with a visible warning and retains
 that candidate’s integrity pin. An incompatible fallback names the required
