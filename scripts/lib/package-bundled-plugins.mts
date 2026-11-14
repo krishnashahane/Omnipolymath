@@ -72,8 +72,12 @@ export async function preparePackageBundledPlugins(
     const manifest = JSON.parse(
       await fs.readFile(path.join(pluginRoot, "omnipolymath.plugin.json"), "utf8"),
     ) as { id: string };
+    // A plugin id may differ from its directory (kimi-coding declares "kimi").
+    const sourceManifest = JSON.parse(
+      await fs.readFile(path.join(sourceDir, "extensions", id, "omnipolymath.plugin.json"), "utf8"),
+    ) as { id: string };
     if (
-      manifest.id !== id ||
+      manifest.id !== sourceManifest.id ||
       (
         [
           "name",
