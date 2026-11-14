@@ -105,9 +105,25 @@ WRAPPER
     fi
     local tmp
     tmp="$(mktemp -d)"
+    # Retry network errors; only a missing asset (HTTP 404) falls back to a source build.
+    local retry_all=""
+    # --retry-all-errors needs curl 7.71+; older curl still retries transient errors.
+    if curl --help all 2>/dev/null | grep -q -- "--retry-all-errors"; then
+      retry_all="--retry-all-errors"
+    fi
+    fetch() {
+      local code
+      # shellcheck disable=SC2086
+      code="$(curl -sSL --retry 4 $retry_all --retry-delay 2 -o "$2" -w '%{http_code}' "$1" || true)"
+      case "$code" in
+        200) return 0 ;;
+        404) return 1 ;;
+        *) die "Could not download $1 (HTTP ${code:-error}). Check your connection and run the installer again." ;;
+      esac
+    }
     say "Downloading the prebuilt package ($ref)"
-    if curl -fsSL "$base/omnipolymath.tgz" -o "$tmp/omnipolymath.tgz" &&
-      curl -fsSL "$base/omnipolymath.tgz.sha256" -o "$tmp/omnipolymath.tgz.sha256"; then
+    if fetch "$base/omnipolymath.tgz.sha256" "$tmp/omnipolymath.tgz.sha256" &&
+      fetch "$base/omnipolymath.tgz" "$tmp/omnipolymath.tgz"; then
       local want got
       want="$(cut -d' ' -f1 <"$tmp/omnipolymath.tgz.sha256")"
       got="$(sha256_of "$tmp/omnipolymath.tgz")"
