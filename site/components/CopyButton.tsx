@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Copy } from "./Icons";
 
 export function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
-  const [done, setDone] = useState(false);
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
   const copy = async () => {
+    let ok = true;
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -19,26 +20,31 @@ export function CopyButton({ text, label = "Copy" }: { text: string; label?: str
       document.body.appendChild(ta);
       ta.select();
       try {
-        document.execCommand("copy");
+        ok = document.execCommand("copy");
+      } catch {
+        ok = false;
       } finally {
         ta.remove();
       }
     }
-    setDone(true);
+    setState(ok ? "copied" : "failed");
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => setDone(false), 1600);
+    timer.current = setTimeout(() => setState("idle"), ok ? 1600 : 2600);
   };
+  const done = state === "copied";
+  const status = done ? "Copied" : state === "failed" ? "Copy failed, select the text instead" : "";
   return (
     <button
       type="button"
       className={`copy-btn${done ? " done" : ""}`}
       onClick={copy}
-      aria-label={done ? "Copied" : label}
+      aria-label={status || label}
+      title={status || label}
     >
       <Copy />
       <Check />
       <span className="sr-only" aria-live="polite">
-        {done ? "Copied" : ""}
+        {status}
       </span>
     </button>
   );
