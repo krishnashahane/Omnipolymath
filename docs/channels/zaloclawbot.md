@@ -6,6 +6,10 @@ read_when:
 title: "Zalo ClawBot"
 ---
 
+<Warning>
+The Zalo plugin is maintained outside this repository for the upstream project Omnipolymath is based on. It expects that project's plugin SDK, so it doesn't install or load in Omnipolymath yet. The rest of this page describes how the integration is designed to work.
+</Warning>
+
 Omnipolymath connects to Zalo ClawBot through the catalog-listed external `@zalo-platforms/omnipolymath-zaloclawbot` plugin. Login uses a Zalo Mini App QR code; the plugin id in config is `omnipolymath-zaloclawbot`.
 
 <Note>
