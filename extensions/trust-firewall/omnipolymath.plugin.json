@@ -1,7 +1,7 @@
 {
   "id": "trust-firewall",
   "name": "Trust Firewall",
-  "description": "Least-privilege approvals, prompt-injection shield with a model second opinion, tamper-evident action log with undo, dry-run mode, daily spend cap, agent wallets, self-cleaning memory, skill install checks and a receipt for every run.",
+  "description": "Least-privilege approvals, prompt-injection shield with a model second opinion, egress guard against cloud-metadata credential theft, host guard for unsandboxed shells, tamper-evident action log with undo, dry-run mode, posture presets, daily spend cap, agent wallets, self-cleaning memory, skill install checks and a receipt for every run.",
   "categories": [
     "security"
   ],
