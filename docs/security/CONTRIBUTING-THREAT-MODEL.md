@@ -9,7 +9,7 @@ read_when:
 The [threat model](/security/THREAT-MODEL-ATLAS) is a living document. Contributions are welcome from anyone; you do not need security or MITRE ATLAS background.
 
 <Note>
-This is for adding to the threat model, not reporting live vulnerabilities. If you found an exploitable vulnerability, follow the responsible-disclosure instructions on the [Trust page](https://trust.openclaw.ai) instead.
+This is for adding to the threat model, not reporting live vulnerabilities. If you found an exploitable vulnerability, report it privately through a [GitHub Security Advisory](https://github.com/krishnashahane/Omnipolymath/security/advisories/new) instead.
 </Note>
 
 ## Ways to contribute
@@ -69,9 +69,8 @@ Threats are mapped to [MITRE ATLAS](https://atlas.mitre.org/) (Adversarial Threa
 
 ## Contact
 
-- **Security vulnerabilities:** [Trust page](https://trust.openclaw.ai) for reporting instructions, or `security@omnipolymath.vercel.app`.
+- **Security vulnerabilities:** report privately through a [GitHub Security Advisory](https://github.com/krishnashahane/Omnipolymath/security/advisories/new).
 - **Threat model questions:** open a [documentation issue](https://github.com/krishnashahane/Omnipolymath/issues/new?template=docs_bug_report.yml).
-- **General chat:** Discord `#security` channel.
 
 ## Recognition
 
