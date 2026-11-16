@@ -14,7 +14,7 @@ Compose apps and terminates HTTPS through Caddy.
 ## Before you begin
 
 - An EasyRunner server with a domain routed to it.
-- The official Omnipolymath image (`ghcr.io/openclaw/openclaw`) or your own build.
+- An Omnipolymath image built from your checkout (`docker build -t omnipolymath:local .`) and pushed to a registry the server can pull from.
 - A persistent config volume for `/home/node/.omnipolymath`.
 - A persistent workspace volume for `/home/node/.omnipolymath/workspace`.
 - A strong Gateway token or password.
@@ -31,7 +31,7 @@ Create an EasyRunner app with a Compose file shaped like this:
 ```yaml
 services:
   omnipolymath:
-    image: ghcr.io/openclaw/openclaw:latest
+    image: <your-registry>/omnipolymath:latest
     restart: unless-stopped
     environment:
       OMNIPOLYMATH_GATEWAY_TOKEN: ${OMNIPOLYMATH_GATEWAY_TOKEN}

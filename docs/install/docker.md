@@ -16,7 +16,7 @@ Hosting mutually untrusted users? Run a separate Gateway for each trust boundary
 ## Prerequisites
 
 - Docker Desktop (or Docker Engine) + Docker Compose v2
-- At least 6 GB RAM for a local source image build; pre-built images avoid this build requirement
+- At least 6 GB RAM for the image build
 - Enough disk for images and logs
 - On a VPS/public host, review [Security hardening for network exposure](/gateway/security), especially the Docker `DOCKER-USER` firewall chain
 
@@ -30,30 +30,23 @@ Hosting mutually untrusted users? Run a separate Gateway for each trust boundary
     ./scripts/docker/setup.sh
     ```
 
-    This builds the Gateway image locally as `omnipolymath:local`. To use a pre-built image instead:
+    This builds the Gateway image locally as `omnipolymath:local`. Omnipolymath doesn't publish prebuilt images yet, so a local build is the supported path. To use a different tag, set it before running setup:
 
     ```bash
-    export OMNIPOLYMATH_IMAGE="ghcr.io/openclaw/openclaw:latest"
+    export OMNIPOLYMATH_IMAGE="omnipolymath:local"
     ./scripts/docker/setup.sh
     ```
 
-    Pre-built images are published first to the [GitHub Container Registry](https://github.com/krishnashahane/Omnipolymath/pkgs/container/omnipolymath). GHCR is the primary registry for release automation, pinned deployments, and provenance checks. The same release publishes a Docker Hub mirror at `krishnashahane/Omnipolymath`:
-
-    ```bash
-    export OMNIPOLYMATH_IMAGE="krishnashahane/Omnipolymath:latest"
-    ./scripts/docker/setup.sh
-    ```
-
-    Use `ghcr.io/openclaw/openclaw` or `krishnashahane/Omnipolymath` and avoid unofficial mirrors, which don't share Omnipolymath's release timing or retention policy. Version-specific tags include releases such as `2026.9.3` and prereleases such as `2026.9.1-beta.1`. Stable releases move `latest` and `main`; trailing-month Gateway releases move only `extended-stable`. Variants include `slim`, `main-slim`, `extended-stable-slim`, `latest-browser`, `main-browser`, and `extended-stable-browser`. The default images bundle the `codex` and `diagnostics-otel` plugins. A `-browser` variant also ships with Chromium baked in for the [Gateway-controlled browser](/install/docker#using-the-control-ui-browser). The agent sandbox browser uses a separate image.
+    The image bundles the `codex` and `diagnostics-otel` plugins. To bake Chromium into it for the [Gateway-controlled browser](/install/docker#using-the-control-ui-browser), build it first with `docker build --build-arg OMNIPOLYMATH_INSTALL_BROWSER=chromium -t omnipolymath:local .`. The agent sandbox browser uses a separate image.
 
   </Step>
 
   <Step title="Airgapped rerun">
-    On offline hosts, transfer and load the image first:
+    On offline hosts, build the image on a connected machine, save it with `docker save omnipolymath:local -o omnipolymath-image.tar`, then load it:
 
     ```bash
     docker load -i omnipolymath-image.tar
-    export OMNIPOLYMATH_IMAGE="ghcr.io/openclaw/openclaw:latest"
+    export OMNIPOLYMATH_IMAGE="omnipolymath:local"
     ./scripts/docker/setup.sh --offline
     ```
 
@@ -112,17 +105,17 @@ browser controlled by the Gateway. It is separate from the browser on your lapto
 or phone that opens the dashboard. For a local managed browser with a Docker
 Gateway, Chromium must be available **inside the Gateway container**.
 
-For a new installation, use the official browser-equipped image with the normal
+For a new installation, build the image with Chromium included and use the normal
 Compose setup; no custom Dockerfile is needed:
 
 ```bash
-export OMNIPOLYMATH_IMAGE="ghcr.io/openclaw/openclaw:latest-browser"
+docker build --build-arg OMNIPOLYMATH_INSTALL_BROWSER=chromium -t omnipolymath:local-browser .
+export OMNIPOLYMATH_IMAGE="omnipolymath:local-browser"
 ./scripts/docker/setup.sh
 ```
 
-For a pinned deployment, choose a release's `-browser` tag instead of the moving
-`latest-browser` tag. For an existing Compose installation, change `OMNIPOLYMATH_IMAGE`
-in its `.env` to the browser variant, then pull and recreate the Gateway using
+For an existing Compose installation, build the browser image the same way, change
+`OMNIPOLYMATH_IMAGE` in its `.env` to `omnipolymath:local-browser`, then recreate the Gateway using
 the same Compose files and overlays as your current deployment:
 
 ```bash
@@ -537,7 +530,7 @@ export OTEL_SERVICE_NAME="omnipolymath-gateway"
 ./scripts/docker/setup.sh
 ```
 
-Official prebuilt images already bundle `diagnostics-otel`; install `@omnipolymath/diagnostics-otel` yourself only if you removed it. To enable export, allow and enable the `diagnostics-otel` plugin in config, then set `diagnostics.otel.enabled=true` (see the full example in [OpenTelemetry export](/gateway/opentelemetry)). Collector auth headers go through `diagnostics.otel.headers`, not Docker environment variables.
+The image built from this repository already bundles `diagnostics-otel`; install `@omnipolymath/diagnostics-otel` yourself only if you removed it. To enable export, allow and enable the `diagnostics-otel` plugin in config, then set `diagnostics.otel.enabled=true` (see the full example in [OpenTelemetry export](/gateway/opentelemetry)). Collector auth headers go through `diagnostics.otel.headers`, not Docker environment variables.
 
 Prometheus metrics reuse the already-published Gateway port. Install `@omnipolymath/diagnostics-prometheus`, enable the `diagnostics-prometheus` plugin, then scrape:
 
@@ -603,7 +596,7 @@ docker compose exec omnipolymath-gateway sh -lc 'node dist/index.js gateway heal
   - <a id="openai-codex-oauth-headless-docker" />[OpenAI Codex OAuth (headless Docker)](/install/docker/compose-operations#openai-codex-oauth-headless-docker)
   - <a id="base-image-metadata" />[Base image metadata](/install/docker/compose-operations#base-image-metadata)
 - <a id="image-contents-and-security-scanning" />[Image contents and security scanning](/install/docker/compose-operations#image-contents-and-security-scanning)
-- <a id="weekly-image-refreshes" />[Weekly image refreshes](/install/docker/compose-operations#weekly-image-refreshes)
+- <a id="weekly-image-refreshes" />[Keeping the image current](/install/docker/compose-operations#keeping-the-image-current)
 - <a id="running-on-a-vps%3F" /><a id="running-on-a-vps" />[Running on a VPS?](/install/docker/compose-operations#running-on-a-vps%3F)
 - <a id="agent-sandbox" />[Agent sandbox](/install/docker/sandbox-and-troubleshooting#agent-sandbox)
   - <a id="quick-enable" />[Quick enable](/install/docker/sandbox-and-troubleshooting#quick-enable)

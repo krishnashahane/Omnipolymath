@@ -88,7 +88,7 @@ Measured on this template against a real R2 bucket: about 2.4 seconds from write
   </Step>
 
   <Step title="Publish the Container image">
-    Replace `<official-omnipolymath-image-digest>` in `Dockerfile` with an immutable digest from the official [`krishnashahane/Omnipolymath`](https://hub.docker.com/r/openclaw/openclaw) Docker Hub repository.
+    Build the Omnipolymath image from your checkout (`docker build -t <your-dockerhub-user>/omnipolymath:<version> .`), push it to Docker Hub, and replace `<official-omnipolymath-image-digest>` in `Dockerfile` with that image's immutable digest.
 
     Build the derived image for Cloudflare's required architecture and push it to a public Docker Hub repository:
 

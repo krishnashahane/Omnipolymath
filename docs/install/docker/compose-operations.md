@@ -3,12 +3,12 @@ summary: "Day-to-day Compose commands, operational accordions, and image mainten
 read_when:
   - You removed ClawDock and need the plain Compose commands
   - You hit EACCES, DNS, or rebuild problems
-  - You want to know how the published images are refreshed
+  - You want to know how to keep the image current
 title: "Docker Compose operations and image maintenance"
 sidebarTitle: "Compose operations"
 ---
 
-The Compose command table that replaced ClawDock, the operational accordions, and how published images are refreshed. Part of the [Docker](/install/docker) guide.
+The Compose command table that replaced ClawDock, the operational accordions, and how to keep the image current. Part of the [Docker](/install/docker) guide.
 
 ## ClawDock migration
 
@@ -205,11 +205,9 @@ Runtime images contain production Node.js dependencies only. Release builds pin 
 
 Scanner totals can include Debian findings that the distribution marks `wont-fix`. To rebuild locally against current base and package metadata, run `docker build --pull -t omnipolymath:local .`.
 
-## Weekly image refreshes
+## Keeping the image current
 
-The `latest*`, `main*`, and `extended-stable*` moving tags are rebuilt weekly from the same tagged release source so they pick up current OS security updates between Omnipolymath releases. Stable and extended-stable refreshes remain separate, and beta images are not rebuilt on this schedule.
-
-Each refresh also publishes a dated tag such as `2026.8.1-r20260820` (plus `-slim` and `-browser` variants). Plain version tags and dated `-rYYYYMMDD` tags are immutable; pin either form when you do not want a deployment to follow a moving tag.
+Omnipolymath doesn't publish prebuilt images yet, so there are no moving tags to follow. To pick up Omnipolymath changes and current OS security updates, pull the repository and rebuild with `docker build --pull -t omnipolymath:local .`, then recreate the Gateway.
 
 ## Running on a VPS?
 
