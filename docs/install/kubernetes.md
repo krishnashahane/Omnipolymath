@@ -270,9 +270,13 @@ OMNIPOLYMATH_NAMESPACE=my-namespace ./scripts/k8s/deploy.sh
 Edit the `image` field in `scripts/k8s/manifests/deployment.yaml`:
 
 ```yaml
-# Bump this immutable versioned tag when upgrading Omnipolymath.
-image: ghcr.io/openclaw/openclaw:2026.7.1-2-slim
+# Build with `docker build -t <your-registry>/omnipolymath:<version> .`, push it,
+# and bump this tag when upgrading Omnipolymath.
+image: <your-registry>/omnipolymath:<version>
 ```
+
+Omnipolymath doesn't publish prebuilt images yet, so build the image from your
+checkout and push it to a registry your cluster can pull from.
 
 Images from `2026.8.1` onward need a [writable cache location](/install/kubernetes#architecture-notes); the shipped manifest provides it through `XDG_CACHE_HOME`. When upgrading an older deployment, apply that environment entry along with the image change.
 
