@@ -60,8 +60,9 @@ spec:
               mountPath: /tmp-volume
       containers:
         - name: gateway
-          # Bump this immutable versioned tag when upgrading Omnipolymath.
-          image: ghcr.io/openclaw/openclaw:2026.7.1-2-slim
+          # Build with `docker build -t <your-registry>/omnipolymath:<version> .`,
+          # push it, and set the tag here. Bump it when upgrading Omnipolymath.
+          image: omnipolymath:local
           imagePullPolicy: IfNotPresent
           command:
             - node
