@@ -526,6 +526,9 @@
   font-size: 13px;
 }
 .qs-all {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
   color: var(--muted);
   text-decoration: none;
   font-size: 13.5px;
@@ -710,9 +713,7 @@
   animation:
     h-word-in 0.9s var(--ease) both,
     h-shine 6s linear infinite;
-  animation-delay:
-    calc(80ms + var(--i, 0) * 70ms),
-    calc(1.9s + (var(--i, 0) - 5) * 160ms);
+  animation-delay: calc(80ms + var(--i, 0) * 70ms), calc(1.9s + (var(--i, 0) - 5) * 160ms);
 }
 @keyframes h-shine {
   0% {
@@ -725,7 +726,6 @@
     background-position: 0% 0;
   }
 }
-
 
 /* Magnetic primary button (components/Magnet.tsx). */
 .magnet {
