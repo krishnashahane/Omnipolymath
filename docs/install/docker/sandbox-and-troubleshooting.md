@@ -60,7 +60,7 @@ For npm installs without a source checkout, see [Sandboxing § Images and setup]
   </Accordion>
 
   <Accordion title="OOM-killed during image build (exit 137)">
-    A local source image build needs at least 6 GB RAM. Use a larger machine class or a pre-built image and retry.
+    The image build needs at least 6 GB RAM. Use a larger machine class, or build on another machine and load the image with `docker load`, then retry.
   </Accordion>
 
   <Accordion title="Unauthorized or pairing required in Control UI">
