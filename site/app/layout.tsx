@@ -54,11 +54,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <a href="#main" className="sr-only">
+        <a href="#main" className="skip-link">
           Skip to content
         </a>
         <Nav />
-        <main id="main">{children}</main>
+        <main id="main" tabIndex={-1}>
+          {children}
+        </main>
         <Footer />
       </body>
     </html>
