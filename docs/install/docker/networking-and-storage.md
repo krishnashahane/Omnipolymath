@@ -41,12 +41,12 @@ Using your own Compose file or `docker run`? Add the same mapping yourself, e.g.
 
 ## Claude CLI backend in Docker
 
-The official image does not pre-install Claude Code. Install and log in inside the container's `node` user, then persist that container home so image upgrades don't erase the binary or auth state.
+The Omnipolymath image does not pre-install Claude Code. Install and log in inside the container's `node` user, then persist that container home so image upgrades don't erase the binary or auth state.
 
 For a new install, enable a persistent `/home/node` volume before running setup:
 
 ```bash
-export OMNIPOLYMATH_IMAGE="ghcr.io/openclaw/openclaw:latest"
+export OMNIPOLYMATH_IMAGE="omnipolymath:local"
 export OMNIPOLYMATH_HOME_VOLUME="omnipolymath_home"
 ./scripts/docker/setup.sh
 ```
