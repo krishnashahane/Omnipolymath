@@ -17,8 +17,8 @@ page owns the Docker setup shared by those hosts.
 You need:
 
 - A Debian or Ubuntu VM with Docker Engine and Docker Compose v2
-- At least 6 GB RAM for a source image build; smaller hosts should use the
-  official pre-built image below
+- At least 6 GB RAM for the image build; on smaller hosts, build the image on
+  another machine and load it with `docker load`
 - The Omnipolymath source checkout on the VM
 - Provider and model credentials for onboarding
 - An SSH-only or otherwise restricted provider firewall; do not expose the
@@ -73,10 +73,12 @@ Gateway through the repository's `docker-compose.yml`. The Compose file pins
 container-side state to `/home/node/.omnipolymath` while using the host paths above
 as bind-mount sources.
 
-To use an official prebuilt image instead of building from source:
+Omnipolymath doesn't publish prebuilt images yet, so `setup.sh` builds
+`omnipolymath:local` from your checkout. Set `OMNIPOLYMATH_IMAGE` to use another
+local tag:
 
 ```bash
-export OMNIPOLYMATH_IMAGE="ghcr.io/openclaw/openclaw:latest"
+export OMNIPOLYMATH_IMAGE="omnipolymath:local"
 ./scripts/docker/setup.sh
 ```
 
@@ -217,7 +219,7 @@ OMNIPOLYMATH_SKIP_ONBOARDING=1 ./scripts/docker/setup.sh
 docker compose run --rm omnipolymath-cli doctor --json
 ```
 
-For a pinned or prebuilt image, update `OMNIPOLYMATH_IMAGE` to the intended tag or
+For a different image tag, update `OMNIPOLYMATH_IMAGE` to the intended tag or
 digest before rerunning the setup script. Routine image upgrades run startup-safe
 migrations against the mounted state; see [Upgrading container images](/install/docker#upgrading-container-images)
 for recovery when a migration cannot complete automatically.
